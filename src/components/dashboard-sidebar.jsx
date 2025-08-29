@@ -1,14 +1,22 @@
 import { Button } from "../components/ui/button"
+import { useLocation, useNavigate } from "react-router"
 
 export function DashboardSidebar() {
+  const location = useLocation()
+  const navigate = useNavigate()
+
   const menuItems = [
-    { id: "dashboard", label: "Dashboard Principal", active: true },
-    { id: "consumption", label: "Consumo", active: false },
-    { id: "wells", label: "Pozos", active: false },
-    { id: "balance", label: "Balance Hídrico", active: false },
-    { id: "predictions", label: "Predicciones", active: false },
-    { id: "alerts", label: "Alertas", active: false },
+    { id: "dashboard", label: "Dashboard Principal", path: "/", active: location.pathname === "/" },
+    { id: "consumption", label: "Consumo", path: "/consumo", active: false },
+    { id: "wells", label: "Pozos", path: "/pozos", active: location.pathname === "/pozos" },
+    { id: "balance", label: "Balance Hídrico", path: "/balance", active: false },
+    { id: "predictions", label: "Predicciones", path: "/predicciones", active: false },
+    { id: "alerts", label: "Alertas", path: "/alertas", active: false },
   ]
+
+  const handleNavigation = (path) => {
+    navigate(path)
+  }
 
   return (
     <aside className="fixed top-0 left-0 h-full w-64 bg-sidebar border-r border-sidebar-border z-50">
@@ -37,6 +45,7 @@ export function DashboardSidebar() {
                   ? "bg-sidebar-primary text-sidebar-primary-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               }`}
+              onClick={() => handleNavigation(item.path)}
             >
               {item.label}
             </Button>
