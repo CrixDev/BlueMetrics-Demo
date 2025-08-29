@@ -9,6 +9,7 @@ export function DashboardSidebar() {
     { id: "dashboard", label: "Dashboard Principal", path: "/", active: location.pathname === "/" },
     { id: "consumption", label: "Consumo", path: "/consumo", active: false },
     { id: "wells", label: "Pozos", path: "/pozos", active: location.pathname === "/pozos" },
+    { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", active: location.pathname === "/agregar-datos" },
     { id: "balance", label: "Balance Hídrico", path: "/balance", active: false },
     { id: "predictions", label: "Predicciones", path: "/predicciones", active: false },
     { id: "alerts", label: "Alertas", path: "/alertas", active: false },
@@ -24,10 +25,10 @@ export function DashboardSidebar() {
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-            <span className="text-primary-foreground font-bold text-lg">A</span>
+            <span className="text-primary-foreground font-bold text-lg">B</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">AquaNet</h1>
+            <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">BlueMetrics</h1>
             <p className="text-xs text-sidebar-foreground/70 font-medium">Sistema Hídrico Inteligente</p>
           </div>
         </div>

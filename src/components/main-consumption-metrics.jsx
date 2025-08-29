@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from "../components/ui/card"
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar } from "recharts"
+import DashboardChart from "./DashboardChart"
 
 const efficiencyData = [
   { name: "Efficiency", value: 82, fill: "hsl(var(--chart-2))" },
@@ -23,7 +23,7 @@ export function MainConsumptionMetrics() {
         <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
           <div className="flex items-center justify-between">
             <span className="text-sm">1270.01</span>
-            <span className="font-semibold">AquaNet</span>
+            <span className="font-semibold">BlueMetrics</span>
           </div>
         </CardHeader>
         <CardContent className="p-6">
@@ -41,26 +41,33 @@ export function MainConsumptionMetrics() {
             <div className="text-center">
               <div className="text-sm text-muted-foreground mb-2">Eficiencia</div>
               <div className="relative w-20 h-20 mx-auto">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={efficiencyData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={25}
-                      outerRadius={35}
-                      startAngle={90}
-                      endAngle={-270}
-                      dataKey="value"
-                    >
-                      {efficiencyData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg font-bold text-primary">82%</span>
+                {/* Círculo de progreso CSS */}
+                <div className="relative w-20 h-20">
+                  <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                    <path
+                      className="text-gray-300"
+                      strokeWidth="3"
+                      stroke="currentColor"
+                      fill="transparent"
+                      d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className="text-blue-600"
+                      strokeWidth="3"
+                      strokeDasharray="82, 100"
+                      strokeLinecap="round"
+                      stroke="currentColor"
+                      fill="transparent"
+                      d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-lg font-bold text-primary">82%</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -82,11 +89,7 @@ export function MainConsumptionMetrics() {
             <div>
               <div className="text-sm text-muted-foreground mb-2">Tendencia Mensual</div>
               <div className="h-16">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={consumptionData}>
-                    <Bar dataKey="value" fill="hsl(var(--chart-2))" radius={[2, 2, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <DashboardChart data={consumptionData} type="bar" height="100%" />
               </div>
             </div>
           </div>
@@ -103,7 +106,7 @@ export function MainConsumptionMetrics() {
         <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
           <div className="flex items-center justify-between">
             <span className="text-sm">Aucan'ti</span>
-            <span className="font-semibold">AquaNet</span>
+            <span className="font-semibold">BlueMetrics</span>
           </div>
         </CardHeader>
         <CardContent className="p-6">

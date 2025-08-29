@@ -1,4 +1,4 @@
-// Centralized data service for the AquaNet dashboard
+// Centralized data service for the BlueMetrics dashboard
 export const dashboardData = {
     // Main consumption metrics
     consumption: {

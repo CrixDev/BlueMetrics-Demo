@@ -6,7 +6,7 @@ export function WaterBalanceFlow() {
       <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
         <div className="flex items-center justify-between">
           <span className="text-sm">Balance Hídrico</span>
-          <span className="font-semibold">AquaNet</span>
+          <span className="font-semibold">BlueMetrics</span>
         </div>
       </CardHeader>
       <CardContent className="p-6">

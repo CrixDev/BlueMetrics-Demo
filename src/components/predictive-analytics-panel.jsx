@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { Button } from "../components/ui/button"
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Area, AreaChart } from "recharts"
+import DashboardChart from "./DashboardChart"
 import { AlertTriangle, Droplets, Settings, TrendingUp } from "lucide-react"
 
 const predictionData = [
@@ -28,8 +28,8 @@ export function PredictiveAnalyticsPanel() {
       <Card className="bg-card border-border">
         <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
           <div className="flex items-center justify-between">
-            <span className="text-sm">AquaNet</span>
-            <span className="font-semibold">AquaNet</span>
+            <span className="text-sm">BlueMetrics</span>
+            <span className="font-semibold">BlueMetrics</span>
           </div>
         </CardHeader>
         <CardContent className="p-6">
@@ -48,28 +48,7 @@ export function PredictiveAnalyticsPanel() {
 
             <div className="text-sm text-muted-foreground mb-2">Predicción de Consumo (7 días)</div>
             <div className="h-32">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={predictionData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                  <YAxis hide />
-                  <Line
-                    type="monotone"
-                    dataKey="actual"
-                    stroke="hsl(var(--chart-2))"
-                    strokeWidth={3}
-                    dot={{ fill: "hsl(var(--chart-2))", strokeWidth: 0, r: 4 }}
-                    connectNulls={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="predicted"
-                    stroke="hsl(var(--chart-1))"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    dot={{ fill: "hsl(var(--chart-1))", strokeWidth: 0, r: 3 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <DashboardChart data={predictionData} type="line" height="100%" />
             </div>
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-2">
@@ -95,7 +74,7 @@ export function PredictiveAnalyticsPanel() {
         <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
           <div className="flex items-center justify-between">
             <span className="text-sm">Acciones</span>
-            <span className="font-semibold">AquaNet</span>
+            <span className="font-semibold">BlueMetrics</span>
           </div>
         </CardHeader>
         <CardContent className="p-6">
@@ -139,25 +118,7 @@ export function PredictiveAnalyticsPanel() {
           <div className="mb-4">
             <div className="text-sm text-muted-foreground mb-2">Nivel de Riesgo (24h)</div>
             <div className="h-20">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={riskData}>
-                  <defs>
-                    <linearGradient id="riskGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                  <YAxis hide />
-                  <Area
-                    type="monotone"
-                    dataKey="risk"
-                    stroke="hsl(var(--destructive))"
-                    strokeWidth={2}
-                    fill="url(#riskGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <DashboardChart data={riskData} type="area" height="100%" />
             </div>
           </div>
 

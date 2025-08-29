@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router"
+import { useState } from "react"
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card } from "../components/ui/card"
@@ -14,12 +15,21 @@ import {
   AlertTriangleIcon,
   InfoIcon,
   FileTextIcon,
-  SettingsIcon
+  SettingsIcon,
+  BarChart3Icon,
+  FilterIcon
 } from "lucide-react"
+import ChartComponent from '../components/ChartComponent'
 
 export default function WellDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  
+  // Estados para los filtros de gráficas
+  const [selectedMetrics, setSelectedMetrics] = useState(['realConsumption', 'availableForConsumption'])
+  const [chartType, setChartType] = useState('line')
+  const [showComparison, setShowComparison] = useState(true)
+  const [timeFilter, setTimeFilter] = useState('yearly') // 'yearly', 'quarterly', 'monthly'
 
   // Datos específicos del Pozo 12 basados en la información proporcionada
   const wellData = {
@@ -65,6 +75,221 @@ export default function WellDetailPage() {
         observations: "El consumo hasta mayo ya excede el volumen disponible."
       }
     ],
+    quarterlyData: [
+      // 2024 - Datos Trimestrales
+      {
+        period: "Q1 2024",
+        quarter: "T1 2024",
+        m3CededByAnnex: 5.000,
+        m3CededByTitle: 0,
+        realConsumption: 8540.62,
+        availableForConsumption: 70.885,
+        observations: "Primer trimestre con consumo elevado."
+      },
+      {
+        period: "Q2 2024",
+        quarter: "T2 2024", 
+        m3CededByAnnex: 5.000,
+        m3CededByTitle: 0,
+        realConsumption: 12050.75,
+        availableForConsumption: 70.885,
+        observations: "Segundo trimestre, pico de consumo."
+      },
+      {
+        period: "Q3 2024",
+        quarter: "T3 2024",
+        m3CededByAnnex: 5.000,
+        m3CededByTitle: 0,
+        realConsumption: 9780.94,
+        availableForConsumption: 70.885,
+        observations: "Tercer trimestre con consumo moderado."
+      },
+      {
+        period: "Q4 2024",
+        quarter: "T4 2024",
+        m3CededByAnnex: 5.000,
+        m3CededByTitle: 0,
+        realConsumption: 5780.18,
+        availableForConsumption: 70.885,
+        observations: "Cuarto trimestre, reducción del consumo."
+      },
+      // 2025 - Datos Trimestrales
+      {
+        period: "Q1 2025",
+        quarter: "T1 2025",
+        m3CededByAnnex: 7.500,
+        m3CededByTitle: 0,
+        realConsumption: 3456.89,
+        availableForConsumption: 75.885,
+        observations: "Primer trimestre 2025, consumo controlado."
+      },
+      {
+        period: "Q2 2025",
+        quarter: "T2 2025",
+        m3CededByAnnex: 7.500,
+        m3CededByTitle: 0,
+        realConsumption: 1747.44,
+        availableForConsumption: 75.885,
+        observations: "Segundo trimestre 2025, consumo bajo."
+      }
+    ],
+    monthlyData: [
+      // 2024 - Datos Mensuales Detallados
+      {
+        period: "Ene 2024",
+        month: "Enero",
+        m3CededByAnnex: 1.667,
+        m3CededByTitle: 0,
+        realConsumption: 2846.87,
+        availableForConsumption: 70.885,
+        observations: "Enero: Consumo normal de inicio de año."
+      },
+      {
+        period: "Feb 2024", 
+        month: "Febrero",
+        m3CededByAnnex: 1.667,
+        m3CededByTitle: 0,
+        realConsumption: 2893.45,
+        availableForConsumption: 70.885,
+        observations: "Febrero: Ligero incremento respecto a enero."
+      },
+      {
+        period: "Mar 2024",
+        month: "Marzo", 
+        m3CededByAnnex: 1.666,
+        m3CededByTitle: 0,
+        realConsumption: 2800.30,
+        availableForConsumption: 70.885,
+        observations: "Marzo: Estabilización del consumo."
+      },
+      {
+        period: "Abr 2024",
+        month: "Abril",
+        m3CededByAnnex: 1.667,
+        m3CededByTitle: 0,
+        realConsumption: 4016.92,
+        availableForConsumption: 70.885,
+        observations: "Abril: Incremento notable del consumo."
+      },
+      {
+        period: "May 2024",
+        month: "Mayo",
+        m3CededByAnnex: 1.667,
+        m3CededByTitle: 0,
+        realConsumption: 4033.83,
+        availableForConsumption: 70.885,
+        observations: "Mayo: Consumo mantenido alto."
+      },
+      {
+        period: "Jun 2024",
+        month: "Junio",
+        m3CededByAnnex: 1.666,
+        m3CededByTitle: 0,
+        realConsumption: 4000.00,
+        availableForConsumption: 70.885,
+        observations: "Junio: Pico máximo del semestre."
+      },
+      {
+        period: "Jul 2024",
+        month: "Julio",
+        m3CededByAnnex: 1.667,
+        m3CededByTitle: 0,
+        realConsumption: 3260.31,
+        availableForConsumption: 70.885,
+        observations: "Julio: Reducción tras el pico de junio."
+      },
+      {
+        period: "Ago 2024",
+        month: "Agosto",
+        m3CededByAnnex: 1.667,
+        m3CededByTitle: 0,
+        realConsumption: 3260.31,
+        availableForConsumption: 70.885,
+        observations: "Agosto: Consumo estable."
+      },
+      {
+        period: "Sep 2024",
+        month: "Septiembre",
+        m3CededByAnnex: 1.666,
+        m3CededByTitle: 0,
+        realConsumption: 3260.32,
+        availableForConsumption: 70.885,
+        observations: "Septiembre: Fin de trimestre controlado."
+      },
+      {
+        period: "Oct 2024",
+        month: "Octubre",
+        m3CededByAnnex: 1.667,
+        m3CededByTitle: 0,
+        realConsumption: 1926.73,
+        availableForConsumption: 70.885,
+        observations: "Octubre: Reducción significativa."
+      },
+      {
+        period: "Nov 2024",
+        month: "Noviembre",
+        m3CededByAnnex: 1.667,
+        m3CededByTitle: 0,
+        realConsumption: 1926.73,
+        availableForConsumption: 70.885,
+        observations: "Noviembre: Consumo bajo mantenido."
+      },
+      {
+        period: "Dic 2024",
+        month: "Diciembre",
+        m3CededByAnnex: 1.666,
+        m3CededByTitle: 0,
+        realConsumption: 1926.72,
+        availableForConsumption: 70.885,
+        observations: "Diciembre: Cierre de año con bajo consumo."
+      },
+      // 2025 - Datos Mensuales
+      {
+        period: "Ene 2025",
+        month: "Enero",
+        m3CededByAnnex: 2.500,
+        m3CededByTitle: 0,
+        realConsumption: 1152.30,
+        availableForConsumption: 75.885,
+        observations: "Enero 2025: Inicio controlado del año."
+      },
+      {
+        period: "Feb 2025",
+        month: "Febrero",
+        m3CededByAnnex: 2.500,
+        m3CededByTitle: 0,
+        realConsumption: 1152.30,
+        availableForConsumption: 75.885,
+        observations: "Febrero 2025: Consumo estable."
+      },
+      {
+        period: "Mar 2025",
+        month: "Marzo",
+        m3CededByAnnex: 2.500,
+        m3CededByTitle: 0,
+        realConsumption: 1152.29,
+        availableForConsumption: 75.885,
+        observations: "Marzo 2025: Cierre T1 controlado."
+      },
+      {
+        period: "Abr 2025",
+        month: "Abril",
+        m3CededByAnnex: 2.500,
+        m3CededByTitle: 0,
+        realConsumption: 873.72,
+        availableForConsumption: 75.885,
+        observations: "Abril 2025: Consumo muy bajo."
+      },
+      {
+        period: "May 2025",
+        month: "Mayo",
+        m3CededByAnnex: 2.500,
+        m3CededByTitle: 0,
+        realConsumption: 873.72,
+        availableForConsumption: 75.885,
+        observations: "Mayo 2025: Consumo mantenido bajo."
+      }
+    ],
     technicalSpecs: {
       depth: "45m",
       waterLevel: "12m",
@@ -74,6 +299,60 @@ export default function WellDetailPage() {
       ph: "7.1",
       quality: "good"
     }
+  }
+
+  // Opciones de métricas disponibles para graficar
+  const availableMetrics = [
+    { key: 'realConsumption', label: 'Consumo Real (m³)', color: '#dc2626' },
+    { key: 'availableForConsumption', label: 'm³ Disponibles', color: '#16a34a' },
+    { key: 'm3CededByAnnex', label: 'm³ Cedidos por Anexo', color: '#2563eb' },
+    { key: 'm3CededByTitle', label: 'm³ Cedidos por Título', color: '#7c3aed' }
+  ]
+
+  // Preparar datos para los gráficos según el filtro de tiempo
+  const getChartData = () => {
+    let sourceData = []
+    let labelKey = 'year'
+    
+    switch (timeFilter) {
+      case 'quarterly':
+        sourceData = wellData.quarterlyData || []
+        labelKey = 'quarter'
+        break
+      case 'monthly':
+        sourceData = wellData.monthlyData || []
+        labelKey = 'period'
+        break
+      case 'yearly':
+      default:
+        sourceData = wellData.yearlyData || []
+        labelKey = 'year'
+        break
+    }
+    
+    return sourceData.map(data => ({
+      [labelKey]: timeFilter === 'yearly' 
+        ? data.year.toString().replace(' (hasta mayo)', '')
+        : data[labelKey],
+      realConsumption: data.realConsumption,
+      availableForConsumption: data.availableForConsumption,
+      m3CededByAnnex: data.m3CededByAnnex,
+      m3CededByTitle: data.m3CededByTitle,
+      efficiency: data.availableForConsumption > 0 
+        ? ((data.realConsumption / data.availableForConsumption) * 100).toFixed(1)
+        : 0
+    }))
+  }
+
+  const chartData = getChartData()
+
+  // Función para alternar métricas seleccionadas
+  const toggleMetric = (metricKey) => {
+    setSelectedMetrics(prev => 
+      prev.includes(metricKey) 
+        ? prev.filter(m => m !== metricKey)
+        : [...prev, metricKey]
+    )
   }
 
   const getConsumptionTrend = (current, previous) => {
@@ -283,6 +562,117 @@ export default function WellDetailPage() {
                       })}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </Card>
+
+            {/* Análisis Gráfico de Datos Históricos */}
+            <Card>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                    <BarChart3Icon className="h-5 w-5" />
+                    Análisis Gráfico de Datos Históricos
+                  </h2>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <FilterIcon className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm text-gray-500">Período:</span>
+                      <select 
+                        value={timeFilter} 
+                        onChange={(e) => setTimeFilter(e.target.value)}
+                        className="text-sm border border-gray-300 rounded px-2 py-1"
+                      >
+                        <option value="yearly">Anual</option>
+                        <option value="quarterly">Trimestral</option>
+                        <option value="monthly">Mensual</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500">Tipo de Gráfico:</span>
+                      <select 
+                        value={chartType} 
+                        onChange={(e) => setChartType(e.target.value)}
+                        className="text-sm border border-gray-300 rounded px-2 py-1"
+                      >
+                        <option value="line">Líneas</option>
+                        <option value="bar">Barras</option>
+                        <option value="area">Área</option>
+                        <option value="composed">Combinado</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filtros de métricas */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Selecciona las métricas a visualizar:</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {availableMetrics.map((metric) => (
+                      <Button
+                        key={metric.key}
+                        size="sm"
+                        variant={selectedMetrics.includes(metric.key) ? "default" : "outline"}
+                        onClick={() => toggleMetric(metric.key)}
+                        className={selectedMetrics.includes(metric.key) ? 
+                          "border-2" : 
+                          "border border-gray-300 hover:border-gray-400"
+                        }
+                        style={selectedMetrics.includes(metric.key) ? 
+                          { backgroundColor: metric.color, borderColor: metric.color } : 
+                          {}
+                        }
+                      >
+                        <div 
+                          className="w-3 h-3 rounded-full mr-2" 
+                          style={{ backgroundColor: metric.color }}
+                        ></div>
+                        {metric.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Gráfico principal con Chart.js */}
+                <ChartComponent 
+                  chartType={chartType}
+                  chartData={chartData}
+                  selectedMetrics={selectedMetrics}
+                  availableMetrics={availableMetrics}
+                />
+
+                {/* Estadísticas del gráfico */}
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="p-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Tendencia de Consumo</h4>
+                    <div className="flex items-center gap-2">
+                      <TrendingUpIcon className="h-4 w-4 text-red-500" />
+                      <span className="text-sm text-gray-900">
+                        Incremento del {(((chartData[chartData.length-1]?.realConsumption || 0) / (chartData[0]?.realConsumption || 1) - 1) * 100).toFixed(1)}% desde 2022
+                      </span>
+                    </div>
+                  </Card>
+                  
+                  <Card className="p-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Promedio Anual</h4>
+                    <span className="text-lg font-semibold text-gray-900">
+                      {(chartData.reduce((sum, item) => sum + item.realConsumption, 0) / chartData.length).toLocaleString()} m³
+                    </span>
+                  </Card>
+                  
+                  <Card className="p-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Eficiencia 2025</h4>
+                    <div className="flex items-center gap-2">
+                      <Badge className={
+                        parseFloat(chartData[chartData.length-1]?.efficiency || 0) > 100 
+                          ? "bg-red-100 text-red-800 border-red-200" 
+                          : "bg-green-100 text-green-800 border-green-200"
+                      }>
+                        {chartData[chartData.length-1]?.efficiency || 0}%
+                      </Badge>
+                      <span className="text-xs text-gray-500">del disponible</span>
+                    </div>
+                  </Card>
                 </div>
               </div>
             </Card>

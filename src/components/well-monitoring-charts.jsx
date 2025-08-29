@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from "../components/ui/card"
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Area, AreaChart } from "recharts"
+import DashboardChart from "./DashboardChart"
 
 const wellConsumptionData = [
   { name: "Ene", actual: 45, target: 50 },
@@ -28,7 +28,7 @@ export function WellMonitoringCharts() {
         <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
           <div className="flex items-center justify-between">
             <span className="text-sm">25 mar 24</span>
-            <span className="font-semibold">AquaNet</span>
+            <span className="font-semibold">BlueMetrics</span>
           </div>
         </CardHeader>
         <CardContent className="p-6">
@@ -42,14 +42,7 @@ export function WellMonitoringCharts() {
 
           <div className="mb-6">
             <div className="h-32">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={wellConsumptionData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                  <YAxis hide />
-                  <Bar dataKey="actual" fill="hsl(var(--chart-2))" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="target" fill="hsl(var(--muted))" radius={[2, 2, 0, 0]} opacity={0.3} />
-                </BarChart>
-              </ResponsiveContainer>
+              <DashboardChart data={wellConsumptionData} type="bar" height="100%" />
             </div>
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-2">
@@ -72,7 +65,7 @@ export function WellMonitoringCharts() {
         <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
           <div className="flex items-center justify-between">
             <span className="text-sm">Pozo 11</span>
-            <span className="font-semibold">AquaNet</span>
+            <span className="font-semibold">BlueMetrics</span>
           </div>
         </CardHeader>
         <CardContent className="p-6">
@@ -92,23 +85,7 @@ export function WellMonitoringCharts() {
           <div className="mb-6">
             <div className="text-sm text-muted-foreground mb-2">Tendencia de Consumo (30 días)</div>
             <div className="h-24">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={historicalData}>
-                  <defs>
-                    <linearGradient id="consumptionGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <Area
-                    type="monotone"
-                    dataKey="consumption"
-                    stroke="hsl(var(--chart-1))"
-                    strokeWidth={2}
-                    fill="url(#consumptionGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <DashboardChart data={historicalData} type="area" height="100%" />
             </div>
           </div>
 

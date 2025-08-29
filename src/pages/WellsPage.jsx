@@ -13,7 +13,8 @@ import {
   XCircleIcon,
   SettingsIcon,
   EyeIcon,
-  Plus
+  Plus,
+  PlusIcon
 } from "lucide-react"
 
 export default function WellsPage() {
@@ -364,6 +365,15 @@ export default function WellsPage() {
           </div>
         </main>
       </div>
+
+      {/* Botón flotante para agregar datos */}
+      <Button
+        onClick={() => navigate('/agregar-datos')}
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-50"
+        size="icon"
+      >
+        <PlusIcon className="h-6 w-6" />
+      </Button>
     </div>
   )
 }
