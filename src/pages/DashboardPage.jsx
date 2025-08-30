@@ -18,7 +18,7 @@ export default function DashboardPage() {
         <DashboardHeader />
         <main className="p-6">
           <div className="grid gap-6">
-            <DashboardSummary />
+            
             <MainConsumptionMetrics />
             <WaterBalanceFlow />
             <WellMonitoringCharts />

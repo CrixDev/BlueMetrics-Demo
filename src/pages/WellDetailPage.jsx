@@ -20,6 +20,7 @@ import {
   FilterIcon
 } from "lucide-react"
 import ChartComponent from '../components/ChartComponent'
+import datosPozo12 from '../lib/datos_pozo_12.json'
 
 export default function WellDetailPage() {
   const { id } = useParams()
@@ -29,267 +30,97 @@ export default function WellDetailPage() {
   const [selectedMetrics, setSelectedMetrics] = useState(['realConsumption', 'availableForConsumption'])
   const [chartType, setChartType] = useState('line')
   const [showComparison, setShowComparison] = useState(true)
-  const [timeFilter, setTimeFilter] = useState('yearly') // 'yearly', 'quarterly', 'monthly'
+  const [timeFilter, setTimeFilter] = useState('yearly') // 'yearly', 'quarterly', 'monthly', 'weekly'
+  const [dateRange, setDateRange] = useState('all') // 'all', 'last6months', 'lastyear', 'custom'
+  const [customStartDate, setCustomStartDate] = useState('')
+  const [customEndDate, setCustomEndDate] = useState('')
 
-  // Datos específicos del Pozo 12 basados en la información proporcionada
+  // Datos específicos del Pozo 12 basados en el JSON reorganizado
   const wellData = {
     id: 12,
-    name: "Pozo 12",
+    name: datosPozo12.pozo.id,
     service: "Servicios",
-    location: "Calle Navio 358",
-    annexCode: "06NVL14666/24ELGR06 (21)",
-    titleCode: "06NVL108500/24EMOC08",
-    m3PerAnnex: 90.885,
+    location: datosPozo12.pozo.ubicacion,
+    annexCode: datosPozo12.pozo.anexo,
+    titleCode: datosPozo12.pozo.titulo,
+    m3PerAnnex: datosPozo12.pozo.m3_por_anexo,
     status: "active",
-    yearlyData: [
-      {
-        year: 2022,
-        m3CededByAnnex: 25.000,
-        m3CededByTitle: 0,
-        realConsumption: 670.9,
-        availableForConsumption: 65.885,
-        observations: "Consumo muy bajo respecto al volumen disponible."
-      },
-      {
-        year: 2023,
-        m3CededByAnnex: 80.000,
-        m3CededByTitle: 0,
-        realConsumption: 0,
-        availableForConsumption: 10.885,
-        observations: "Sin consumo registrado en el año."
-      },
-      {
-        year: 2024,
-        m3CededByAnnex: 20.000,
-        m3CededByTitle: 0,
-        realConsumption: 36152.49,
-        availableForConsumption: 70.885,
-        observations: "Se realizó el consumo, aunque menor a lo permitido."
-      },
-      {
-        year: "2025 (hasta mayo)",
-        m3CededByAnnex: 20.000,
-        m3CededByTitle: 0,
-        realConsumption: 84493.00,
-        availableForConsumption: 70.885,
-        observations: "El consumo hasta mayo ya excede el volumen disponible."
-      }
-    ],
-    quarterlyData: [
-      // 2024 - Datos Trimestrales
-      {
-        period: "Q1 2024",
-        quarter: "T1 2024",
-        m3CededByAnnex: 5.000,
-        m3CededByTitle: 0,
-        realConsumption: 8540.62,
-        availableForConsumption: 70.885,
-        observations: "Primer trimestre con consumo elevado."
-      },
-      {
-        period: "Q2 2024",
-        quarter: "T2 2024", 
-        m3CededByAnnex: 5.000,
-        m3CededByTitle: 0,
-        realConsumption: 12050.75,
-        availableForConsumption: 70.885,
-        observations: "Segundo trimestre, pico de consumo."
-      },
-      {
-        period: "Q3 2024",
-        quarter: "T3 2024",
-        m3CededByAnnex: 5.000,
-        m3CededByTitle: 0,
-        realConsumption: 9780.94,
-        availableForConsumption: 70.885,
-        observations: "Tercer trimestre con consumo moderado."
-      },
-      {
-        period: "Q4 2024",
-        quarter: "T4 2024",
-        m3CededByAnnex: 5.000,
-        m3CededByTitle: 0,
-        realConsumption: 5780.18,
-        availableForConsumption: 70.885,
-        observations: "Cuarto trimestre, reducción del consumo."
-      },
-      // 2025 - Datos Trimestrales
-      {
-        period: "Q1 2025",
-        quarter: "T1 2025",
-        m3CededByAnnex: 7.500,
-        m3CededByTitle: 0,
-        realConsumption: 3456.89,
-        availableForConsumption: 75.885,
-        observations: "Primer trimestre 2025, consumo controlado."
-      },
-      {
-        period: "Q2 2025",
-        quarter: "T2 2025",
-        m3CededByAnnex: 7.500,
-        m3CededByTitle: 0,
-        realConsumption: 1747.44,
-        availableForConsumption: 75.885,
-        observations: "Segundo trimestre 2025, consumo bajo."
-      }
-    ],
-    monthlyData: [
-      // 2024 - Datos Mensuales Detallados
-      {
-        period: "Ene 2024",
-        month: "Enero",
-        m3CededByAnnex: 1.667,
-        m3CededByTitle: 0,
-        realConsumption: 2846.87,
-        availableForConsumption: 70.885,
-        observations: "Enero: Consumo normal de inicio de año."
-      },
-      {
-        period: "Feb 2024", 
-        month: "Febrero",
-        m3CededByAnnex: 1.667,
-        m3CededByTitle: 0,
-        realConsumption: 2893.45,
-        availableForConsumption: 70.885,
-        observations: "Febrero: Ligero incremento respecto a enero."
-      },
-      {
-        period: "Mar 2024",
-        month: "Marzo", 
-        m3CededByAnnex: 1.666,
-        m3CededByTitle: 0,
-        realConsumption: 2800.30,
-        availableForConsumption: 70.885,
-        observations: "Marzo: Estabilización del consumo."
-      },
-      {
-        period: "Abr 2024",
-        month: "Abril",
-        m3CededByAnnex: 1.667,
-        m3CededByTitle: 0,
-        realConsumption: 4016.92,
-        availableForConsumption: 70.885,
-        observations: "Abril: Incremento notable del consumo."
-      },
-      {
-        period: "May 2024",
-        month: "Mayo",
-        m3CededByAnnex: 1.667,
-        m3CededByTitle: 0,
-        realConsumption: 4033.83,
-        availableForConsumption: 70.885,
-        observations: "Mayo: Consumo mantenido alto."
-      },
-      {
-        period: "Jun 2024",
-        month: "Junio",
-        m3CededByAnnex: 1.666,
-        m3CededByTitle: 0,
-        realConsumption: 4000.00,
-        availableForConsumption: 70.885,
-        observations: "Junio: Pico máximo del semestre."
-      },
-      {
-        period: "Jul 2024",
-        month: "Julio",
-        m3CededByAnnex: 1.667,
-        m3CededByTitle: 0,
-        realConsumption: 3260.31,
-        availableForConsumption: 70.885,
-        observations: "Julio: Reducción tras el pico de junio."
-      },
-      {
-        period: "Ago 2024",
-        month: "Agosto",
-        m3CededByAnnex: 1.667,
-        m3CededByTitle: 0,
-        realConsumption: 3260.31,
-        availableForConsumption: 70.885,
-        observations: "Agosto: Consumo estable."
-      },
-      {
-        period: "Sep 2024",
-        month: "Septiembre",
-        m3CededByAnnex: 1.666,
-        m3CededByTitle: 0,
-        realConsumption: 3260.32,
-        availableForConsumption: 70.885,
-        observations: "Septiembre: Fin de trimestre controlado."
-      },
-      {
-        period: "Oct 2024",
-        month: "Octubre",
-        m3CededByAnnex: 1.667,
-        m3CededByTitle: 0,
-        realConsumption: 1926.73,
-        availableForConsumption: 70.885,
-        observations: "Octubre: Reducción significativa."
-      },
-      {
-        period: "Nov 2024",
-        month: "Noviembre",
-        m3CededByAnnex: 1.667,
-        m3CededByTitle: 0,
-        realConsumption: 1926.73,
-        availableForConsumption: 70.885,
-        observations: "Noviembre: Consumo bajo mantenido."
-      },
-      {
-        period: "Dic 2024",
-        month: "Diciembre",
-        m3CededByAnnex: 1.666,
-        m3CededByTitle: 0,
-        realConsumption: 1926.72,
-        availableForConsumption: 70.885,
-        observations: "Diciembre: Cierre de año con bajo consumo."
-      },
-      // 2025 - Datos Mensuales
-      {
-        period: "Ene 2025",
-        month: "Enero",
-        m3CededByAnnex: 2.500,
-        m3CededByTitle: 0,
-        realConsumption: 1152.30,
-        availableForConsumption: 75.885,
-        observations: "Enero 2025: Inicio controlado del año."
-      },
-      {
-        period: "Feb 2025",
-        month: "Febrero",
-        m3CededByAnnex: 2.500,
-        m3CededByTitle: 0,
-        realConsumption: 1152.30,
-        availableForConsumption: 75.885,
-        observations: "Febrero 2025: Consumo estable."
-      },
-      {
-        period: "Mar 2025",
-        month: "Marzo",
-        m3CededByAnnex: 2.500,
-        m3CededByTitle: 0,
-        realConsumption: 1152.29,
-        availableForConsumption: 75.885,
-        observations: "Marzo 2025: Cierre T1 controlado."
-      },
-      {
-        period: "Abr 2025",
-        month: "Abril",
-        m3CededByAnnex: 2.500,
-        m3CededByTitle: 0,
-        realConsumption: 873.72,
-        availableForConsumption: 75.885,
-        observations: "Abril 2025: Consumo muy bajo."
-      },
-      {
-        period: "May 2025",
-        month: "Mayo",
-        m3CededByAnnex: 2.500,
-        m3CededByTitle: 0,
-        realConsumption: 873.72,
-        availableForConsumption: 75.885,
-        observations: "Mayo 2025: Consumo mantenido bajo."
-      }
-    ],
+    yearlyData: datosPozo12.especificaciones_anuales.map(spec => ({
+      year: spec.año,
+      m3CededByAnnex: spec.m3_cedidos_por_anexo,
+      m3CededByTitle: spec.m3_cedidos_por_titulo,
+      realConsumption: spec.consumo_real_m3,
+      availableForConsumption: spec.m3_disponibles_para_consumir,
+      observations: spec.observaciones
+    })),
+    quarterlyData: datosPozo12.datos_trimestrales.consumo_trimestral.map((trimestre, index) => {
+      const trimestreNum = ['primer_trimestre', 'segundo_trimestre', 'tercer_trimestre', 'cuarto_trimestre'];
+      const quarterLabels = ['T1', 'T2', 'T3', 'T4'];
+      
+      return trimestreNum.map((key, qIndex) => {
+        if (trimestre[key] !== null && trimestre[key] !== undefined) {
+          return {
+            period: `Q${qIndex + 1} ${trimestre.año}`,
+            quarter: `${quarterLabels[qIndex]} ${trimestre.año}`,
+            m3CededByAnnex: 0, // No hay datos específicos en el JSON
+            m3CededByTitle: 0, // No hay datos específicos en el JSON  
+            realConsumption: trimestre[key],
+            availableForConsumption: 70885, // Valor por defecto del JSON
+            observations: `${quarterLabels[qIndex]} ${trimestre.año} - Consumo real`
+          }
+        }
+        return null;
+      }).filter(Boolean);
+    }).flat(),
+    monthlyData: (() => {
+      const monthlyConsumption = datosPozo12.datos_mensuales.consumo_mensual;
+      const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+                         'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+      const monthAbbrev = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
+                          'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      
+      return monthlyConsumption.flatMap(yearData => {
+        return monthNames.map((month, index) => {
+          const consumption = yearData[month];
+          if (consumption !== null && consumption !== undefined) {
+            return {
+              period: `${monthAbbrev[index]} ${yearData.año}`,
+              month: monthNames[index].charAt(0).toUpperCase() + monthNames[index].slice(1),
+              m3CededByAnnex: 0, // No hay datos específicos en el JSON
+              m3CededByTitle: 0, // No hay datos específicos en el JSON
+              realConsumption: consumption,
+              availableForConsumption: 70885, // Valor por defecto del JSON
+              observations: `${monthNames[index].charAt(0).toUpperCase() + monthNames[index].slice(1)} ${yearData.año}: Consumo registrado`
+            };
+          }
+          return null;
+        }).filter(Boolean);
+      });
+    })(),
+    weeklyData: (() => {
+      const weeklyConsumption = datosPozo12.datos_semanales.consumo_semanal_detallado;
+      const weeklyReadings = datosPozo12.datos_semanales.lecturas_acumuladas;
+      
+      return weeklyConsumption.map((week, index) => {
+        const matchingReading = weeklyReadings.find(reading => 
+          reading.fecha.includes(week.periodo.split(' ')[2]) && 
+          reading.fecha.includes(week.periodo.split(' ')[3])
+        );
+        
+        return {
+          period: week.periodo,
+          week: `Sem ${index + 1}`,
+          m3CededByAnnex: 0, // No hay datos específicos en el JSON
+          m3CededByTitle: 0, // No hay datos específicos en el JSON
+          realConsumption: week.total_pozos,
+          consumoServicios: week.consumo_servicios,
+          consumoRiego: week.consumo_riego,
+          availableForConsumption: 70885, // Valor por defecto del JSON
+          observations: week.notas || `Semana del ${week.periodo}`,
+          lectura: matchingReading?.lectura || 0
+        };
+      });
+    })(),
     technicalSpecs: {
       depth: "45m",
       waterLevel: "12m",
@@ -304,10 +135,55 @@ export default function WellDetailPage() {
   // Opciones de métricas disponibles para graficar
   const availableMetrics = [
     { key: 'realConsumption', label: 'Consumo Real (m³)', color: '#dc2626' },
+    { key: 'consumoServicios', label: 'Consumo Servicios (m³)', color: '#f59e0b' },
+    { key: 'consumoRiego', label: 'Consumo Riego (m³)', color: '#10b981' },
     { key: 'availableForConsumption', label: 'm³ Disponibles', color: '#16a34a' },
     { key: 'm3CededByAnnex', label: 'm³ Cedidos por Anexo', color: '#2563eb' },
     { key: 'm3CededByTitle', label: 'm³ Cedidos por Título', color: '#7c3aed' }
   ]
+
+  // Filtrar datos por rango de fechas
+  const filterDataByDateRange = (data) => {
+    if (dateRange === 'all') return data;
+    
+    const now = new Date();
+    let startDate = new Date();
+    
+    switch (dateRange) {
+      case 'last6months':
+        startDate.setMonth(now.getMonth() - 6);
+        break;
+      case 'lastyear':
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+      case 'custom':
+        if (customStartDate && customEndDate) {
+          startDate = new Date(customStartDate);
+          const endDate = new Date(customEndDate);
+          return data.filter(item => {
+            // Para datos semanales, usar la fecha del período
+            if (timeFilter === 'weekly' && item.period) {
+              const itemDate = new Date(item.period.split(' - ')[0]);
+              return itemDate >= startDate && itemDate <= endDate;
+            }
+            return true;
+          });
+        }
+        return data;
+      default:
+        return data;
+    }
+    
+    // Filtrar por año para datos anuales, trimestrales y mensuales
+    if (timeFilter !== 'weekly') {
+      return data.filter(item => {
+        const itemYear = parseInt(item.year || item.quarter?.split(' ')[1] || item.period?.split(' ')[1]);
+        return itemYear >= startDate.getFullYear();
+      });
+    }
+    
+    return data;
+  };
 
   // Preparar datos para los gráficos según el filtro de tiempo
   const getChartData = () => {
@@ -315,6 +191,10 @@ export default function WellDetailPage() {
     let labelKey = 'year'
     
     switch (timeFilter) {
+      case 'weekly':
+        sourceData = wellData.weeklyData || []
+        labelKey = 'period'
+        break
       case 'quarterly':
         sourceData = wellData.quarterlyData || []
         labelKey = 'quarter'
@@ -330,11 +210,16 @@ export default function WellDetailPage() {
         break
     }
     
-    return sourceData.map(data => ({
+    // Aplicar filtros de fecha
+    const filteredData = filterDataByDateRange(sourceData);
+    
+    return filteredData.map(data => ({
       [labelKey]: timeFilter === 'yearly' 
         ? data.year.toString().replace(' (hasta mayo)', '')
-        : data[labelKey],
+        : data[labelKey] || data.period,
       realConsumption: data.realConsumption,
+      consumoServicios: data.consumoServicios || 0,
+      consumoRiego: data.consumoRiego || 0,
       availableForConsumption: data.availableForConsumption,
       m3CededByAnnex: data.m3CededByAnnex,
       m3CededByTitle: data.m3CededByTitle,
@@ -574,7 +459,7 @@ export default function WellDetailPage() {
                     <BarChart3Icon className="h-5 w-5" />
                     Análisis Gráfico de Datos Históricos
                   </h2>
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-4">
                     <div className="flex items-center gap-2">
                       <FilterIcon className="h-4 w-4 text-gray-500" />
                       <span className="text-sm text-gray-500">Período:</span>
@@ -586,8 +471,41 @@ export default function WellDetailPage() {
                         <option value="yearly">Anual</option>
                         <option value="quarterly">Trimestral</option>
                         <option value="monthly">Mensual</option>
+                        <option value="weekly">Semanal</option>
                       </select>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500">Rango:</span>
+                      <select 
+                        value={dateRange} 
+                        onChange={(e) => setDateRange(e.target.value)}
+                        className="text-sm border border-gray-300 rounded px-2 py-1"
+                      >
+                        <option value="all">Todos los datos</option>
+                        <option value="lastyear">Último año</option>
+                        <option value="last6months">Últimos 6 meses</option>
+                        <option value="custom">Personalizado</option>
+                      </select>
+                    </div>
+                    {dateRange === 'custom' && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          value={customStartDate}
+                          onChange={(e) => setCustomStartDate(e.target.value)}
+                          className="text-sm border border-gray-300 rounded px-2 py-1"
+                          placeholder="Fecha inicio"
+                        />
+                        <span className="text-sm text-gray-500">a</span>
+                        <input
+                          type="date"
+                          value={customEndDate}
+                          onChange={(e) => setCustomEndDate(e.target.value)}
+                          className="text-sm border border-gray-300 rounded px-2 py-1"
+                          placeholder="Fecha fin"
+                        />
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-500">Tipo de Gráfico:</span>
                       <select 

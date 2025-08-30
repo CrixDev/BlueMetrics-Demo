@@ -1,26 +1,85 @@
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import DashboardChart from "./DashboardChart"
+import datosPozo12 from '../lib/datos_pozo_12.json'
+import { useState } from 'react'
+import { FilterIcon, CalendarIcon } from 'lucide-react'
 
-const wellConsumptionData = [
-  { name: "Ene", actual: 45, target: 50 },
-  { name: "Feb", actual: 52, target: 50 },
-  { name: "Mar", actual: 48, target: 50 },
-  { name: "Abr", actual: 61, target: 50 },
-  { name: "May", actual: 55, target: 50 },
-  { name: "Jun", actual: 67, target: 50 },
-]
+// Procesar datos semanales del JSON
+const processWeeklyData = () => {
+  const weeklyData = datosPozo12.datos_semanales.consumo_semanal_detallado;
+  const recentWeeks = weeklyData.slice(-6); // Últimas 6 semanas
+  
+  return recentWeeks.map(week => ({
+    name: week.periodo.split(' ')[2] + ' ' + week.periodo.split(' ')[3], // Mes Año
+    actual: Math.round(week.total_pozos / 1000), // Convertir a miles para mejor visualización
+    target: 50, // Meta fija de 50k m³
+    consumo_servicios: week.consumo_servicios,
+    consumo_riego: week.consumo_riego,
+    total_pozos: week.total_pozos
+  }));
+};
 
-const historicalData = [
-  { day: 1, consumption: 45 },
-  { day: 5, consumption: 52 },
-  { day: 10, consumption: 48 },
-  { day: 15, consumption: 55 },
-  { day: 20, consumption: 61 },
-  { day: 25, consumption: 58 },
-  { day: 30, consumption: 54 },
-]
+// Procesar lecturas semanales para el gráfico histórico
+const processHistoricalData = () => {
+  const readings = datosPozo12.datos_semanales.lecturas_acumuladas;
+  const recent30 = readings.slice(-30); // Últimas 30 lecturas
+  
+  return recent30.map((reading, index) => ({
+    day: index + 1,
+    consumption: Math.round((reading.lectura || 0) / 1000), // Convertir a miles
+    fecha: reading.fecha
+  }));
+};
 
 export function WellMonitoringCharts() {
+  const [weeklyFilter, setWeeklyFilter] = useState('recent') // 'recent', 'all', 'range'
+  const [weeklyRange, setWeeklyRange] = useState(6) // Número de semanas
+  const [selectedYear, setSelectedYear] = useState('2022') // Año seleccionado
+  
+  // Procesar datos dinámicamente según filtros
+  const getFilteredWeeklyData = () => {
+    const weeklyData = datosPozo12.datos_semanales.consumo_semanal_detallado;
+    
+    switch (weeklyFilter) {
+      case 'recent':
+        return weeklyData.slice(-weeklyRange);
+      case 'all':
+        return weeklyData;
+      case 'range':
+        // Filtrar por año seleccionado
+        return weeklyData.filter(week => week.periodo.includes(selectedYear));
+      default:
+        return weeklyData.slice(-6);
+    }
+  };
+  
+  const getFilteredHistoricalData = () => {
+    const readings = datosPozo12.datos_semanales.lecturas_acumuladas;
+    const filteredReadings = readings.filter(reading => 
+      reading.fecha.includes(selectedYear) || weeklyFilter === 'all'
+    );
+    
+    const dataToUse = weeklyFilter === 'all' ? 
+      filteredReadings.slice(-30) : 
+      filteredReadings.slice(-weeklyRange);
+    
+    return dataToUse.map((reading, index) => ({
+      day: index + 1,
+      consumption: Math.round((reading.lectura || 0) / 1000),
+      fecha: reading.fecha
+    }));
+  };
+  
+  const wellConsumptionData = getFilteredWeeklyData().map(week => ({
+    name: week.periodo.split(' ')[2] + ' ' + week.periodo.split(' ')[3],
+    actual: Math.round(week.total_pozos / 1000),
+    target: 50,
+    consumo_servicios: week.consumo_servicios,
+    consumo_riego: week.consumo_riego,
+    total_pozos: week.total_pozos
+  }));
+  
+  const historicalData = getFilteredHistoricalData();
   return (
     <div className="grid gap-6 md:grid-cols-2">
       {/* Well Visualization */}
@@ -32,12 +91,54 @@ export function WellMonitoringCharts() {
           </div>
         </CardHeader>
         <CardContent className="p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Visualización por Pozo</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground">Visualización por Pozo</h2>
+            <div className="flex items-center gap-2">
+              <FilterIcon className="h-4 w-4 text-muted-foreground" />
+              <select 
+                value={weeklyFilter} 
+                onChange={(e) => setWeeklyFilter(e.target.value)}
+                className="text-xs border border-muted rounded px-2 py-1"
+              >
+                <option value="recent">Recientes</option>
+                <option value="range">Por Año</option>
+                <option value="all">Todos</option>
+              </select>
+              {weeklyFilter === 'recent' && (
+                <select 
+                  value={weeklyRange} 
+                  onChange={(e) => setWeeklyRange(Number(e.target.value))}
+                  className="text-xs border border-muted rounded px-2 py-1"
+                >
+                  <option value={6}>6 semanas</option>
+                  <option value={12}>12 semanas</option>
+                  <option value={24}>24 semanas</option>
+                </select>
+              )}
+              {weeklyFilter === 'range' && (
+                <select 
+                  value={selectedYear} 
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="text-xs border border-muted rounded px-2 py-1"
+                >
+                  <option value="2022">2022</option>
+                  <option value="2023">2023</option>
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                </select>
+              )}
+            </div>
+          </div>
 
           <div className="mb-6">
-            <div className="text-sm text-muted-foreground mb-1">23 mar, 2024</div>
-            <div className="text-sm text-muted-foreground mb-2">Consumo Diario vs. Meta</div>
-            <div className="text-3xl font-bold text-foreground mb-4">54,2 m³</div>
+            <div className="text-sm text-muted-foreground mb-1">{datosPozo12.pozo.id}</div>
+            <div className="text-sm text-muted-foreground mb-2">Consumo Semanal vs. Meta</div>
+            <div className="text-3xl font-bold text-foreground mb-4">
+              {wellConsumptionData.length > 0 ? 
+                `${(wellConsumptionData[wellConsumptionData.length - 1].actual * 1000).toLocaleString()} m³` 
+                : '0 m³'
+              }
+            </div>
           </div>
 
           <div className="mb-6">
@@ -49,7 +150,9 @@ export function WellMonitoringCharts() {
                 <div className="w-3 h-3 rounded bg-chart-2"></div>
                 <span className="text-xs text-muted-foreground">Meta</span>
               </div>
-              <div className="text-xs text-muted-foreground">Reducir el uso en un 5% para alcanzar la meta mensual</div>
+              <div className="text-xs text-muted-foreground">
+                Mostrando {wellConsumptionData.length} semanas de datos - {weeklyFilter === 'range' ? `Año ${selectedYear}` : weeklyFilter === 'all' ? 'Todos los datos' : `Últimas ${weeklyRange} semanas`}
+              </div>
             </div>
           </div>
 
@@ -64,7 +167,7 @@ export function WellMonitoringCharts() {
       <Card className="bg-card border-border">
         <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
           <div className="flex items-center justify-between">
-            <span className="text-sm">Pozo 11</span>
+            <span className="text-sm">{datosPozo12.pozo.id}</span>
             <span className="font-semibold">BlueMetrics</span>
           </div>
         </CardHeader>
@@ -73,17 +176,25 @@ export function WellMonitoringCharts() {
 
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-foreground">11</div>
+              <div className="text-2xl font-bold text-foreground">12</div>
               <div className="text-sm text-muted-foreground">Pozo Activo</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-secondary">98%</div>
+              <div className="text-2xl font-bold text-secondary">
+                {(() => {
+                  const lastYear = datosPozo12.especificaciones_anuales[datosPozo12.especificaciones_anuales.length - 1];
+                  const efficiency = (lastYear.consumo_real_m3 / lastYear.m3_disponibles_para_consumir * 100).toFixed(0);
+                  return `${Math.min(efficiency, 100)}%`;
+                })()}
+              </div>
               <div className="text-sm text-muted-foreground">Eficiencia</div>
             </div>
           </div>
 
           <div className="mb-6">
-            <div className="text-sm text-muted-foreground mb-2">Tendencia de Consumo (30 días)</div>
+            <div className="text-sm text-muted-foreground mb-2">
+              Tendencia de Lecturas ({historicalData.length} registros)
+            </div>
             <div className="h-24">
               <DashboardChart data={historicalData} type="area" height="100%" />
             </div>

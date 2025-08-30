@@ -1,21 +1,94 @@
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import DashboardChart from "./DashboardChart"
+import datosPozo12 from '../lib/datos_pozo_12.json'
+import { useState } from 'react'
+import { FilterIcon, TrendingUpIcon, AlertTriangleIcon } from 'lucide-react'
 
-const efficiencyData = [
-  { name: "Efficiency", value: 82, fill: "hsl(var(--chart-2))" },
-  { name: "Remaining", value: 18, fill: "hsl(var(--muted))" },
-]
+// Procesar datos de eficiencia del Pozo 12
+const processEfficiencyData = () => {
+  const lastYear = datosPozo12.especificaciones_anuales[datosPozo12.especificaciones_anuales.length - 1];
+  const efficiency = Math.min((lastYear.consumo_real_m3 / lastYear.m3_disponibles_para_consumir * 100), 100);
+  
+  return [
+    { name: "Efficiency", value: efficiency, fill: "hsl(var(--chart-2))" },
+    { name: "Remaining", value: 100 - efficiency, fill: "hsl(var(--muted))" },
+  ];
+};
 
-const consumptionData = [
-  { name: "Ene", value: 45 },
-  { name: "Feb", value: 52 },
-  { name: "Mar", value: 48 },
-  { name: "Abr", value: 61 },
-  { name: "May", value: 55 },
-  { name: "Jun", value: 67 },
-]
+// Procesar datos de consumo mensual del último año con datos
+const processConsumptionData = () => {
+  const monthlyData = datosPozo12.datos_mensuales.consumo_mensual;
+  const lastYearWithData = monthlyData.find(year => year.año === "2025 (ene–jun)") || monthlyData[monthlyData.length - 1];
+  
+  const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio'];
+  const monthAbbrev = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+  
+  return monthNames.map((month, index) => {
+    const value = lastYearWithData[month];
+    if (value !== null && value !== undefined) {
+      return {
+        name: monthAbbrev[index],
+        value: Math.round(value / 1000) // Convertir a miles para mejor visualización
+      };
+    }
+    return null;
+  }).filter(Boolean);
+};
 
 export function MainConsumptionMetrics() {
+  const [timeFrame, setTimeFrame] = useState('monthly') // 'monthly', 'quarterly', 'yearly'
+  const [selectedYear, setSelectedYear] = useState('2025')
+  const [comparisonMode, setComparisonMode] = useState(false)
+  
+  // Procesar datos dinámicamente según filtros
+  const getFilteredConsumptionData = () => {
+    switch (timeFrame) {
+      case 'quarterly':
+        const quarterlyData = datosPozo12.datos_trimestrales.consumo_trimestral;
+        const yearData = quarterlyData.find(q => q.año.includes(selectedYear)) || quarterlyData[quarterlyData.length - 1];
+        const quarters = ['primer_trimestre', 'segundo_trimestre', 'tercer_trimestre', 'cuarto_trimestre'];
+        const quarterLabels = ['Q1', 'Q2', 'Q3', 'Q4'];
+        
+        return quarters.map((quarter, index) => {
+          const value = yearData[quarter];
+          if (value !== null && value !== undefined) {
+            return {
+              name: quarterLabels[index],
+              value: Math.round(value / 1000)
+            };
+          }
+          return null;
+        }).filter(Boolean);
+        
+      case 'yearly':
+        return datosPozo12.especificaciones_anuales.map(year => ({
+          name: year.año.toString().replace('2025 (hasta mayo)', '2025'),
+          value: Math.round(year.consumo_real_m3 / 1000)
+        }));
+        
+      case 'monthly':
+      default:
+        const monthlyData = datosPozo12.datos_mensuales.consumo_mensual;
+        const lastYearWithData = monthlyData.find(year => year.año.includes(selectedYear)) || monthlyData[monthlyData.length - 1];
+        
+        const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        const monthAbbrev = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        
+        return monthNames.map((month, index) => {
+          const value = lastYearWithData[month];
+          if (value !== null && value !== undefined) {
+            return {
+              name: monthAbbrev[index],
+              value: Math.round(value / 1000)
+            };
+          }
+          return null;
+        }).filter(Boolean);
+    }
+  };
+  
+  const efficiencyData = processEfficiencyData();
+  const consumptionData = getFilteredConsumptionData();
   return (
     <div className="grid gap-6 md:grid-cols-2">
       {/* Main System Dashboard */}
@@ -27,16 +100,54 @@ export function MainConsumptionMetrics() {
           </div>
         </CardHeader>
         <CardContent className="p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Dashboard Principal del Sistema Hídrico</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground">Dashboard Principal del Sistema Hídrico</h2>
+            <div className="flex items-center gap-2">
+              <FilterIcon className="h-4 w-4 text-muted-foreground" />
+              <select 
+                value={timeFrame} 
+                onChange={(e) => setTimeFrame(e.target.value)}
+                className="text-xs border border-muted rounded px-2 py-1"
+              >
+                <option value="monthly">Mensual</option>
+                <option value="quarterly">Trimestral</option>
+                <option value="yearly">Anual</option>
+              </select>
+              {(timeFrame === 'monthly' || timeFrame === 'quarterly') && (
+                <select 
+                  value={selectedYear} 
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="text-xs border border-muted rounded px-2 py-1"
+                >
+                  <option value="2022">2022</option>
+                  <option value="2023">2023</option>
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                </select>
+              )}
+            </div>
+          </div>
 
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="text-center">
               <div className="text-sm text-muted-foreground">Consumo Diario</div>
-              <div className="text-2xl font-bold text-foreground">195,3 m³</div>
+              <div className="text-2xl font-bold text-foreground">
+                {(() => {
+                  const lastMonthConsumption = consumptionData.length > 0 ? consumptionData[consumptionData.length - 1].value * 1000 : 0;
+                  const dailyAverage = Math.round(lastMonthConsumption / 30);
+                  return `${dailyAverage.toLocaleString()} m³`;
+                })()}
+              </div>
             </div>
             <div className="text-center">
               <div className="text-sm text-muted-foreground">Consumo Semanal</div>
-              <div className="text-2xl font-bold text-foreground">1.280 m³</div>
+              <div className="text-2xl font-bold text-foreground">
+                {(() => {
+                  const weeklyData = datosPozo12.datos_semanales.consumo_semanal_detallado;
+                  const lastWeek = weeklyData[weeklyData.length - 1];
+                  return `${Math.round(lastWeek?.total_pozos || 0).toLocaleString()} m³`;
+                })()}
+              </div>
             </div>
             <div className="text-center">
               <div className="text-sm text-muted-foreground mb-2">Eficiencia</div>
@@ -56,7 +167,7 @@ export function MainConsumptionMetrics() {
                     <path
                       className="text-blue-600"
                       strokeWidth="3"
-                      strokeDasharray="82, 100"
+                      strokeDasharray={`${efficiencyData[0].value}, 100`}
                       strokeLinecap="round"
                       stroke="currentColor"
                       fill="transparent"
@@ -66,7 +177,9 @@ export function MainConsumptionMetrics() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-lg font-bold text-primary">82%</span>
+                    <span className="text-lg font-bold text-primary">
+                      {Math.round(efficiencyData[0].value)}%
+                    </span>
                   </div>
                 </div>
               </div>
@@ -76,18 +189,28 @@ export function MainConsumptionMetrics() {
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <div className="text-sm text-muted-foreground mb-2">Consumo Mensual</div>
-              <div className="text-3xl font-bold text-foreground">5.420</div>
+              <div className="text-3xl font-bold text-foreground">
+                {(() => {
+                  const lastMonthValue = consumptionData.length > 0 ? consumptionData[consumptionData.length - 1].value : 0;
+                  return (lastMonthValue * 1000).toLocaleString();
+                })()}
+              </div>
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex gap-1">
                   <div className="w-2 h-2 rounded-full bg-chart-1"></div>
                   <div className="w-2 h-2 rounded-full bg-chart-2"></div>
                   <div className="w-2 h-2 rounded-full bg-destructive"></div>
                 </div>
-                <span className="text-xs text-muted-foreground">Pozo 11</span>
+                <span className="text-xs text-muted-foreground">{datosPozo12.pozo.id}</span>
               </div>
             </div>
             <div>
-              <div className="text-sm text-muted-foreground mb-2">Tendencia Mensual</div>
+              <div className="text-sm text-muted-foreground mb-2">
+                Tendencia {timeFrame === 'monthly' ? 'Mensual' : timeFrame === 'quarterly' ? 'Trimestral' : 'Anual'}
+                {(timeFrame === 'monthly' || timeFrame === 'quarterly') && (
+                  <span className="text-xs text-muted-foreground ml-1">({selectedYear})</span>
+                )}
+              </div>
               <div className="h-16">
                 <DashboardChart data={consumptionData} type="bar" height="100%" />
               </div>
@@ -95,8 +218,14 @@ export function MainConsumptionMetrics() {
           </div>
 
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
-            <div className="text-destructive font-semibold text-sm mb-1">ALERTA</div>
-            <div className="text-sm text-foreground">El Pozo 11 superó el límite diario permitido</div>
+            <div className="text-destructive font-semibold text-sm mb-1">ALERTA CRÍTICA</div>
+            <div className="text-sm text-foreground">
+              {(() => {
+                const lastYear = datosPozo12.especificaciones_anuales[datosPozo12.especificaciones_anuales.length - 1];
+                const exceedPercent = ((lastYear.consumo_real_m3 / lastYear.m3_disponibles_para_consumir - 1) * 100).toFixed(0);
+                return `${datosPozo12.pozo.id} ha excedido el límite anual en ${exceedPercent}%`;
+              })()}
+            </div>
           </div>
         </CardContent>
       </Card>
