@@ -1,5 +1,7 @@
 import { Button } from "../components/ui/button"
 import { useLocation, useNavigate } from "react-router"
+import BluemetricsLogo from "./svg/BluemetricsLogo"
+import BluemetricsText from "./svg/BluemetricsText"
 
 export function DashboardSidebar() {
   const location = useLocation()
@@ -7,10 +9,10 @@ export function DashboardSidebar() {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard Principal", path: "/", active: location.pathname === "/" },
-    { id: "consumption", label: "Consumo", path: "/consumo", active: false },
+    { id: "consumption", label: "Consumo", path: "/consumo", active: location.pathname === "/consumo" },
+    { id: "balance", label: "Balance Hídrico", path: "/balance", active: location.pathname === "/balance" },
     { id: "wells", label: "Pozos", path: "/pozos", active: location.pathname === "/pozos" },
     { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", active: location.pathname === "/agregar-datos" },
-    { id: "balance", label: "Balance Hídrico", path: "/balance", active: false },
     { id: "predictions", label: "Predicciones", path: "/predicciones", active: false },
     { id: "alerts", label: "Alertas", path: "/alertas", active: false },
   ]
@@ -23,13 +25,12 @@ export function DashboardSidebar() {
     <aside className="fixed top-0 left-0 h-full w-64 bg-sidebar border-r border-sidebar-border z-50">
       {/* Logo y nombre de la empresa */}
       <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-            <span className="text-primary-foreground font-bold text-lg">B</span>
+        <div className="flex items-center ">
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-lg">
+            <BluemetricsLogo className="w-10 h-10" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">BlueMetrics</h1>
-            <p className="text-xs text-sidebar-foreground/70 font-medium">Sistema Hídrico Inteligente</p>
+            <BluemetricsText className="w-52 h-12" />
           </div>
         </div>
       </div>
