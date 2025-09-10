@@ -1,7 +1,7 @@
 import { Button } from "../components/ui/button"
 import { useLocation, useNavigate } from "react-router"
-import BluemetricsLogo from "./svg/BluemetricsLogo"
-import BluemetricsText from "./svg/BluemetricsText"
+import BluemetricsLogoWhite from "./svg/BluemetricsLogoWhite"
+import BluemetricsTextWhite from "./svg/BluemetricsTextWhite"
 
 export function DashboardSidebar() {
   const location = useLocation()
@@ -24,13 +24,13 @@ export function DashboardSidebar() {
   return (
     <aside className="fixed top-0 left-0 h-full w-64 bg-sidebar border-r border-sidebar-border z-50">
       {/* Logo y nombre de la empresa */}
-      <div className="p-6 border-b border-sidebar-border">
+      <div className="p-2 border-b border-sidebar-border">
         <div className="flex items-center ">
-          <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-lg">
-            <BluemetricsLogo className="w-10 h-10" />
+          <div className="h-10 w-10  rounded-xl flex items-center justify-center shadow-lg">
+            <BluemetricsLogoWhite className="w-10 h-10" />
           </div>
           <div>
-            <BluemetricsText className="w-52 h-12" />
+            <BluemetricsTextWhite className="w-52 h-12" />
           </div>
         </div>
       </div>
