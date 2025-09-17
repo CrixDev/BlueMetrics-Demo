@@ -1,5 +1,5 @@
 import React from 'react';
-import './WaterBackground.css'; // Asegúrate de importar el nuevo CSS
+
 
 const WaterBackground = () => {
   return (
