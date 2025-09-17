@@ -116,7 +116,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 }
-
+/* Reset base */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -124,4 +124,46 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+/* Animación suave de ola */
+@keyframes wave {
+  0% {
+    transform: translateX(0) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(15px);
+  }
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+}
+
+.wave {
+  position: absolute;
+  bottom: 0;
+  left: -50%;
+  width: 200%;
+  height: 240px;
+  border-radius: 100%;
+  background: rgba(59, 130, 246, 0.25); /* azul clarito */
+  animation: wave ease-in-out infinite;
+}
+
+/* Variaciones para capas */
+.wave-1 {
+  animation-duration: 30s;
+  animation-delay: 0s;
+  opacity: 0.3;
+}
+
+.wave-2 {
+  animation-duration: 45s;
+  animation-delay: -10s;
+  opacity: 0.2;
+}
+
+.wave-3 {
+  animation-duration: 60s;
+  animation-delay: -20s;
+  opacity: 0.15;
 }

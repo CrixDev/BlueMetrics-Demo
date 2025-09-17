@@ -1,20 +1,20 @@
 import { Button } from "../components/ui/button"
 import { useLocation, useNavigate } from "react-router"
-import BluemetricsLogoWhite from "./svg/BluemetricsLogoWhite"
-import BluemetricsTextWhite from "./svg/BluemetricsTextWhite"
+import AquaNetLogoWhite from "./svg/AquaNetLogoWhite"
+import AquaNetTextWhite from "./svg/AquaNetTextWhite"
 
 export function DashboardSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
 
   const menuItems = [
-    { id: "dashboard", label: "Dashboard Principal", path: "/", active: location.pathname === "/" },
+    { id: "dashboard", label: "Dashboard Principal", path: "/dashboard", active: location.pathname === "/dashboard" },
     { id: "consumption", label: "Consumo", path: "/consumo", active: location.pathname === "/consumo" },
     { id: "balance", label: "Balance Hídrico", path: "/balance", active: location.pathname === "/balance" },
     { id: "wells", label: "Pozos", path: "/pozos", active: location.pathname === "/pozos" },
     { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", active: location.pathname === "/agregar-datos" },
-    { id: "predictions", label: "Predicciones", path: "/predicciones", active: false },
-    { id: "alerts", label: "Alertas", path: "/alertas", active: false },
+    { id: "predictions", label: "Predicciones", path: "/predicciones", active: location.pathname === "/predicciones" },
+    { id: "alerts", label: "Alertas", path: "/alertas", active: location.pathname === "/alertas" },
   ]
 
   const handleNavigation = (path) => {
@@ -27,10 +27,10 @@ export function DashboardSidebar() {
       <div className="p-2 border-b border-sidebar-border">
         <div className="flex items-center ">
           <div className="h-10 w-10  rounded-xl flex items-center justify-center shadow-lg">
-            <BluemetricsLogoWhite className="w-10 h-10" />
+            <AquaNetLogoWhite className="w-10 h-10" />
           </div>
           <div>
-            <BluemetricsTextWhite className="w-52 h-12" />
+            <AquaNetTextWhite className="w-36 h-12 pt-3" />
           </div>
         </div>
       </div>

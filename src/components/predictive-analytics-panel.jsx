@@ -1,50 +1,64 @@
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import DashboardChart from "./DashboardChart"
-import { AlertTriangle, Droplets, Settings, TrendingUp } from "lucide-react"
+import { AlertTriangle, Droplets, Settings, TrendingUp, Brain, Target, Zap } from "lucide-react"
+import { dashboardData } from '../lib/dashboard-data'
 
-const predictionData = [
-  { day: "Lun", actual: 54, predicted: 52 },
-  { day: "Mar", actual: 58, predicted: 55 },
-  { day: "Mié", actual: null, predicted: 61 },
-  { day: "Jue", actual: null, predicted: 58 },
-  { day: "Vie", actual: null, predicted: 63 },
-  { day: "Sáb", actual: null, predicted: 59 },
-  { day: "Dom", actual: null, predicted: 56 },
-]
+const predictionData = dashboardData.predictions.map(p => ({
+  day: p.day,
+  actual: p.actual,
+  predicted: p.predicted,
+  confidence: p.confidence
+}))
 
 const riskData = [
-  { time: "00:00", risk: 20 },
-  { time: "06:00", risk: 35 },
-  { time: "12:00", risk: 75 },
-  { time: "18:00", risk: 45 },
-  { time: "24:00", risk: 25 },
+  { time: "00:00", risk: 20, factors: ["low_demand", "minimal_operations"] },
+  { time: "03:00", risk: 15, factors: ["lowest_consumption"] },
+  { time: "06:00", risk: 35, factors: ["startup_operations", "pressure_changes"] },
+  { time: "09:00", risk: 55, factors: ["peak_morning", "high_demand"] },
+  { time: "12:00", risk: 75, factors: ["maximum_load", "cooling_systems"] },
+  { time: "15:00", risk: 68, factors: ["sustained_high_demand"] },
+  { time: "18:00", risk: 45, factors: ["evening_reduction"] },
+  { time: "21:00", risk: 30, factors: ["low_industrial_activity"] },
+  { time: "24:00", risk: 25, factors: ["night_operations"] },
 ]
+
+const mlInsights = dashboardData.mlInsights || {
+  patterns: [],
+  anomalies: []
+}
 
 export function PredictiveAnalyticsPanel() {
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <div className="grid gap-6 lg:grid-cols-2">
       {/* Predictive Forecasting */}
       <Card className="bg-card border-border">
         <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
           <div className="flex items-center justify-between">
-            <span className="text-sm">BlueMetrics</span>
-            <span className="font-semibold">BlueMetrics</span>
+            <div className="flex items-center gap-2">
+              <Brain className="w-4 h-4" />
+              <span className="font-semibold">Análisis Predictivo</span>
+            </div>
+            <span className="text-sm">IA {dashboardData.stats.aiPrecision}%</span>
           </div>
         </CardHeader>
         <CardContent className="p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Proyección Predictiva y Recomendaciones</h2>
-
           <div className="mb-6">
-            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
-                <div>
-                  <div className="text-destructive font-semibold text-sm mb-1">ALERTA</div>
-                  <div className="text-sm text-foreground">Pozo 7 posible fuga detectada sobrecurso en este día.</div>
+            {/* Mostrar anomalías si existen */}
+            {mlInsights.anomalies && mlInsights.anomalies.length > 0 && (
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
+                  <div>
+                    <div className="text-destructive font-semibold text-sm mb-1">ANOMALÍA DETECTADA</div>
+                    <div className="text-sm text-foreground">
+                      {mlInsights.anomalies[0]?.source}: consumo anómalo de {mlInsights.anomalies[0]?.value}% 
+                      (esperado: {mlInsights.anomalies[0]?.expected}%)
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <div className="text-sm text-muted-foreground mb-2">Predicción de Consumo (7 días)</div>
             <div className="h-32">
@@ -62,9 +76,25 @@ export function PredictiveAnalyticsPanel() {
             </div>
           </div>
 
+          {/* Patrones ML */}
           <div className="space-y-3">
-            <div className="text-sm font-medium text-foreground mb-2">Recomendación</div>
-            <div className="text-sm text-muted-foreground">Reducir el uso en un 5% para alcanzar la meta mensual</div>
+            <div className="text-sm font-medium text-foreground mb-2">Patrones Identificados</div>
+            {mlInsights.patterns && mlInsights.patterns.slice(0, 2).map((pattern, index) => (
+              <div key={index} className="text-xs p-2 bg-muted/30 rounded">
+                <span className="font-medium capitalize">{pattern.type}:</span> {pattern.description}
+                <span className="text-muted-foreground ml-2">({pattern.confidence}% confianza)</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Confianza promedio */}
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Confianza Promedio:</span>
+              <span className="font-semibold">
+                {predictionData.reduce((acc, p) => acc + p.confidence, 0) / predictionData.length}%
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -73,46 +103,41 @@ export function PredictiveAnalyticsPanel() {
       <Card className="bg-card border-border">
         <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
           <div className="flex items-center justify-between">
-            <span className="text-sm">Acciones</span>
-            <span className="font-semibold">BlueMetrics</span>
+            <div className="flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              <span className="font-semibold">Recomendaciones IA</span>
+            </div>
+            <span className="text-sm">{dashboardData.recommendations.length} activas</span>
           </div>
         </CardHeader>
         <CardContent className="p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Recomendaciones Inteligentes</h2>
-
           <div className="space-y-4 mb-6">
-            <div className="flex items-start gap-3 p-3 bg-chart-1/10 rounded-lg">
-              <Droplets className="w-5 h-5 text-chart-1 mt-0.5" />
-              <div className="flex-1">
-                <div className="text-sm font-medium text-foreground mb-1">Precisión</div>
-                <div className="text-xs text-muted-foreground">Activar el riego a 1hr</div>
-              </div>
-              <Button size="sm" variant="outline" className="text-xs bg-transparent">
-                Activar
-              </Button>
-            </div>
-
-            <div className="flex items-start gap-3 p-3 bg-primary/10 rounded-lg">
-              <Settings className="w-5 h-5 text-primary mt-0.5" />
-              <div className="flex-1">
-                <div className="text-sm font-medium text-foreground mb-1">Optimización</div>
-                <div className="text-xs text-muted-foreground">Conectar la torre 5 a la PTAA para reciclar agua</div>
-              </div>
-              <Button size="sm" variant="outline" className="text-xs bg-transparent">
-                Conectar
-              </Button>
-            </div>
-
-            <div className="flex items-start gap-3 p-3 bg-secondary/10 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-secondary mt-0.5" />
-              <div className="flex-1">
-                <div className="text-sm font-medium text-foreground mb-1">Eficiencia</div>
-                <div className="text-xs text-muted-foreground">Las torres de enfriamiento usan ≤ 30%</div>
-              </div>
-              <Button size="sm" variant="outline" className="text-xs bg-transparent">
-                Revisar
-              </Button>
-            </div>
+            {dashboardData.recommendations.slice(0, 3).map((rec, index) => {
+              const icons = { eficiencia: Droplets, reciclaje: Settings, automatización: Zap };
+              const Icon = icons[rec.category] || TrendingUp;
+              const colors = { 
+                high: "destructive", 
+                medium: "chart-1", 
+                low: "secondary" 
+              };
+              
+              return (
+                <div key={rec.id} className={`flex items-start gap-3 p-3 bg-${colors[rec.priority]}/10 rounded-lg`}>
+                  <Icon className={`w-5 h-5 text-${colors[rec.priority]} mt-0.5`} />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-foreground mb-1">{rec.title}</div>
+                    <div className="text-xs text-muted-foreground mb-1">{rec.description}</div>
+                    <div className="text-xs text-secondary font-medium">{rec.impact}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Ahorro: {rec.estimatedSavings} m³ | Tiempo: {rec.implementationTime}
+                    </div>
+                  </div>
+                  <Button size="sm" variant="outline" className="text-xs bg-transparent">
+                    {rec.action}
+                  </Button>
+                </div>
+              );
+            })}
           </div>
 
           <div className="mb-4">
@@ -120,16 +145,38 @@ export function PredictiveAnalyticsPanel() {
             <div className="h-20">
               <DashboardChart data={riskData} type="area" height="100%" />
             </div>
+            <div className="grid grid-cols-3 gap-2 mt-2 text-xs">
+              <div className="text-center">
+                <div className="font-medium text-green-600">Bajo</div>
+                <div className="text-muted-foreground">0-3h, 20-24h</div>
+              </div>
+              <div className="text-center">
+                <div className="font-medium text-orange-600">Medio</div>
+                <div className="text-muted-foreground">6-9h, 18-21h</div>
+              </div>
+              <div className="text-center">
+                <div className="font-medium text-red-600">Alto</div>
+                <div className="text-muted-foreground">9-15h</div>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-center">
+          <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-lg font-bold text-secondary">94%</div>
+              <div className="text-lg font-bold text-secondary">{dashboardData.stats.aiPrecision}%</div>
               <div className="text-xs text-muted-foreground">Precisión IA</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-chart-1">3</div>
-              <div className="text-xs text-muted-foreground">Acciones Pendientes</div>
+              <div className="text-lg font-bold text-chart-1">
+                {dashboardData.recommendations.filter(r => ['high', 'medium'].includes(r.priority)).length}
+              </div>
+              <div className="text-xs text-muted-foreground">Pendientes</div>
+            </div>
+            <div>
+              <div className="text-lg font-bold text-green-600">
+                {dashboardData.stats.implementedRecommendations}
+              </div>
+              <div className="text-xs text-muted-foreground">Implementadas</div>
             </div>
           </div>
         </CardContent>

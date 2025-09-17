@@ -1,12 +1,36 @@
 import { useState } from 'react'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
+import { DashboardSummary } from "../components/dashboard-summary"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import ChartComponent from "../components/ChartComponent"
+import { 
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  RadialLinearScale,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js'
+import { Bar, Radar } from 'react-chartjs-2'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  RadialLinearScale,
+  Title,
+  Tooltip,
+  Legend
+)
 import { WellMonitoringCharts } from "../components/well-monitoring-charts"
-import { PredictiveAnalyticsPanel } from "../components/predictive-analytics-panel"
-import { AlertsRecommendationsSystem } from "../components/alerts-recommendations-system"
 import { dashboardData } from '../lib/dashboard-data'
 import { 
   TrendingUpIcon, 
@@ -163,6 +187,9 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Dashboard Summary */}
+          <DashboardSummary />
+
           {/* Resumen de Consumo Comparativo */}
           <Card className="mb-6">
             <CardHeader>
@@ -232,10 +259,8 @@ export default function DashboardPage() {
               </div>
 
               <div className="h-64">
-                <ChartComponent 
-                  data={consumptionComparisonData} 
-                  type="bar"
-                  options={{
+                <div className="h-full">
+                  <Bar data={consumptionComparisonData} options={{
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
@@ -253,8 +278,8 @@ export default function DashboardPage() {
                         }
                       }
                     }
-                  }}
-                />
+                  }} />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -343,29 +368,25 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="h-48">
-                  <ChartComponent 
-                    data={goalsData} 
-                    type="bar"
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'top'
-                        }
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          ticks: {
-                            callback: function(value) {
-                              return formatNumber(value) + ' m³'
-                            }
+                  <Bar data={goalsData} options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'top'
+                      }
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        ticks: {
+                          callback: function(value) {
+                            return formatNumber(value) + ' m³'
                           }
                         }
                       }
-                    }}
-                  />
+                    }
+                  }} />
                 </div>
               </CardContent>
             </Card>
@@ -409,40 +430,34 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="h-48">
-                  <ChartComponent 
-                    data={efficiencyData} 
-                    type="radar"
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'top'
-                        }
-                      },
-                      scales: {
-                        r: {
-                          beginAtZero: true,
-                          max: 100,
-                          ticks: {
-                            callback: function(value) {
-                              return value + '%'
-                            }
+                  <Radar data={efficiencyData} options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'top'
+                      }
+                    },
+                    scales: {
+                      r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                          callback: function(value) {
+                            return value + '%'
                           }
                         }
                       }
-                    }}
-                  />
+                    }
+                  }} />
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Componentes existentes que seguirán */}
+          {/* Componente de monitoreo de pozos */}
           <div className="grid gap-6">
             <WellMonitoringCharts />
-            <PredictiveAnalyticsPanel />
-            <AlertsRecommendationsSystem />
           </div>
         </main>
       </div>

@@ -3,8 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
-import BluemetricsLogo from '../components/svg/BluemetricsLogo';
-import BluemetricsText from '../components/svg/BluemetricsText';
+import AquaNetLogo from '../components/svg/AquaNetLogo';
+import AquaNetText from '../components/svg/AquaNetText';
 
 const LoginPage = () => {
   const [credentials, setCredentials] = useState({
@@ -46,10 +46,10 @@ const LoginPage = () => {
       <Card className="w-full max-w-md p-8 shadow-xl">
         <div className="text-center mb-8">
           <div className="mx-auto w-35 h-20 rounded-full flex items-center justify-center mb-4">
-            <BluemetricsLogo className="w-20 h-20" />
+            <AquaNetLogo className="w-20 h-20" />
           </div>
           <div className='flex items-center justify-center'>
-            <BluemetricsText className="w-44 h-12" />
+            <AquaNetText className="w-44 h-12" />
           </div>
           <p className="text-gray-600">Sistema de Gestión Hídrica</p>
         </div>

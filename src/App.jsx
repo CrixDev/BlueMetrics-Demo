@@ -9,6 +9,8 @@ import WaterBalancePage from './pages/WaterBalancePage'
 import WellsPage from './pages/WellsPage'
 import WellDetailPage from './pages/WellDetailPage'
 import AddDataPage from './pages/AddDataPage'
+import AlertsPage from './pages/AlertsPage'
+import PredictionsPage from './pages/PredictionsPage'
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
         <Route path="/pozos" element={<WellsPage />} />
         <Route path="/pozos/:id" element={<WellDetailPage />} />
         <Route path="/agregar-datos" element={<AddDataPage />} />
+        <Route path="/alertas" element={<AlertsPage />} />
+        <Route path="/predicciones" element={<PredictionsPage />} />
       </Routes>
     </AuthProvider>
   );

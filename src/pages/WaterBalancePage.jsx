@@ -532,6 +532,17 @@ export default function WaterBalancePage() {
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
+                      <Factory className="h-4 w-4 text-purple-600" />
+                      <span className="text-sm">Industria</span>
+                    </div>
+                    <span className="text-sm font-medium">{(waterBalance.outflow.industria / 1000).toFixed(0)}k m³</span>
+                  </div>
+                  <div className="ml-6 h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-purple-600 rounded-full" style={{ width: `${(waterBalance.outflow.industria / totalOutflow * 100)}%` }}></div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <AlertTriangleIcon className="h-4 w-4 text-gray-600" />
                       <span className="text-sm">Pérdidas</span>
                     </div>
@@ -539,6 +550,17 @@ export default function WaterBalancePage() {
                   </div>
                   <div className="ml-6 h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-gray-600 rounded-full" style={{ width: `${(waterBalance.outflow.perdidas / totalOutflow * 100)}%` }}></div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Waves className="h-4 w-4 text-amber-600" />
+                      <span className="text-sm">Evaporación</span>
+                    </div>
+                    <span className="text-sm font-medium">{(waterBalance.outflow.evaporacion / 1000).toFixed(1)}k m³</span>
+                  </div>
+                  <div className="ml-6 h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-600 rounded-full" style={{ width: `${(waterBalance.outflow.evaporacion / totalOutflow * 100)}%` }}></div>
                   </div>
                 </div>
               </CardContent>

@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import DashboardChart from "./DashboardChart"
 import datosPozo12 from '../lib/datos_pozo_12.json'
+import { dashboardData } from '../lib/dashboard-data'
 import { useState } from 'react'
 import { FilterIcon, CalendarIcon } from 'lucide-react'
 
@@ -201,29 +202,103 @@ export function WellMonitoringCharts() {
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-secondary/10 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-secondary"></div>
-                <span className="text-sm font-medium">Estado Operativo</span>
-              </div>
-              <span className="text-sm text-secondary font-medium">Normal</span>
-            </div>
+            {(() => {
+              const currentWell = datosPozo12.pozo;
+              const wellFromData = dashboardData.wells.find(w => w.id === currentWell.id);
+              
+              const getStatusColor = (status) => {
+                switch(status) {
+                  case 'normal': return 'secondary';
+                  case 'warning': return 'chart-3';
+                  case 'alert': return 'destructive';
+                  case 'inactive': return 'muted';
+                  default: return 'secondary';
+                }
+              };
+              
+              const getLevelColor = (level) => {
+                switch(level) {
+                  case 'high': return 'chart-1';
+                  case 'normal': return 'secondary';
+                  case 'low': return 'chart-3';
+                  default: return 'secondary';
+                }
+              };
+              
+              const getLimitColor = (limit) => {
+                switch(limit) {
+                  case 'normal': return 'secondary';
+                  case 'approaching': return 'chart-3';
+                  case 'exceeded': return 'destructive';
+                  default: return 'secondary';
+                }
+              };
+              
+              return (
+                <>
+                  <div className={`flex items-center justify-between p-3 bg-${getStatusColor(wellFromData?.status)}/10 rounded-lg`}>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full bg-${getStatusColor(wellFromData?.status)}`}></div>
+                      <span className="text-sm font-medium">Estado Operativo</span>
+                    </div>
+                    <span className={`text-sm text-${getStatusColor(wellFromData?.status)} font-medium capitalize`}>
+                      {wellFromData?.status || 'Normal'}
+                    </span>
+                  </div>
 
-            <div className="flex items-center justify-between p-3 bg-chart-1/10 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-chart-1"></div>
-                <span className="text-sm font-medium">Nivel de Agua</span>
-              </div>
-              <span className="text-sm text-chart-1 font-medium">Alto</span>
-            </div>
+                  <div className={`flex items-center justify-between p-3 bg-${getLevelColor(wellFromData?.waterLevel)}/10 rounded-lg`}>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full bg-${getLevelColor(wellFromData?.waterLevel)}`}></div>
+                      <span className="text-sm font-medium">Nivel de Agua</span>
+                    </div>
+                    <span className={`text-sm text-${getLevelColor(wellFromData?.waterLevel)} font-medium capitalize`}>
+                      {wellFromData?.waterLevel || 'Normal'}
+                    </span>
+                  </div>
 
-            <div className="flex items-center justify-between p-3 bg-destructive/10 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-destructive"></div>
-                <span className="text-sm font-medium">Límite Diario</span>
-              </div>
-              <span className="text-sm text-destructive font-medium">Excedido</span>
-            </div>
+                  <div className={`flex items-center justify-between p-3 bg-${getLimitColor(wellFromData?.dailyLimit)}/10 rounded-lg`}>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full bg-${getLimitColor(wellFromData?.dailyLimit)}`}></div>
+                      <span className="text-sm font-medium">Límite Diario</span>
+                    </div>
+                    <span className={`text-sm text-${getLimitColor(wellFromData?.dailyLimit)} font-medium capitalize`}>
+                      {wellFromData?.dailyLimit === 'exceeded' ? 'Excedido' : 
+                       wellFromData?.dailyLimit === 'approaching' ? 'Cerca del límite' : 'Normal'}
+                    </span>
+                  </div>
+
+                  {wellFromData && (
+                    <>
+                      <div className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-primary"></div>
+                          <span className="text-sm font-medium">Profundidad</span>
+                        </div>
+                        <span className="text-sm text-primary font-medium">{wellFromData.depth}m</span>
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-chart-2"></div>
+                          <span className="text-sm font-medium">Capacidad Máx.</span>
+                        </div>
+                        <span className="text-sm text-chart-2 font-medium">{wellFromData.maxCapacity} m³/h</span>
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-muted-foreground"></div>
+                          <span className="text-sm font-medium">Último Mant.</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground font-medium">
+                          {new Date(wellFromData.lastMaintenance).toLocaleDateString('es-ES')}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </CardContent>
       </Card>
