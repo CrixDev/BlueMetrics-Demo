@@ -1,5 +1,5 @@
 import React from 'react';
-import ErrorBoundary from '../components/errorBoundary'; // Asegúrate de importar el componente
+
 
 const ContactPage = () => {
   return (
@@ -10,7 +10,7 @@ const ContactPage = () => {
     </div>
 
       <div className="bg-gray-100 p-8 rounded shadow-md w-full max-w-md">
-        <ErrorBoundary>
+       
         <iframe
   width="500"
   height="805"
@@ -25,7 +25,7 @@ const ContactPage = () => {
     maxWidth: '100%'
   }}
 ></iframe>
-        </ErrorBoundary>
+       
       </div>
     </div>
   );
