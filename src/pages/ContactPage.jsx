@@ -1,6 +1,5 @@
 import React from 'react';
 
-
 const ContactPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-row justify-around items-center">
@@ -10,7 +9,7 @@ const ContactPage = () => {
     </div>
 
       <div className="bg-gray-100 p-8 rounded shadow-md w-full max-w-md">
-       
+        
         <iframe
   width="500"
   height="805"
@@ -25,7 +24,7 @@ const ContactPage = () => {
     maxWidth: '100%'
   }}
 ></iframe>
-       
+        
       </div>
     </div>
   );
