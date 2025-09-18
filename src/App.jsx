@@ -11,6 +11,8 @@ import WellDetailPage from './pages/WellDetailPage'
 import AddDataPage from './pages/AddDataPage'
 import AlertsPage from './pages/AlertsPage'
 import PredictionsPage from './pages/PredictionsPage'
+import ContactPage from './pages/ContactPage'
+import ConfirmationPage from './pages/ConfirmationPage'
 
 function App() {
   return (
@@ -27,6 +29,8 @@ function App() {
         <Route path="/agregar-datos" element={<AddDataPage />} />
         <Route path="/alertas" element={<AlertsPage />} />
         <Route path="/predicciones" element={<PredictionsPage />} />
+        <Route path="/contacto" element={<ContactPage />} />
+        <Route path="/confirmacion" element={<ConfirmationPage />} />
       </Routes>
     </AuthProvider>
   );
