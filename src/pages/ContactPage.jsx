@@ -1,4 +1,3 @@
-import React from 'react';
 
 const ContactPage = () => {
   return (
@@ -9,7 +8,21 @@ const ContactPage = () => {
     </div>
 
       <div className="bg-gray-100 p-8 rounded shadow-md w-full max-w-md">
-      
+        
+        <iframe
+  width="500"
+  height="805"
+  src="https://e098f742.sibforms.com/serve/MUIFAFeKFBwLTmW1WRFwLBPqSQJgy4xMpP1nt-8FiwDOMuvE6FaOoilmzF6Xmf6F-GaR5VMRtY6UFcv6f570snazGax6Z7rZQurKRZpnRjORXibT1MzL6GLZUJrpd13QZxcK6QmVycJ6JoGQvUzmBF3JfZ8wr6UJlSgfeXXhG_al33BBk-i9nA5TdXf7rK1uBvCfsmqX0CxD5v8Y"
+  frameBorder="0"
+  scrolling="auto"
+  allowFullScreen
+  style={{
+    display: 'block',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    maxWidth: '100%'
+  }}
+></iframe>
         
       </div>
     </div>
