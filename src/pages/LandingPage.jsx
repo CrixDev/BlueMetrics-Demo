@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import ComplexWaterBackground from '../components/WaterBackground'
+import Brave_form from '../components/Brave_form'
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -433,11 +434,87 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Contact Section with Form */}
+      <section id="contact" className="py-20 bg-gradient-to-br from-blue-50 via-blue-100/50 to-white relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-10 left-10 w-72 h-72 bg-blue-200/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+          <div className="absolute top-10 right-10 w-72 h-72 bg-blue-300/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-blue-400/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+        </div>
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            {/* Icon header */}
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-full mb-6 shadow-lg">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            
+            <h2 className="text-4xl lg:text-5xl font-bold text-blue-900 mb-6">
+              <span className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                Contáctanos
+              </span>
+            </h2>
+            <p className="text-xl text-blue-700 max-w-3xl mx-auto leading-relaxed">
+              ¿Tienes preguntas? Nos encantaría ayudarte a encontrar la solución perfecta para tu empresa.
+              <span className="block mt-2 text-lg text-blue-600">
+                Transforma tu gestión hídrica con tecnología inteligente.
+              </span>
+            </p>
+          </div>
+          
+          <div className="max-w-2xl mx-auto">
+            <div className="relative">
+              {/* Decorative gradient border */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 rounded-2xl blur opacity-75"></div>
+              <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <Brave_form />
+              </div>
+            </div>
+            
+            {/* Features below form */}
+            <div className="mt-12 grid md:grid-cols-3 gap-6 text-center">
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-blue-100">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-full mb-4">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">Respuesta Rápida</h3>
+                <p className="text-blue-700">Te contactamos en menos de 24 horas</p>
+              </div>
+              
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-blue-100">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-full mb-4">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">Sin Compromiso</h3>
+                <p className="text-blue-700">Demo gratuita sin obligaciones</p>
+              </div>
+              
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-blue-100">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-full mb-4">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">Soporte Especializado</h3>
+                <p className="text-blue-700">Equipo experto en gestión hídrica</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer id="contact" className="bg-gray-900 text-white py-16">
+      <footer className="bg-gray-900 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="col-span-2">
+          <div className="grid md:grid-cols-3 gap-8">
+            <div>
               <div className="flex items-center mb-6">
                 <AquaNetLogo className="w-8 h-8 mr-3" />
                 <AquaNetText className="w-32 h-6" />
@@ -446,52 +523,47 @@ const LandingPage = () => {
                 Innovación y datos para un futuro con agua. Transformamos la gestión hídrica 
                 a través de tecnología inteligente y soluciones sostenibles.
               </p>
-              <div className="flex space-x-4">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800 flex items-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8a6 6 0 01-11.95 1M5 12a6 6 0 0011.95 1M8 16a6 6 0 0011.95 1M12 20a6 6 0 0011.95 1" />
-                  </svg>
-                  LinkedIn
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800 flex items-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12a6 6 0 0111.95 1M5 12a6 6 0 0011.95 1M8 16a6 6 0 0011.95 1M12 20a6 6 0 0011.95 1" />
-                  </svg>
-                  Twitter
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800 flex items-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12a6 6 0 0111.95 1M5 12a6 6 0 0011.95 1M8 16a6 6 0 0011.95 1M12 20a6 6 0 0011.95 1" />
-                  </svg>
-                  Facebook
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800 flex items-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12a6 6 0 0111.95 1M5 12a6 6 0 0011.95 1M8 16a6 6 0 0011.95 1M12 20a6 6 0 0011.95 1" />
-                  </svg>
-                  Instagram
-                </Button>
-              </div>
+                <div className="flex space-x-4">
+                  <Button 
+                    variant="social"
+                    size="sm"
+                    href="https://www.linkedin.com/company/bluemetrics-gestion-h%C3%ADdrica/posts/?feedView=all"
+                    target="_blank"
+                    title="Síguenos en LinkedIn"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                  </Button>
+                  
+                  <Button 
+                    variant="social"
+                    size="sm"
+                    href="https://www.facebook.com/people/BlueMetrics/61581174772648/"
+                    target="_blank"
+                    title="Síguenos en Facebook"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                  </Button>
+                  
+                  <Button 
+                    variant="social"
+                    size="sm"
+                    href="https://www.instagram.com/blue_metrics_ai/?igsh=MWg1YzVtY2Y2OGkyOQ%3D%3D#"
+                    target="_blank"
+                    title="Síguenos en Instagram"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.042-3.441.219-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 01.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.888-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24c6.624 0 11.99-5.367 11.99-12.013C24.007 5.367 18.641.001 12.017.001z"/>
+                    </svg>
+                  </Button>
+                </div>
             </div>
             
             <div>
-              <h3 className="font-semibold mb-6">Plataforma</h3>
+              <h3 className="font-semibold  mb-6">Plataforma</h3>
               <ul className="space-y-3 text-gray-400">
                 <li><button onClick={() => navigate('/dashboard')} className="hover:text-white transition-colors">Dashboard</button></li>
                 <li><button onClick={() => navigate('/pozos')} className="hover:text-white transition-colors">Pozos</button></li>
@@ -502,9 +574,9 @@ const LandingPage = () => {
             </div>
             
             <div>
-              <h3 className="font-semibold mb-6">Contacto</h3>
+              <h3 className="font-semibold mb-6">Información</h3>
               <ul className="space-y-3 text-gray-400">
-                <li className="hover:text-white transition-colors">Contacto@bluemetrics.mx</li>
+                <li className="hover:text-white transition-colors">contacto@bluemetrics.mx</li>
                 <li className="hover:text-white transition-colors">+52 (55) 1234-5678</li>
                 <li className="hover:text-white transition-colors">Soporte 24/7</li>
                 <li>
@@ -537,4 +609,3 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
-
