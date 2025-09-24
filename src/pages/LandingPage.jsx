@@ -58,8 +58,8 @@ const LandingPage = () => {
     { icon: <Zap className="w-6 h-6" />, text: "Optimización automática" },
   ];
 
-  const handleGetStarted = () => {
-    navigate('/dashboard');
+  const handleContactRedirect = () => {
+    window.location.href = '/#contact';
   };
 
   const handleLogin = () => {
@@ -83,12 +83,12 @@ const LandingPage = () => {
               <a href="#about" className="text-gray-700 hover:text-blue-600 transition-colors">Nosotros</a>
               <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contacto</a>
               <Button 
-                onClick={handleLogin}
+                onClick={handleContactRedirect}
                 variant="outline"
                 size="sm"
                 className="border-blue-600 text-blue-600 hover:bg-blue-50"
               >
-                Iniciar Sesión
+                Contacto
               </Button>
             </nav>
 
@@ -109,12 +109,12 @@ const LandingPage = () => {
                 <a href="#about" className="text-gray-700 hover:text-blue-600 transition-colors">Nosotros</a>
                 <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contacto</a>
                 <Button 
-                  onClick={handleLogin}
+                  onClick={handleContactRedirect}
                   variant="outline"
                   size="sm"
                   className="border-blue-600 text-blue-600 hover:bg-blue-50 w-fit"
                 >
-                  Iniciar Sesión
+                  Contacto
                 </Button>
               </nav>
             </div>
@@ -162,14 +162,15 @@ const LandingPage = () => {
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
-                  onClick={handleGetStarted}
+                  onClick={handleContactRedirect}
                   size="lg"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg group"
                 >
-                  Empieza tu prueba gratis
+                  Contáctanos
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 <Button 
+                  onClick={handleContactRedirect}
                   variant="outline"
                   size="lg"
                   className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 text-lg"
@@ -264,6 +265,7 @@ const LandingPage = () => {
                     {benefit.description}
                   </p>
                   <Button 
+                    onClick={handleContactRedirect}
                     variant="outline" 
                     className="border-blue-600 text-blue-600 hover:bg-blue-50"
                   >
@@ -414,18 +416,19 @@ const LandingPage = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={handleGetStarted}
+              onClick={handleContactRedirect}
               size="lg"
               className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 text-lg"
             >
-              Empieza tu prueba gratis
+              Contáctanos
             </Button>
             <Button 
+              onClick={handleContactRedirect}
               variant="outline"
               size="lg"
               className="border-blue-600 text-blue-600 hover:bg-blue-50 px-10 py-4 text-lg"
             >
-              Contáctanos
+              Más información
             </Button>
           </div>
           <p className="text-sm text-gray-500 mt-6">
@@ -565,11 +568,11 @@ const LandingPage = () => {
             <div>
               <h3 className="font-semibold  mb-6">Plataforma</h3>
               <ul className="space-y-3 text-gray-400">
-                <li><button onClick={() => navigate('/dashboard')} className="hover:text-white transition-colors">Dashboard</button></li>
-                <li><button onClick={() => navigate('/pozos')} className="hover:text-white transition-colors">Pozos</button></li>
-                <li><button onClick={() => navigate('/consumo')} className="hover:text-white transition-colors">Consumo</button></li>
-                <li><button onClick={() => navigate('/balance')} className="hover:text-white transition-colors">Balance Hídrico</button></li>
-                <li><button onClick={handleLogin} className="hover:text-white transition-colors">Iniciar Sesión</button></li>
+                <li><button onClick={handleContactRedirect} className="hover:text-white transition-colors">Dashboard</button></li>
+                <li><button onClick={handleContactRedirect} className="hover:text-white transition-colors">Pozos</button></li>
+                <li><button onClick={handleContactRedirect} className="hover:text-white transition-colors">Consumo</button></li>
+                <li><button onClick={handleContactRedirect} className="hover:text-white transition-colors">Balance Hídrico</button></li>
+                <li><button onClick={handleContactRedirect} className="hover:text-white transition-colors">Consulta</button></li>
               </ul>
             </div>
             
@@ -581,11 +584,11 @@ const LandingPage = () => {
                 <li className="hover:text-white transition-colors">Soporte 24/7</li>
                 <li>
                   <Button 
-                    onClick={handleGetStarted}
+                    onClick={handleContactRedirect}
                     size="sm"
                     className="bg-blue-600 hover:bg-blue-700 text-white mt-2"
                   >
-                    Empezar ahora
+                    Contáctanos
                   </Button>
                 </li>
               </ul>
