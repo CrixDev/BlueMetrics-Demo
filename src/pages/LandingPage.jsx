@@ -55,7 +55,7 @@ const LandingPage = () => {
     { icon: <Droplets className="w-6 h-6" />, text: "Monitoreo en tiempo real" },
     { icon: <BarChart3 className="w-6 h-6" />, text: "Análisis predictivo con IA" },
     { icon: <Shield className="w-6 h-6" />, text: "Cumplimiento regulatorio" },
-    { icon: <Zap className="w-6 h-6" />, text: "Optimización automática" },
+    { icon: <Zap className="w-6 h-6" />, text: "Identificación de fugas" },
   ];
 
   const handleContactRedirect = () => {
@@ -64,6 +64,10 @@ const LandingPage = () => {
 
   const handleLogin = () => {
     navigate('/login');
+  };
+
+  const handleDashboardRedirect = () => {
+    navigate('/dashboard');
   };
 
   return (
@@ -81,7 +85,7 @@ const LandingPage = () => {
             <nav className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors">Características</a>
               <a href="#about" className="text-gray-700 hover:text-blue-600 transition-colors">Nosotros</a>
-              <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contacto</a>
+             
               <Button 
                 onClick={handleContactRedirect}
                 variant="outline"
@@ -170,7 +174,7 @@ const LandingPage = () => {
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 <Button 
-                  onClick={handleContactRedirect}
+                  onClick={handleDashboardRedirect}
                   variant="outline"
                   size="lg"
                   className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 text-lg"
@@ -580,7 +584,7 @@ const LandingPage = () => {
               <h3 className="font-semibold mb-6">Información</h3>
               <ul className="space-y-3 text-gray-400">
                 <li className="hover:text-white transition-colors">contacto@bluemetrics.mx</li>
-                <li className="hover:text-white transition-colors">+52 (55) 1234-5678</li>
+                <li className="hover:text-white transition-colors">+52 844 544 7606</li>
                 <li className="hover:text-white transition-colors">Soporte 24/7</li>
                 <li>
                   <Button 
