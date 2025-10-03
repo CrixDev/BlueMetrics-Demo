@@ -110,6 +110,15 @@ const LandingPage = () => {
               >
                 Contacto
               </Button>
+
+              <Button 
+                onClick={handleLogin}
+                variant="default"
+                size="sm"
+                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+              >
+                Iniciar sesión
+              </Button>
             </nav>
 
             {/* Mobile menu button */}
