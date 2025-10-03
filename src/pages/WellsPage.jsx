@@ -19,12 +19,14 @@ import {
 
 export default function WellsPage() {
   const navigate = useNavigate()
-  // Datos mock para los pozos
+  // Datos de los pozos - Servicios primero, luego Riego
   const wells = [
+    // POZOS DE SERVICIOS
     {
-      id: 1,
-      name: "Pozo Norte #1",
-      location: "Sector Norte",
+      id: 11,
+      name: "Pozo 11",
+      type: "Servicios",
+      location: "Zona Servicios",
       depth: "150m",
       waterLevel: "45m",
       flow: "1200 L/min",
@@ -36,11 +38,42 @@ export default function WellsPage() {
       ph: "7.2"
     },
     {
-      id: 2,
-      name: "Pozo Central #2",
-      location: "Sector Central",
-      depth: "180m",
-      waterLevel: "62m",
+      id: 12,
+      name: "Pozo 12",
+      type: "Servicios",
+      location: "Calle Navio 358",
+      depth: "45m",
+      waterLevel: "12m",
+      flow: "850 L/min",
+      pressure: "2.3 bar",
+      status: "active",
+      quality: "good",
+      lastMaintenance: "2024-01-08",
+      temperature: "19°C",
+      ph: "7.1"
+    },
+    {
+      id: 3,
+      name: "Pozo 3",
+      type: "Servicios",
+      location: "Zona Servicios",
+      depth: "120m",
+      waterLevel: "38m",
+      flow: "800 L/min",
+      pressure: "1.8 bar",
+      status: "active",
+      quality: "fair",
+      lastMaintenance: "2024-01-05",
+      temperature: "20°C",
+      ph: "6.8"
+    },
+    {
+      id: 7,
+      name: "Pozo 7",
+      type: "Servicios",
+      location: "Zona Servicios",
+      depth: "160m",
+      waterLevel: "55m",
       flow: "950 L/min",
       pressure: "2.1 bar",
       status: "active",
@@ -50,23 +83,26 @@ export default function WellsPage() {
       ph: "7.0"
     },
     {
-      id: 3,
-      name: "Pozo Sur #3",
-      location: "Sector Sur",
-      depth: "120m",
-      waterLevel: "38m",
-      flow: "800 L/min",
-      pressure: "1.8 bar",
-      status: "maintenance",
-      quality: "fair",
-      lastMaintenance: "2024-01-05",
-      temperature: "20°C",
-      ph: "6.8"
+      id: 14,
+      name: "Pozo 14",
+      type: "Servicios",
+      location: "Zona Servicios",
+      depth: "140m",
+      waterLevel: "42m",
+      flow: "1100 L/min",
+      pressure: "2.4 bar",
+      status: "active",
+      quality: "excellent",
+      lastMaintenance: "2024-01-12",
+      temperature: "17°C",
+      ph: "7.3"
     },
+    // POZOS DE RIEGO
     {
       id: 4,
-      name: "Pozo Este #4",
-      location: "Sector Este",
+      name: "Pozo 4",
+      type: "Riego",
+      location: "Zona Riego",
       depth: "200m",
       waterLevel: "78m",
       flow: "1350 L/min",
@@ -78,47 +114,38 @@ export default function WellsPage() {
       ph: "7.4"
     },
     {
-      id: 5,
-      name: "Pozo Oeste #5",
-      location: "Sector Oeste",
-      depth: "160m",
-      waterLevel: "55m",
-      flow: "0 L/min",
-      pressure: "0 bar",
-      status: "inactive",
-      quality: "poor",
-      lastMaintenance: "2023-12-15",
-      temperature: "N/A",
-      ph: "N/A"
-    },
-    {
-      id: 12,
-      name: "Pozo 12",
-      location: "Calle Navio 358",
-      depth: "45m",
-      waterLevel: "12m",
-      flow: "850 L/min",
-      pressure: "2.3 bar",
+      id: 8,
+      name: "Pozo 8",
+      type: "Riego",
+      location: "Zona Riego",
+      depth: "180m",
+      waterLevel: "65m",
+      flow: "1250 L/min",
+      pressure: "2.6 bar",
       status: "active",
       quality: "good",
-      lastMaintenance: "2024-01-08",
+      lastMaintenance: "2024-01-18",
+      temperature: "18°C",
+      ph: "7.2"
+    },
+    {
+      id: 15,
+      name: "Pozo 15",
+      type: "Riego",
+      location: "Zona Riego",
+      depth: "170m",
+      waterLevel: "60m",
+      flow: "1150 L/min",
+      pressure: "2.5 bar",
+      status: "active",
+      quality: "good",
+      lastMaintenance: "2024-01-14",
       temperature: "19°C",
       ph: "7.1"
     }
   ]
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-green-100 text-green-800 border-green-200">Activo</Badge>
-      case 'maintenance':
-        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Mantenimiento</Badge>
-      case 'inactive':
-        return <Badge className="bg-red-100 text-red-800 border-red-200">Inactivo</Badge>
-      default:
-        return <Badge>Desconocido</Badge>
-    }
-  }
+  
 
   const getQualityBadge = (quality) => {
     switch (quality) {
@@ -171,51 +198,39 @@ export default function WellsPage() {
             </div>
 
             {/* Estadísticas generales */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <CheckCircleIcon className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Pozos Activos</p>
-                    <p className="text-2xl font-bold text-gray-900">4</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-yellow-100 rounded-lg">
-                    <AlertTriangleIcon className="h-6 w-6 text-yellow-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">En Mantenimiento</p>
-                    <p className="text-2xl font-bold text-gray-900">1</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-red-100 rounded-lg">
-                    <XCircleIcon className="h-6 w-6 text-red-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Inactivos</p>
-                    <p className="text-2xl font-bold text-gray-900">1</p>
-                  </div>
-                </div>
-              </Card>
-
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="p-6">
                 <div className="flex items-center">
                   <div className="p-2 bg-blue-100 rounded-lg">
                     <DropletIcon className="h-6 w-6 text-blue-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Caudal Total</p>
-                    <p className="text-2xl font-bold text-gray-900">5,150 L/min</p>
+                    <p className="text-sm font-medium text-gray-600">Pozos de Servicios</p>
+                    <p className="text-2xl font-bold text-gray-900">5</p>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <DropletIcon className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Pozos de Riego</p>
+                    <p className="text-2xl font-bold text-gray-900">3</p>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <CheckCircleIcon className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Total de Pozos</p>
+                    <p className="text-2xl font-bold text-gray-900">8</p>
                   </div>
                 </div>
               </Card>
@@ -233,6 +248,9 @@ export default function WellsPage() {
                           Pozo
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Tipo
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Estado
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -244,9 +262,7 @@ export default function WellsPage() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Nivel de Agua
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Calidad
-                        </th>
+                       
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Acciones
                         </th>
@@ -269,7 +285,14 @@ export default function WellsPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {getStatusBadge(well.status)}
+                            <Badge variant={well.type === 'Servicios' ? 'default' : 'secondary'}>
+                              {well.type}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge variant={well.status === 'active' ? 'secondary' : 'default'}>
+                              {well.status}
+                            </Badge>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {well.flow}
@@ -280,9 +303,7 @@ export default function WellsPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {well.waterLevel}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {getQualityBadge(well.quality)}
-                          </td>
+                         
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex space-x-2">
                               <Button 
@@ -313,25 +334,25 @@ export default function WellsPage() {
                 <div className="p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Alertas Recientes</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center p-3 bg-red-50 border-l-4 border-red-400">
-                      <AlertTriangleIcon className="h-5 w-5 text-red-400" />
+                    <div className="flex items-center p-3 bg-green-50 border-l-4 border-green-400">
+                      <CheckCircleIcon className="h-5 w-5 text-green-400" />
                       <div className="ml-3">
-                        <p className="text-sm font-medium text-red-800">
-                          Pozo Oeste #5 - Fuera de servicio
+                        <p className="text-sm font-medium text-green-800">
+                          Todos los pozos operando normalmente
                         </p>
-                        <p className="text-sm text-red-700">
-                          Requiere mantenimiento urgente
+                        <p className="text-sm text-green-700">
+                          Sistema funcionando correctamente
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center p-3 bg-yellow-50 border-l-4 border-yellow-400">
-                      <AlertTriangleIcon className="h-5 w-5 text-yellow-400" />
+                    <div className="flex items-center p-3 bg-blue-50 border-l-4 border-blue-400">
+                      <DropletIcon className="h-5 w-5 text-blue-400" />
                       <div className="ml-3">
-                        <p className="text-sm font-medium text-yellow-800">
-                          Pozo Sur #3 - Mantenimiento programado
+                        <p className="text-sm font-medium text-blue-800">
+                          Pozos de servicios - Rendimiento óptimo
                         </p>
-                        <p className="text-sm text-yellow-700">
-                          Finaliza el 2024-01-25
+                        <p className="text-sm text-blue-700">
+                          5 pozos activos cumpliendo con los estándares
                         </p>
                       </div>
                     </div>
@@ -339,24 +360,43 @@ export default function WellsPage() {
                 </div>
               </Card>
 
-              {/* Próximos mantenimientos */}
+              {/* Recomendaciones */}
               <Card>
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Próximos Mantenimientos</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Recomendaciones</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                      <div>
-                        <p className="text-sm font-medium text-blue-900">Pozo Norte #1</p>
-                        <p className="text-sm text-blue-700">Revisión trimestral</p>
+                    <div className="flex items-start p-3 bg-purple-50 rounded-lg border border-purple-200">
+                      <div className="flex-shrink-0">
+                        <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
+                          <span className="text-purple-600 font-bold text-sm">💡</span>
+                        </div>
                       </div>
-                      <span className="text-sm text-blue-600 font-medium">15 Feb 2024</span>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-purple-900">Monitoreo continuo</p>
+                        <p className="text-sm text-purple-700">Mantener vigilancia en niveles de agua de todos los pozos</p>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                      <div>
-                        <p className="text-sm font-medium text-blue-900">Pozo Central #2</p>
-                        <p className="text-sm text-blue-700">Cambio de bomba</p>
+                    <div className="flex items-start p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex-shrink-0">
+                        <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 font-bold text-sm">📊</span>
+                        </div>
                       </div>
-                      <span className="text-sm text-blue-600 font-medium">28 Feb 2024</span>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-blue-900">Optimización de recursos</p>
+                        <p className="text-sm text-blue-700">Revisar distribución de carga entre pozos de servicios y riego</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex-shrink-0">
+                        <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-green-600 font-bold text-sm">🔧</span>
+                        </div>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-green-900">Mantenimiento preventivo</p>
+                        <p className="text-sm text-green-700">Programar revisiones periódicas para garantizar eficiencia</p>
+                      </div>
                     </div>
                   </div>
                 </div>

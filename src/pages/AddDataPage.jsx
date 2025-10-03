@@ -525,7 +525,7 @@ export default function AddDataPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">
-                        m³ Cedidos por Anexo *
+                        m³ por Anexo *
                       </label>
                       <input
                         type="number"
@@ -542,7 +542,7 @@ export default function AddDataPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">
-                        m³ Cedidos por Título *
+                        m³ Cedidos por Anexo *
                       </label>
                       <input
                         type="number"
@@ -574,22 +574,7 @@ export default function AddDataPage() {
                       {errors.realConsumption && <p className="text-red-500 text-sm mt-1">{errors.realConsumption}</p>}
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Disponible para Consumo *
-                      </label>
-                      <input
-                        type="number"
-                        step="0.001"
-                        min="0"
-                        value={formData.availableForConsumption}
-                        onChange={(e) => handleInputChange('availableForConsumption', e.target.value)}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        placeholder="0.000"
-                        disabled={isSubmitting}
-                      />
-                      {errors.availableForConsumption && <p className="text-red-500 text-sm mt-1">{errors.availableForConsumption}</p>}
-                    </div>
+                  
                   </div>
                 </div>
 

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
-import { Mail, User, Phone, Building, ArrowRight } from 'lucide-react';
+import { Card, CardContent, CardHeader } from './ui/card';
+import { Mail, User, Phone, Building, ArrowRight, CheckCircle } from 'lucide-react';
 
 const BrevoForm = () => {
   const navigate = useNavigate();

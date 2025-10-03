@@ -383,10 +383,10 @@ export default function WellDetailPage() {
                           m³ cedidos por título
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Consumo real (m³)
+                         m³ disponibles para consumir
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          m³ disponibles para consumir
+                          Consumo real (m³) 
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Estado
@@ -413,7 +413,12 @@ export default function WellDetailPage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               <div className="flex items-center gap-2">
-                                {data.realConsumption.toLocaleString()}
+                              {data.availableForConsumption.toLocaleString()}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                             
+                              {data.realConsumption.toLocaleString()}
                                 {index > 0 && wellData.yearlyData[index - 1] && (
                                   <>
                                     {getConsumptionTrend(data.realConsumption, wellData.yearlyData[index - 1].realConsumption) === 'up' && (
@@ -424,10 +429,6 @@ export default function WellDetailPage() {
                                     )}
                                   </>
                                 )}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {data.availableForConsumption.toLocaleString()}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <Badge className={`bg-${consumptionStatus.color}-100 text-${consumptionStatus.color}-800 border-${consumptionStatus.color}-200`}>

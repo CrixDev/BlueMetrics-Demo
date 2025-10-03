@@ -2,7 +2,7 @@ import React from "react"
 
 const badgeVariants = {
   default: "border-transparent bg-blue-600 text-white hover:bg-blue-700",
-  secondary: "border-transparent bg-gray-100 text-gray-900 hover:bg-gray-200",
+  secondary: "border-transparent bg-green-600 text-white hover:bg-green-700",
   destructive: "border-transparent bg-red-600 text-white hover:bg-red-700",
   outline: "text-gray-900 border border-gray-300"
 }
