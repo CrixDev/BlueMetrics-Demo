@@ -1,7 +1,6 @@
 import { Button } from "../components/ui/button"
 import { useLocation, useNavigate } from "react-router"
 import AquaNetLogoWhite from "./svg/AquaNetLogoWhite"
-import AquaNetTextWhite from "./svg/AquaNetTextWhite"
 
 export function DashboardSidebar() {
   const location = useLocation()
@@ -23,14 +22,11 @@ export function DashboardSidebar() {
 
   return (
     <aside className="fixed top-0 left-0 h-full w-64 bg-sidebar border-r border-sidebar-border z-50">
-      {/* Logo y nombre de la empresa */}
-      <div className="p-2 border-b border-sidebar-border">
-        <div className="flex items-center ">
-          <div className="h-10 w-10  rounded-xl flex items-center justify-center shadow-lg">
-            <AquaNetLogoWhite className="w-10 h-10" />
-          </div>
-          <div>
-            <AquaNetTextWhite className="w-36 h-12 pt-3" />
+      {/* Logo de la empresa */}
+      <div className="p-4 border-b border-sidebar-border">
+        <div className="flex items-center justify-center">
+          <div className="h-12 w-12 rounded-xl flex items-center justify-center shadow-lg">
+            <AquaNetLogoWhite className="w-12 h-12" />
           </div>
         </div>
       </div>

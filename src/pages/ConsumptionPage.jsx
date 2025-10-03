@@ -28,8 +28,81 @@ export default function ConsumptionPage() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [comparisonMode, setComparisonMode] = useState(false)
   const [chartType, setChartType] = useState('bar')
+  const [viewMode, setViewMode] = useState('conjunto') // 'servicios', 'riego', 'conjunto'
+  const [periodView, setPeriodView] = useState('monthly') // 'monthly', 'yearly'
+  const [selectedYearsComparison, setSelectedYearsComparison] = useState(['2025']) // Años para comparar
 
-  // Procesar datos de consumo según filtros
+  // Obtener datos de consumo por categoría y período
+  const getConsumptionDataByCategory = (category, period = 'monthly', year = '2025') => {
+    if (period === 'yearly') {
+      // Datos anuales por categoría
+      const yearlyData = datosPozo12.especificaciones_anuales.map(yearData => {
+        const yearName = yearData.año.toString().replace(' (hasta mayo)', '')
+        let value = 0
+        
+        switch (category) {
+          case 'servicios':
+            // Simular datos de servicios (30% del consumo total)
+            value = Math.round((yearData.consumo_real_m3 * 0.3) / 1000)
+            break
+          case 'riego':
+            // Simular datos de riego (70% del consumo total)
+            value = Math.round((yearData.consumo_real_m3 * 0.7) / 1000)
+            break
+          case 'conjunto':
+          default:
+            value = Math.round(yearData.consumo_real_m3 / 1000)
+            break
+        }
+        
+        return {
+          name: yearName,
+          value: value,
+          year: yearName
+        }
+      })
+      return yearlyData
+    } else {
+      // Datos mensuales por categoría
+      const monthlyData = datosPozo12.datos_mensuales.consumo_mensual
+      const yearData = monthlyData.find(y => y.año.includes(year)) || monthlyData[monthlyData.length - 1]
+      
+      const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+      const monthAbbrev = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+      
+      return monthNames.map((month, index) => {
+        const totalValue = yearData[month]
+        if (totalValue !== null && totalValue !== undefined) {
+          let value = 0
+          
+          switch (category) {
+            case 'servicios':
+              // Simular datos de servicios (30% del consumo mensual)
+              value = Math.round((totalValue * 0.3) / 1000)
+              break
+            case 'riego':
+              // Simular datos de riego (70% del consumo mensual)
+              value = Math.round((totalValue * 0.7) / 1000)
+              break
+            case 'conjunto':
+            default:
+              value = Math.round(totalValue / 1000)
+              break
+          }
+          
+          return {
+            name: monthAbbrev[index],
+            value: value,
+            month: month,
+            year: year
+          }
+        }
+        return null
+      }).filter(Boolean)
+    }
+  }
+
+  // Procesar datos de consumo según filtros (función original mantenida para compatibilidad)
   const getConsumptionData = () => {
     switch (timeFrame) {
       case 'daily':
@@ -116,64 +189,81 @@ export default function ConsumptionPage() {
     }))
   }
 
-  // Datos de origen del agua
-  const getWaterOriginData = () => {
-    return dashboardData.waterSources.map(source => ({
-      name: source.name,
-      volume: source.volume,
-      percentage: source.percentage,
-      description: source.description,
-      icon: getSourceIcon(source.name)
-    }))
-  }
-
-  // Función para obtener iconos por tipo de fuente
-  const getSourceIcon = (sourceName) => {
-    switch (sourceName.toLowerCase()) {
-      case 'pozos':
-        return <Waves className="h-5 w-5" />
-      case 'agua municipal':
-        return <Building2 className="h-5 w-5" />
-      case 'ptar':
-        return <Factory className="h-5 w-5" />
-      case 'pipas':
-        return <Truck className="h-5 w-5" />
-      default:
-        return <DropletIcon className="h-5 w-5" />
-    }
-  }
-
-  // Datos históricos de origen según período
-  const getOriginHistoryData = () => {
-    switch (timeFrame) {
-      case 'quarterly':
-        return dashboardData.waterOriginHistory.quarterly
-      case 'yearly':
-        return dashboardData.waterOriginHistory.yearly
-      case 'monthly':
-      default:
-        return dashboardData.waterOriginHistory.monthly
-    }
-  }
 
   // Cálculos de métricas principales
   const consumptionData = getConsumptionData()
   const categoryData = getCategoryData()
   const wellData = getWellEfficiencyData()
-  const waterOriginData = getWaterOriginData()
-  const originHistoryData = getOriginHistoryData()
   
   const currentConsumption = consumptionData.length > 0 ? consumptionData[consumptionData.length - 1].value * 1000 : 0
   const previousConsumption = consumptionData.length > 1 ? consumptionData[consumptionData.length - 2].value * 1000 : 0
   const consumptionTrend = previousConsumption > 0 ? ((currentConsumption - previousConsumption) / previousConsumption * 100).toFixed(1) : 0
 
+  // Obtener datos del año actual para las nuevas métricas
+  const currentYearData = datosPozo12.especificaciones_anuales.find(year => year.año.includes('2025')) || datosPozo12.especificaciones_anuales[datosPozo12.especificaciones_anuales.length - 1]
+  
+  // Calcular métricas de consumo por categoría
+  const consumoPozos = Math.round(currentConsumption / 1000) // Consumo actual de pozos
+  const serviciosTotal = Math.round(dashboardData.waterUsage.find(item => item.name === 'Servicios')?.volume || 0)
+  const riegoTotal = Math.round(dashboardData.waterUsage.find(item => item.name === 'Riego')?.volume || 0)
+  const m3CedidosTitulo1 = currentYearData.m3_cedidos_por_anexo
+  const m3CedidosTitulo2 = currentYearData.m3_cedidos_por_titulo
+
+  // Obtener datos para las nuevas gráficas
+  const currentViewData = getConsumptionDataByCategory(viewMode, periodView, selectedYear)
+  
+  // Años disponibles para comparación
+  const availableYears = ['2022', '2023', '2024', '2025']
+  
+  // Manejar selección de años para comparación
+  const handleYearComparisonToggle = (year) => {
+    console.log('Toggle año:', year);
+    setSelectedYearsComparison(prev => {
+      const newSelection = prev.includes(year) 
+        ? prev.filter(y => y !== year)
+        : [...prev, year];
+      console.log('Nueva selección de años:', newSelection);
+      return newSelection;
+    })
+  }
+  
+  // Crear datos de comparación con años anteriores
+  const getComparisonChartData = () => {
+    const datasets = []
+    const colors = [
+      { bg: 'rgba(59, 130, 246, 0.6)', border: 'rgb(59, 130, 246)' },
+      { bg: 'rgba(16, 185, 129, 0.6)', border: 'rgb(16, 185, 129)' },
+      { bg: 'rgba(245, 158, 11, 0.6)', border: 'rgb(245, 158, 11)' },
+      { bg: 'rgba(239, 68, 68, 0.6)', border: 'rgb(239, 68, 68)' },
+      { bg: 'rgba(139, 92, 246, 0.6)', border: 'rgb(139, 92, 246)' }
+    ]
+    
+    selectedYearsComparison.forEach((year, index) => {
+      const yearData = getConsumptionDataByCategory(viewMode, periodView, year)
+      const color = colors[index % colors.length]
+      
+      datasets.push({
+        label: `${viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} ${year}`,
+        data: yearData.map(item => item.value),
+        backgroundColor: color.bg,
+        borderColor: color.border,
+        borderWidth: 2
+      })
+    })
+    
+    return {
+      labels: currentViewData.map(item => item.name),
+      datasets: datasets
+    }
+  }
+
   // Datos para gráfico de comparación histórica
-  const comparisonData = {
-    labels: consumptionData.map(item => item.name),
+  const comparisonData = comparisonMode ? getComparisonChartData() : {
+    labels: currentViewData.map(item => item.name),
     datasets: [
       {
-        label: `Consumo ${selectedYear}`,
-        data: consumptionData.map(item => item.value),
+        label: `${viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} ${selectedYear}`,
+        data: currentViewData.map(item => item.value),
         backgroundColor: 'rgba(59, 130, 246, 0.6)',
         borderColor: 'rgb(59, 130, 246)',
         borderWidth: 2
@@ -209,56 +299,6 @@ export default function ConsumptionPage() {
     }
   }
 
-  // Datos para gráfico de origen del agua
-  const waterOriginChartData = {
-    labels: waterOriginData.map(item => item.name),
-    datasets: [{
-      label: 'Volumen por Fuente',
-      data: waterOriginData.map(item => item.volume),
-      backgroundColor: [
-        'rgba(59, 130, 246, 0.8)',   // Pozos - azul
-        'rgba(16, 185, 129, 0.8)',   // Agua Municipal - verde
-        'rgba(245, 158, 11, 0.8)',   // PTAR - amarillo
-        'rgba(239, 68, 68, 0.8)',    // Pipas - rojo
-      ],
-      borderWidth: 0
-    }]
-  }
-
-  // Datos para gráfico histórico de origen
-  const originHistoryChartData = {
-    labels: originHistoryData.map(item => item.name),
-    datasets: [
-      {
-        label: 'Pozos',
-        data: originHistoryData.map(item => item.pozos),
-        backgroundColor: 'rgba(59, 130, 246, 0.6)',
-        borderColor: 'rgb(59, 130, 246)',
-        borderWidth: 2
-      },
-      {
-        label: 'Agua Municipal',
-        data: originHistoryData.map(item => item.municipal),
-        backgroundColor: 'rgba(16, 185, 129, 0.6)',
-        borderColor: 'rgb(16, 185, 129)',
-        borderWidth: 2
-      },
-      {
-        label: 'PTAR',
-        data: originHistoryData.map(item => item.ptar),
-        backgroundColor: 'rgba(245, 158, 11, 0.6)',
-        borderColor: 'rgb(245, 158, 11)',
-        borderWidth: 2
-      },
-      {
-        label: 'Pipas',
-        data: originHistoryData.map(item => item.pipas),
-        backgroundColor: 'rgba(239, 68, 68, 0.6)',
-        borderColor: 'rgb(239, 68, 68)',
-        borderWidth: 2
-      }
-    ]
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -278,10 +318,6 @@ export default function ConsumptionPage() {
                   <DownloadIcon className="h-4 w-4 mr-2" />
                   Exportar Reporte
                 </Button>
-                <Button variant="outline" size="sm">
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  Programar Análisis
-                </Button>
               </div>
             </div>
           </div>
@@ -300,26 +336,44 @@ export default function ConsumptionPage() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div>
+                  <label className="text-sm font-medium text-muted-foreground mb-2 block">Categoría</label>
+                  <select 
+                    value={viewMode} 
+                    onChange={(e) => {
+                      console.log('Categoría cambiada a:', e.target.value);
+                      setViewMode(e.target.value);
+                    }}
+                    className="w-full border border-muted rounded px-3 py-2 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                  >
+                    <option value="conjunto">Consumo Total</option>
+                    <option value="servicios">Solo Servicios</option>
+                    <option value="riego">Solo Riego</option>
+                  </select>
+                </div>
+                <div>
                   <label className="text-sm font-medium text-muted-foreground mb-2 block">Período</label>
                   <select 
-                    value={timeFrame} 
-                    onChange={(e) => setTimeFrame(e.target.value)}
-                    className="w-full border border-muted rounded px-3 py-2 text-sm"
+                    value={periodView} 
+                    onChange={(e) => {
+                      console.log('Período cambiado a:', e.target.value);
+                      setPeriodView(e.target.value);
+                    }}
+                    className="w-full border border-muted rounded px-3 py-2 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                   >
-                    <option value="daily">Diario</option>
-                    <option value="weekly">Semanal</option>
                     <option value="monthly">Mensual</option>
-                    <option value="quarterly">Trimestral</option>
                     <option value="yearly">Anual</option>
                   </select>
                 </div>
-                {(timeFrame === 'monthly' || timeFrame === 'quarterly') && (
+                {periodView === 'monthly' && (
                   <div>
                     <label className="text-sm font-medium text-muted-foreground mb-2 block">Año</label>
                     <select 
                       value={selectedYear} 
-                      onChange={(e) => setSelectedYear(e.target.value)}
-                      className="w-full border border-muted rounded px-3 py-2 text-sm"
+                      onChange={(e) => {
+                        console.log('Año cambiado a:', e.target.value);
+                        setSelectedYear(e.target.value);
+                      }}
+                      className="w-full border border-muted rounded px-3 py-2 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                     >
                       <option value="2022">2022</option>
                       <option value="2023">2023</option>
@@ -329,24 +383,14 @@ export default function ConsumptionPage() {
                   </div>
                 )}
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground mb-2 block">Categoría</label>
-                  <select 
-                    value={selectedCategory} 
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full border border-muted rounded px-3 py-2 text-sm"
-                  >
-                    <option value="all">Todas</option>
-                    <option value="riego">Riego</option>
-                    <option value="torres">Torres de Enfriamiento</option>
-                    <option value="edificios">Edificios</option>
-                  </select>
-                </div>
-                <div>
                   <label className="text-sm font-medium text-muted-foreground mb-2 block">Tipo de Gráfico</label>
                   <select 
                     value={chartType} 
-                    onChange={(e) => setChartType(e.target.value)}
-                    className="w-full border border-muted rounded px-3 py-2 text-sm"
+                    onChange={(e) => {
+                      console.log('Tipo de gráfico cambiado a:', e.target.value);
+                      setChartType(e.target.value);
+                    }}
+                    className="w-full border border-muted rounded px-3 py-2 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                   >
                     <option value="bar">Barras</option>
                     <option value="line">Líneas</option>
@@ -356,26 +400,59 @@ export default function ConsumptionPage() {
                 <div className="flex items-end">
                   <Button 
                     variant={comparisonMode ? "default" : "outline"} 
-                    onClick={() => setComparisonMode(!comparisonMode)}
+                    onClick={() => {
+                      console.log('Modo comparación cambiado a:', !comparisonMode);
+                      setComparisonMode(!comparisonMode);
+                    }}
                     className="w-full"
                   >
                     <BarChart3Icon className="h-4 w-4 mr-2" />
-                    Comparar
+                    Comparar Años
                   </Button>
                 </div>
               </div>
+              
+              {/* Panel de selección de años para comparación */}
+              {comparisonMode && (
+                <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Seleccionar años para comparar:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {availableYears.map(year => (
+                      <Button
+                        key={year}
+                        variant={selectedYearsComparison.includes(year) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          console.log('Click en año:', year);
+                          handleYearComparisonToggle(year);
+                        }}
+                        className={`text-xs transition-all duration-200 ${
+                          selectedYearsComparison.includes(year) 
+                            ? 'bg-primary text-primary-foreground shadow-md' 
+                            : 'hover:bg-muted/50'
+                        }`}
+                      >
+                        {year}
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Seleccionados: {selectedYearsComparison.length} año{selectedYearsComparison.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Métricas principales */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Consumo Actual</p>
+                    <p className="text-sm text-muted-foreground">Consumo de Pozos</p>
                     <p className="text-2xl font-bold text-foreground">
-                      {currentConsumption.toLocaleString()} m³
+                      {consumoPozos.toLocaleString()} m³
                     </p>
                     <div className="flex items-center gap-1 mt-1">
                       <TrendingUpIcon className={`h-4 w-4 ${parseFloat(consumptionTrend) > 0 ? 'text-destructive' : 'text-green-500'}`} />
@@ -395,31 +472,14 @@ export default function ConsumptionPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Eficiencia Promedio</p>
+                    <p className="text-sm text-muted-foreground">Servicios Total</p>
                     <p className="text-2xl font-bold text-foreground">
-                      {Math.round(wellData.reduce((sum, well) => sum + well.efficiency, 0) / wellData.length)}%
+                      {serviciosTotal.toLocaleString()} m³
                     </p>
-                    <p className="text-sm text-green-500 mt-1">Óptimo</p>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                    <ActivityIcon className="h-6 w-6 text-green-500" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Pozos Activos</p>
-                    <p className="text-2xl font-bold text-foreground">{wellData.length}</p>
-                    <p className="text-sm text-blue-500 mt-1">
-                      {wellData.filter(w => w.status === 'alert').length} en alerta
-                    </p>
+                    <p className="text-sm text-blue-500 mt-1">Mensual</p>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
-                    <BarChart3Icon className="h-6 w-6 text-blue-500" />
+                    <Building2 className="h-6 w-6 text-blue-500" />
                   </div>
                 </div>
               </CardContent>
@@ -429,16 +489,48 @@ export default function ConsumptionPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Fuentes de Agua</p>
+                    <p className="text-sm text-muted-foreground">Riego Total</p>
                     <p className="text-2xl font-bold text-foreground">
-                      {dashboardData.stats.sourceDiversification}
+                      {riegoTotal.toLocaleString()} m³
                     </p>
-                    <p className="text-sm text-green-500 mt-1">
-                      Diversificado ({dashboardData.stats.waterSecurity}% seguridad)
-                    </p>
+                    <p className="text-sm text-green-500 mt-1">Mensual</p>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
                     <Waves className="h-6 w-6 text-green-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">M³ Cedidos por Anexo</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {m3CedidosTitulo1.toLocaleString()} m³
+                    </p>
+                    <p className="text-sm text-amber-600 mt-1">Anual</p>
+                  </div>
+                  <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center">
+                    <Factory className="h-6 w-6 text-amber-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">M³ Cedidos por Título</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {m3CedidosTitulo2.toLocaleString()} m³
+                    </p>
+                    <p className="text-sm text-purple-600 mt-1">Anual</p>
+                  </div>
+                  <div className="h-12 w-12 rounded-full bg-purple-500/10 flex items-center justify-center">
+                    <ActivityIcon className="h-6 w-6 text-purple-600" />
                   </div>
                 </div>
               </CardContent>
@@ -450,8 +542,11 @@ export default function ConsumptionPage() {
             <Card>
               <CardHeader>
                 <h3 className="text-lg font-semibold">
-                  Tendencia de Consumo - {timeFrame === 'monthly' ? 'Mensual' : timeFrame === 'quarterly' ? 'Trimestral' : timeFrame === 'yearly' ? 'Anual' : timeFrame === 'weekly' ? 'Semanal' : 'Diario'}
-                  {(timeFrame === 'monthly' || timeFrame === 'quarterly') && ` (${selectedYear})`}
+                  {viewMode === 'servicios' ? 'Consumo de Servicios' : 
+                   viewMode === 'riego' ? 'Consumo de Riego' : 
+                   'Consumo Total'} - {periodView === 'monthly' ? 'Mensual' : 'Anual'}
+                  {periodView === 'monthly' && ` (${selectedYear})`}
+                  {comparisonMode && ` - Comparación`}
                 </h3>
               </CardHeader>
               <CardContent>
@@ -467,12 +562,23 @@ export default function ConsumptionPage() {
 
             <Card>
               <CardHeader>
-                <h3 className="text-lg font-semibold">Origen del Agua</h3>
+                <h3 className="text-lg font-semibold">Distribución por Uso</h3>
               </CardHeader>
               <CardContent>
                 <div className="h-80">
                   <ChartComponent 
-                    data={waterOriginChartData} 
+                    data={{
+                      labels: categoryData.map(item => item.name),
+                      datasets: [{
+                        data: categoryData.map(item => item.value),
+                        backgroundColor: [
+                          'rgba(59, 130, 246, 0.8)',
+                          'rgba(16, 185, 129, 0.8)',
+                          'rgba(245, 158, 11, 0.8)',
+                        ],
+                        borderWidth: 0
+                      }]
+                    }} 
                     type="doughnut"
                     options={{
                       responsive: true,
@@ -484,8 +590,8 @@ export default function ConsumptionPage() {
                         tooltip: {
                           callbacks: {
                             label: function(context) {
-                              const item = waterOriginData[context.dataIndex]
-                              return `${item.name}: ${item.volume.toLocaleString()} m³ (${item.percentage}%)`
+                              const item = categoryData[context.dataIndex]
+                              return `${item.name}: ${item.value.toLocaleString()} m³ (${item.percentage}%)`
                             }
                           }
                         }
@@ -497,163 +603,6 @@ export default function ConsumptionPage() {
             </Card>
           </div>
 
-          {/* Sección de Origen del Agua */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-foreground mb-4">Análisis de Origen del Agua</h2>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {/* Gráfico histórico de origen */}
-              <Card>
-                <CardHeader>
-                  <h3 className="text-lg font-semibold">
-                    Tendencia Histórica por Fuente - {timeFrame === 'monthly' ? 'Mensual' : timeFrame === 'quarterly' ? 'Trimestral' : 'Anual'}
-                  </h3>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <ChartComponent 
-                      data={originHistoryChartData} 
-                      type="bar"
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                          legend: {
-                            position: 'top'
-                          },
-                          tooltip: {
-                            callbacks: {
-                              label: function(context) {
-                                return `${context.dataset.label}: ${context.parsed.y}% del total`
-                              }
-                            }
-                          }
-                        },
-                        scales: {
-                          x: {
-                            stacked: true
-                          },
-                          y: {
-                            stacked: true,
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                              callback: function(value) {
-                                return value + '%'
-                              }
-                            }
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Métricas de confiabilidad */}
-              <Card>
-                <CardHeader>
-                  <h3 className="text-lg font-semibold">Confiabilidad por Fuente</h3>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {Object.entries(dashboardData.sourceReliability).map(([source, metrics], index) => {
-                      const sourceData = waterOriginData.find(s => s.name.toLowerCase().includes(source)) || 
-                                        waterOriginData.find(s => source === 'pozos' && s.name === 'Pozos') ||
-                                        waterOriginData.find(s => source === 'municipal' && s.name === 'Agua Municipal') ||
-                                        waterOriginData.find(s => source === 'ptar' && s.name === 'PTAR') ||
-                                        waterOriginData.find(s => source === 'pipas' && s.name === 'Pipas')
-                      
-                      return (
-                        <div key={index} className="border rounded-lg p-4">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="text-primary">
-                              {sourceData?.icon}
-                            </div>
-                            <div>
-                              <h4 className="font-medium">{sourceData?.name || source}</h4>
-                              <p className="text-sm text-muted-foreground">{sourceData?.description}</p>
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-3 gap-4 text-sm">
-                            <div>
-                              <p className="text-muted-foreground">Confiabilidad</p>
-                              <div className="flex items-center gap-2">
-                                <div className="w-full bg-muted rounded-full h-2">
-                                  <div 
-                                    className={`h-2 rounded-full ${
-                                      metrics.reliability >= 90 ? 'bg-green-500' : 
-                                      metrics.reliability >= 80 ? 'bg-yellow-500' : 'bg-red-500'
-                                    }`}
-                                    style={{ width: `${metrics.reliability}%` }}
-                                  ></div>
-                                </div>
-                                <span className="font-medium">{metrics.reliability}%</span>
-                              </div>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Costo</p>
-                              <span className={`font-medium ${
-                                metrics.cost === 'Bajo' ? 'text-green-600' :
-                                metrics.cost === 'Medio' ? 'text-yellow-600' : 'text-red-600'
-                              }`}>
-                                {metrics.cost}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Disponibilidad</p>
-                              <span className="font-medium text-foreground">{metrics.availability}</span>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Detalle por fuente de agua */}
-            <Card className="mb-6">
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Detalle por Fuente de Agua</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {waterOriginData.map((source, index) => (
-                    <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                          {source.icon}
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">{source.name}</h4>
-                          <p className="text-sm text-muted-foreground">{source.percentage}% del total</p>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Volumen Mensual</p>
-                          <p className="text-xl font-bold text-foreground">{source.volume.toLocaleString()} m³</p>
-                        </div>
-                        
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div 
-                            className="bg-primary h-2 rounded-full" 
-                            style={{ width: `${source.percentage}%` }}
-                          ></div>
-                        </div>
-                        
-                        <p className="text-xs text-muted-foreground mt-2">{source.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
 
           {/* Análisis detallado */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -692,51 +641,26 @@ export default function ConsumptionPage() {
               </CardContent>
             </Card>
 
-            {/* Distribución por Categorías de Uso */}
+            {/* Resumen de Consumo por Categoría */}
             <Card>
               <CardHeader>
-                <h3 className="text-lg font-semibold">Distribución por Uso</h3>
+                <h3 className="text-lg font-semibold">Resumen por Categoría</h3>
               </CardHeader>
               <CardContent>
-                <div className="h-64 mb-4">
-                  <ChartComponent 
-                    data={{
-                      labels: categoryData.map(item => item.name),
-                      datasets: [{
-                        data: categoryData.map(item => item.value),
-                        backgroundColor: [
-                          'rgba(59, 130, 246, 0.8)',
-                          'rgba(16, 185, 129, 0.8)',
-                          'rgba(245, 158, 11, 0.8)',
-                        ],
-                        borderWidth: 0
-                      }]
-                    }} 
-                    type="doughnut"
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'bottom'
-                        },
-                        tooltip: {
-                          callbacks: {
-                            label: function(context) {
-                              const item = categoryData[context.dataIndex]
-                              return `${item.name}: ${item.value.toLocaleString()} m³ (${item.percentage}%)`
-                            }
-                          }
-                        }
-                      }
-                    }}
-                  />
-                </div>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {categoryData.map((category, index) => (
-                    <div key={index} className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{category.name}</span>
-                      <span className="text-muted-foreground">{category.value.toLocaleString()} m³ ({category.percentage}%)</span>
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">{category.name}</span>
+                        <span className="text-lg font-bold">{category.value.toLocaleString()} m³</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full" 
+                          style={{ width: `${category.percentage}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">{category.percentage}% del total</p>
                     </div>
                   ))}
                 </div>

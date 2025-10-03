@@ -21,11 +21,12 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import ComplexWaterBackground from '../components/WaterBackground'
-import Brave_form from '../components/Brave_form'
+import Braveform from '../components/BrevoForm'
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const benefits = [
     {
@@ -67,7 +68,22 @@ const LandingPage = () => {
   };
 
   const handleDashboardRedirect = () => {
-    navigate('/dashboard');
+    console.log('Redirigiendo al dashboard...');
+    setIsNavigating(true);
+    
+    try {
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error al navegar al dashboard:', error);
+      setIsNavigating(false);
+      // Fallback: redirección manual
+      window.location.href = '/dashboard';
+    }
+    
+    // Resetear el estado después de un tiempo
+    setTimeout(() => {
+      setIsNavigating(false);
+    }, 2000);
   };
 
   return (
@@ -174,13 +190,28 @@ const LandingPage = () => {
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 <Button 
-                  onClick={handleDashboardRedirect}
+                  onClick={() => {
+                    console.log('Botón Ver demo clickeado');
+                    handleDashboardRedirect();
+                  }}
                   variant="outline"
                   size="lg"
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 text-lg"
+                  disabled={isNavigating}
+                  className={`border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 text-lg transition-all duration-200 hover:border-blue-300 hover:text-blue-600 ${
+                    isNavigating ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
-                  <Play className="w-5 h-5 mr-2" />
-                  Ver demo
+                  {isNavigating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-2"></div>
+                      Cargando...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-5 h-5 mr-2" />
+                      Ver demo
+                    </>
+                  )}
                 </Button>
               </div>
 
@@ -477,7 +508,7 @@ const LandingPage = () => {
               {/* Decorative gradient border */}
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 rounded-2xl blur opacity-75"></div>
               <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden">
-                <Brave_form />
+                <Braveform />
               </div>
             </div>
             

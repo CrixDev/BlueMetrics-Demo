@@ -12,6 +12,7 @@ import AddDataPage from './pages/AddDataPage'
 import AlertsPage from './pages/AlertsPage'
 import PredictionsPage from './pages/PredictionsPage'
 import ContactPage from './pages/ContactPage'
+import ConfirmationPage from './pages/ConfirmationPage'
 
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         {/* Rutas temporalmente sin protección para desarrollo */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/confirmacion" element={<ConfirmationPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/consumo" element={<ConsumptionPage />} />
         <Route path="/balance" element={<WaterBalancePage />} />
