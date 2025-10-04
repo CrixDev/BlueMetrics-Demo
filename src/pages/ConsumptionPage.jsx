@@ -22,12 +22,14 @@ import {
   Factory
 } from 'lucide-react'
 
+import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth';
+
 export default function ConsumptionPage() {
   const [timeFrame, setTimeFrame] = useState('monthly')
   const [selectedYear, setSelectedYear] = useState('2025')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [chartType, setChartType] = useState('bar')
-  const [viewMode, setViewMode] = useState('conjunto') // 'servicios', 'riego', 'conjunto'
+  const [viewMode, setViewMode] = useState('Consumo Total') // 'servicios', 'riego', 'conjunto'
   const [periodView, setPeriodView] = useState('monthly') // 'monthly', 'yearly'
   const [selectedYearsComparison, setSelectedYearsComparison] = useState(['2024', '2025']) // Años para comparar
 
@@ -72,7 +74,7 @@ export default function ConsumptionPage() {
           case 'riego':
             value = Math.round((totalAnual * 0.7) / 1000) // 70% para riego
             break
-          case 'conjunto':
+          case 'Consumo Total':
           default:
             value = Math.round(totalAnual / 1000)
             break
@@ -101,7 +103,7 @@ export default function ConsumptionPage() {
             case 'riego':
             value = Math.round((totalValue * 0.7) / 1000) // 70% para riego
               break
-            case 'conjunto':
+            case 'Consumo Total':
             default:
               value = Math.round(totalValue / 1000)
               break
@@ -316,7 +318,8 @@ export default function ConsumptionPage() {
 
 
   return (
-    <div className="min-h-screen bg-background">
+    <RedirectIfNotAuth>
+      <div className="min-h-screen bg-background">
       <DashboardSidebar />
       
       <div className="ml-64">
@@ -400,7 +403,7 @@ export default function ConsumptionPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">M³ Cedidos por Anexo</p>
+                    <p className="text-sm text-muted-foreground">m³ Cedidos por Anexo</p>
                     <p className="text-2xl font-bold text-foreground">
                       {m3CedidosTitulo1.toLocaleString()} m³
                     </p>
@@ -417,7 +420,7 @@ export default function ConsumptionPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">M³ Cedidos por Título</p>
+                    <p className="text-sm text-muted-foreground">m³ Cedidos por Título</p>
                     <p className="text-2xl font-bold text-foreground">
                       {m3CedidosTitulo2.toLocaleString()} m³
                     </p>
@@ -476,7 +479,7 @@ export default function ConsumptionPage() {
                         }}
                         className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                       >
-                        <option value="conjunto">Consumo Total</option>
+                        <option value="Consumo Total">Consumo Total</option>
                         <option value="servicios">Solo Servicios</option>
                         <option value="riego">Solo Riego</option>
                       </select>
@@ -700,5 +703,6 @@ export default function ConsumptionPage() {
         </main>
       </div>
     </div>
+    </RedirectIfNotAuth>
   )
 }

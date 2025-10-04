@@ -46,9 +46,10 @@ import {
   BarChart3Icon
 } from 'lucide-react'
 
+import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth';
+
 export default function DashboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState('monthly')
-
   const { consumption, goals, efficiencyKPIs } = dashboardData
 
   // Formatear números
@@ -162,6 +163,7 @@ export default function DashboardPage() {
   }
 
   return (
+    <RedirectIfNotAuth>
     <div className="min-h-screen bg-background">
       <DashboardSidebar />
       
@@ -463,4 +465,6 @@ export default function DashboardPage() {
       </div>
     </div>
   )
+    </RedirectIfNotAuth>
+  );
 }

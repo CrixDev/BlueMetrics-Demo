@@ -32,10 +32,10 @@ export default function AddDataPage() {
     fromMonth: new Date().getMonth() + 1,
     toMonth: new Date().getMonth() + 1,
     useRange: false, // Para alternar entre período único y rango
-    m3CededByAnnex: '',
-    m3CededByTitle: '',
-    realConsumption: '',
-    availableForConsumption: '',
+    m3PorAnexo: '',
+    m3CedidosPorAnexo: '',
+    m3PorTitulo: '',
+    m3CedidosPorTitulo: '',
     observations: ''
   })
 
@@ -143,13 +143,18 @@ export default function AddDataPage() {
     }
     
     // Validar campos numéricos
-    const numericFields = ['m3CededByAnnex', 'm3CededByTitle', 'realConsumption', 'availableForConsumption']
+    const numericFields = ['m3PorAnexo', 'm3CedidosPorAnexo', 'm3PorTitulo', 'm3CedidosPorTitulo']
     numericFields.forEach(field => {
       const value = parseFloat(formData[field])
       if (!formData[field] || isNaN(value) || value < 0) {
         newErrors[field] = 'Debe ser un número válido mayor o igual a 0'
       }
     })
+
+    // Validar que m3CedidosPorAnexo no sea mayor que m3PorAnexo
+    if (parseFloat(formData.m3CedidosPorAnexo) > parseFloat(formData.m3PorAnexo)) {
+      newErrors.m3CedidosPorAnexo = 'Los m³ cedidos no pueden ser mayores que los m³ por anexo'
+    }
 
     if (!formData.observations.trim()) {
       newErrors.observations = 'Las observaciones son requeridas'
@@ -174,10 +179,11 @@ export default function AddDataPage() {
       const dataToSubmit = {
         ...formData,
         period: generatePeriod(),
-        m3CededByAnnex: parseFloat(formData.m3CededByAnnex),
-        m3CededByTitle: parseFloat(formData.m3CededByTitle),
-        realConsumption: parseFloat(formData.realConsumption),
-        availableForConsumption: parseFloat(formData.availableForConsumption),
+        m3PorAnexo: parseFloat(formData.m3PorAnexo),
+        m3CedidosPorAnexo: parseFloat(formData.m3CedidosPorAnexo),
+        m3PorTitulo: parseFloat(formData.m3PorTitulo),
+        m3CedidosPorTitulo: parseFloat(formData.m3CedidosPorTitulo),
+        disponibleParaConsumo: parseFloat(formData.m3PorAnexo) - parseFloat(formData.m3CedidosPorAnexo),
         createdAt: new Date().toISOString()
       }
       
@@ -531,13 +537,13 @@ export default function AddDataPage() {
                         type="number"
                         step="0.001"
                         min="0"
-                        value={formData.m3CededByAnnex}
-                        onChange={(e) => handleInputChange('m3CededByAnnex', e.target.value)}
+                        value={formData.m3PorAnexo}
+                        onChange={(e) => handleInputChange('m3PorAnexo', e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                         placeholder="0.000"
                         disabled={isSubmitting}
                       />
-                      {errors.m3CededByAnnex && <p className="text-red-500 text-sm mt-1">{errors.m3CededByAnnex}</p>}
+                      {errors.m3PorAnexo && <p className="text-red-500 text-sm mt-1">{errors.m3PorAnexo}</p>}
                     </div>
 
                     <div>
@@ -548,32 +554,51 @@ export default function AddDataPage() {
                         type="number"
                         step="0.001"
                         min="0"
-                        value={formData.m3CededByTitle}
-                        onChange={(e) => handleInputChange('m3CededByTitle', e.target.value)}
+                        value={formData.m3CedidosPorAnexo}
+                        onChange={(e) => handleInputChange('m3CedidosPorAnexo', e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                         placeholder="0.000"
                         disabled={isSubmitting}
                       />
-                      {errors.m3CededByTitle && <p className="text-red-500 text-sm mt-1">{errors.m3CededByTitle}</p>}
+                      {errors.m3CedidosPorAnexo && <p className="text-red-500 text-sm mt-1">{errors.m3CedidosPorAnexo}</p>}
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">
-                        Consumo Real *
+                      Consumo Real *
                       </label>
                       <input
                         type="number"
                         step="0.001"
                         min="0"
-                        value={formData.realConsumption}
-                        onChange={(e) => handleInputChange('realConsumption', e.target.value)}
+                        value={formData.m3PorTitulo}
+                        onChange={(e) => handleInputChange('m3PorTitulo', e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                         placeholder="0.000"
                         disabled={isSubmitting}
                       />
-                      {errors.realConsumption && <p className="text-red-500 text-sm mt-1">{errors.realConsumption}</p>}
+                      {errors.m3PorTitulo && <p className="text-red-500 text-sm mt-1">{errors.m3PorTitulo}</p>}
                     </div>
 
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Disponible para Consumo
+                      </label>
+                      <div className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-700">
+                        {formData.m3PorAnexo && formData.m3CedidosPorAnexo ? (
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">
+                              {(parseFloat(formData.m3PorAnexo) - parseFloat(formData.m3CedidosPorAnexo)).toFixed(2)} m³
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {parseFloat(formData.m3PorAnexo).toFixed(2)} - {parseFloat(formData.m3CedidosPorAnexo).toFixed(2)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">0.00 m³</span>
+                        )}
+                      </div>
+                    </div>
                   
                   </div>
                 </div>

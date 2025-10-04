@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router'
-import { AuthProvider } from './contexts/AuthContext'
-// import ProtectedRoute from './components/ProtectedRoute' // Temporalmente desactivado
+// import { AuthProvider } from './contexts/AuthContext'
+// import ProtectedRoute from './components/ProtectedRoute'
+// import AdminRoute from './components/AdminRoute'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
@@ -13,16 +14,19 @@ import AlertsPage from './pages/AlertsPage'
 import PredictionsPage from './pages/PredictionsPage'
 import ContactPage from './pages/ContactPage'
 import ConfirmationPage from './pages/ConfirmationPage'
+import CorreosPage from './pages/CorreosPage'
 
 
 function App() {
   return (
-    <AuthProvider>
+    // <AuthProvider>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        {/* Rutas temporalmente sin protección para desarrollo */}
+        {/* Rutas públicas - accesibles sin autenticación */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/confirmacion" element={<ConfirmationPage />} />
+
+        {/* Rutas protegidas - TEMPORALMENTE DESACTIVADAS - Todos pueden acceder */}
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/consumo" element={<ConsumptionPage />} />
         <Route path="/balance" element={<WaterBalancePage />} />
@@ -32,9 +36,11 @@ function App() {
         <Route path="/alertas" element={<AlertsPage />} />
         <Route path="/predicciones" element={<PredictionsPage />} />
         <Route path="/contacto" element={<ContactPage />} />
-      
+
+        {/* Ruta de administradores - TEMPORALMENTE DESACTIVADA - Todos pueden acceder */}
+        <Route path="/correos" element={<CorreosPage />} />
       </Routes>
-    </AuthProvider>
+    // </AuthProvider>
   );
 }
 

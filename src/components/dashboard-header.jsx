@@ -1,10 +1,65 @@
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { dashboardData, getAlertCount } from "../lib/dashboard-data"
-import { useAuth } from "../contexts/AuthContext"
+import { supabase } from '../supabaseClient'
+import { useNavigate } from 'react-router'
+import { useState, useEffect } from 'react'
 
 export function DashboardHeader() {
-  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const [user, setUser] = useState({ name: 'Cargando...', role: '...' })
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('❌ Error al obtener sesión:', error)
+          return
+        }
+
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+
+          setUser({
+            name: profile?.full_name || session.user.email,
+            role: profile?.role || 'user'
+          })
+        }
+      } catch (error) {
+        console.error('❌ Error al cargar usuario:', error)
+      }
+    }
+
+    loadUser()
+  }, [])
+
+  const logout = async () => {
+    try {
+      setIsLoggingOut(true)
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        console.error('❌ Error al cerrar sesión:', error)
+        throw error
+      }
+
+      console.log('✅ Sesión cerrada exitosamente')
+      navigate('/')
+    } catch (error) {
+      console.error('❌ Error inesperado:', error)
+      alert('Error al cerrar sesión. Por favor, intenta de nuevo.')
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+  
   const criticalAlerts = getAlertCount("critical")
   const warningAlerts = getAlertCount("warning")
 
@@ -62,12 +117,22 @@ export function DashboardHeader() {
               variant="outline" 
               size="sm" 
               onClick={logout}
-              className="text-sm px-3 py-1 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+              disabled={isLoggingOut}
+              className="text-sm px-3 py-1 hover:bg-red-50 hover:text-red-600 hover:border-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-4 h-4 mr-2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-              </svg>
-              Cerrar Sesión
+              {isLoggingOut ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                  Cerrando sesión...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-4 h-4 mr-2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                  </svg>
+                  Cerrar Sesión
+                </>
+              )}
             </Button>
           </div>
         </div>

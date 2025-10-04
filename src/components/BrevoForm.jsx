@@ -1,54 +1,75 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader } from './ui/card';
-import { Mail, User, Phone, Building, ArrowRight, CheckCircle } from 'lucide-react';
+import { Mail, User, Phone, Building, ArrowRight, CheckCircle, MessageSquare } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 const BrevoForm = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // useEffect sigue siendo necesario para cargar la hoja de estilos base de Brevo.
-  useEffect(() => {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://sibforms.com/forms/end-form/build/sib-styles.css';
-    document.head.appendChild(link);
-
-    // Limpia el <link> cuando el componente se desmonte
-    return () => {
-      document.head.removeChild(link);
-    };
-  }, []); // El array vacío asegura que se ejecute solo una vez
+  // BREVO DESACTIVADO - Ahora se usa Supabase
+  // useEffect(() => {
+  //   const link = document.createElement('link');
+  //   link.rel = 'stylesheet';
+  //   link.href = 'https://sibforms.com/forms/end-form/build/sib-styles.css';
+  //   document.head.appendChild(link);
+  //   return () => {
+  //     document.head.removeChild(link);
+  //   };
+  // }, []);
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevenir el envío por defecto
+    e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      // Crear FormData con los datos del formulario
+      // Obtener datos del formulario
       const formData = new FormData(e.target);
+      const nombre = formData.get('NOMBRE');
+      const apellidos = formData.get('APELLIDOS');
+      const email = formData.get('EMAIL');
+      const telefono = formData.get('TELEFONO');
+      const empresa = formData.get('EMPRESA');
+      const mensaje = formData.get('MENSAJE');
       
-      // Enviar datos a Brevo usando fetch
-      const response = await fetch('https://e098f742.sibforms.com/serve/MUIFAOkhus2nKJ9I3zdEQPLgWqYSLd6nqUWY12Q2SO-Q8kM9CFbggF-2fm708G9weeKcHv3uv8UGs-64SzWr_B67ipt9L6mxOUR7d_zwJBxgoo0rUK-6h50gmaqlNyeSuzWQ2padLpJE-lnFZdUfEccYFm3nh96Nr7KqqhaTZlK0vMUPIYEj6aFXyNc_3YwvGTl6RCMeDsWpQwe2', {
-        method: 'POST',
-        body: formData,
-        mode: 'no-cors' // Importante para evitar problemas de CORS
-      });
+      // Construir el remitente completo
+      const remitente = apellidos ? `${nombre} ${apellidos}` : nombre;
       
-      // Simular tiempo de procesamiento
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      console.log('Formulario enviado exitosamente. Redirigiendo a /confirmacion');
+      // Insertar en Supabase tabla 'correos'
+      const { data, error } = await supabase
+        .from('correos')
+        .insert([
+          {
+            remitente: remitente,
+            email: email,
+            telefono: telefono || null,
+            empresa: empresa || null,
+            asunto: 'Solicitud de demo desde Landing Page',
+            mensaje: mensaje || `Solicitud de contacto de ${remitente}`,
+            leido: false,
+            importante: false,
+            categoria: 'consulta'
+          }
+        ])
+        .select();
+
+      if (error) {
+        console.error('❌ Error al guardar en Supabase:', error);
+        throw error;
+      }
+
+      console.log('✅ Correo guardado exitosamente en Supabase:', data);
       
       // Redirigir a la página de confirmación
       navigate('/confirmacion');
       
     } catch (error) {
-      console.error('Error al enviar el formulario:', error);
+      console.error('❌ Error al enviar el formulario:', error);
       setIsSubmitting(false);
       
-      // Mostrar mensaje de error (opcional)
+      // Mostrar mensaje de error
       alert('Hubo un problema al enviar el formulario. Por favor, inténtalo de nuevo.');
     }
   };
@@ -57,9 +78,6 @@ const BrevoForm = () => {
     <Card className="border-0 shadow-none bg-transparent">
       <CardContent className="p-8">
         <form
-          id="sib-form"
-          method="POST"
-          action="https://e098f742.sibforms.com/serve/MUIFAOkhus2nKJ9I3zdEQPLgWqYSLd6nqUWY12Q2SO-Q8kM9CFbggF-2fm708G9weeKcHv3uv8UGs-64SzWr_B67ipt9L6mxOUR7d_zwJBxgoo0rUK-6h50gmaqlNyeSuzWQ2padLpJE-lnFZdUfEccYFm3nh96Nr7KqqhaTZlK0vMUPIYEj6aFXyNc_3YwvGTl6RCMeDsWpQwe2"
           onSubmit={handleSubmit}
           className="space-y-6"
         >
@@ -166,9 +184,25 @@ const BrevoForm = () => {
                 />
               </div>
             </div>
-          </div>
 
-        
+            {/* Campo MENSAJE */}
+            <div className="space-y-2 md:col-span-2">
+              <label className="block text-sm font-semibold text-blue-900" htmlFor="MENSAJE">
+                Mensaje
+              </label>
+              <div className="relative">
+                <MessageSquare className="absolute left-3 top-3 text-blue-400 w-5 h-5" />
+                <textarea 
+                  className="w-full pl-10 pr-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/80 backdrop-blur-sm resize-none"
+                  id="MENSAJE" 
+                  name="MENSAJE" 
+                  autoComplete="off" 
+                  placeholder="Cuéntanos sobre tu proyecto..." 
+                  rows="4"
+                />
+              </div>
+            </div>
+          </div>
           
           {/* Botón de envío */}
           <div className="pt-4">
@@ -190,11 +224,6 @@ const BrevoForm = () => {
               )}
             </Button>
           </div>
-
-          {/* Campos ocultos */}
-          <input type="text" name="email_address_check" value="" className="hidden" />
-          <input type="hidden" name="locale" value="es" />
-          <input type="hidden" name="html_type" value="simple" />
         </form>
       </CardContent>
     </Card>

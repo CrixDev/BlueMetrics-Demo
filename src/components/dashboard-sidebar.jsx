@@ -1,10 +1,50 @@
 import { Button } from "../components/ui/button"
 import { useLocation, useNavigate } from "react-router"
+import { Mail } from "lucide-react"
 import AquaNetLogoWhite from "./svg/AquaNetLogoWhite"
+import { useState } from "react"
+// import { useEffect } from "react"
+// import { supabase } from "../supabaseClient"
 
 export function DashboardSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
+  // const [userRole, setUserRole] = useState(null)
+  // TEMPORALMENTE DESACTIVADO - Todos tienen acceso de admin para pruebas
+  const [userRole, setUserRole] = useState('admin')
+
+  // useEffect(() => {
+  //   const getUserRole = async () => {
+  //     try {
+  //       console.log('🔍 [Sidebar] Obteniendo rol del usuario...');
+  //       const { data: { session } } = await supabase.auth.getSession()
+        
+  //       if (session?.user) {
+  //         console.log('✅ [Sidebar] Sesión encontrada, consultando profiles...');
+          
+  //         // GET directo a profiles para obtener el rol
+  //         const { data: profile, error } = await supabase
+  //           .from('profiles')
+  //           .select('role')
+  //           .eq('id', session.user.id)
+  //           .single()
+          
+  //         if (error) {
+  //           console.error('❌ [Sidebar] Error al obtener rol:', error);
+  //           setUserRole('user');
+  //         } else {
+  //           console.log('✅ [Sidebar] Rol obtenido:', profile?.role);
+  //           setUserRole(profile?.role || 'user');
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error('❌ [Sidebar] Error inesperado:', error)
+  //       setUserRole('user')
+  //     }
+  //   }
+
+  //   getUserRole()
+  // }, [])
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard Principal", path: "/dashboard", active: location.pathname === "/dashboard" },
@@ -15,6 +55,11 @@ export function DashboardSidebar() {
     { id: "predictions", label: "Predicciones", path: "/predicciones", active: location.pathname === "/predicciones" },
     { id: "alerts", label: "Alertas", path: "/alertas", active: location.pathname === "/alertas" },
   ]
+
+  // SOLO agregar Correos si el rol es admin
+  const allMenuItems = userRole === 'admin' 
+    ? [...menuItems, { id: "correos", label: "Correos", path: "/correos", active: location.pathname === "/correos", icon: Mail }]
+    : menuItems
 
   const handleNavigation = (path) => {
     navigate(path)
@@ -34,7 +79,7 @@ export function DashboardSidebar() {
       {/* Menú de navegación */}
       <div className="p-4">
         <nav className="space-y-2">
-          {menuItems.map((item) => (
+          {allMenuItems.map((item) => (
             <Button
               key={item.id}
               variant={item.active ? "default" : "ghost"}
@@ -45,7 +90,13 @@ export function DashboardSidebar() {
               }`}
               onClick={() => handleNavigation(item.path)}
             >
+              {item.icon && <item.icon className="w-4 h-4 mr-2" />}
               {item.label}
+              {item.id === "correos" && (
+                <span className="ml-auto bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  Admin
+                </span>
+              )}
             </Button>
           ))}
         </nav>

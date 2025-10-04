@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
@@ -10,7 +9,7 @@ import { ArrowRight } from 'lucide-react';
 
 const LoginPage = () => {
   const [credentials, setCredentials] = useState({
-    username: '',
+    email: '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -22,10 +21,11 @@ const LoginPage = () => {
     password: '',
     username: '',
     full_name: '',
+    company: '',
+    role: 'user',
     avatar_url: null
   });
   
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,20 +48,28 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const result = await login(credentials.username, credentials.password);
-    
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setError(result.message);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password
+      });
+
+      if (error) throw error;
+
+      if (data?.user) {
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Error de inicio de sesión:', error);
+      setError(error.message || 'Error al iniciar sesión');
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
-  const handleInputChange = (e) => {
+  const handleEmailChange = (e) => {
     const { name, value } = e.target;
     setCredentials(prev => ({
       ...prev,
@@ -97,6 +105,7 @@ const LoginPage = () => {
 
     try {
       // 1. Registrar usuario en Supabase Auth
+      // El trigger creará automáticamente el perfil en la tabla profiles
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: registerData.email,
         password: registerData.password,
@@ -104,29 +113,16 @@ const LoginPage = () => {
           data: {
             username: registerData.username,
             full_name: registerData.full_name,
+            company: registerData.company,
+            role: registerData.role,
+            avatar_url: registerData.avatar_url
           }
         }
       });
 
       if (authError) throw authError;
 
-      // 2. Insertar datos adicionales en la tabla de usuarios
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: authData.user.id,
-            username: registerData.username,
-            full_name: registerData.full_name,
-            avatar_url: registerData.avatar_url,
-            email: registerData.email,
-            updated_at: new Date().toISOString()
-          }
-        ]);
-
-      if (profileError) throw profileError;
-
-      // 3. Éxito - mostrar mensaje y cambiar a modo login
+      // 2. Éxito - el perfil se crea automáticamente con el trigger
       setError('');
       setIsRegisterMode(false);
       alert('Cuenta creada exitosamente. Por favor, verifica tu correo electrónico.');
@@ -211,6 +207,40 @@ const LoginPage = () => {
             </div>
 
             <div>
+              <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">
+                Empresa
+              </label>
+              <input
+                type="text"
+                id="company"
+                name="company"
+                value={registerData.company}
+                onChange={handleRegisterInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Nombre de tu empresa"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
+                Rol
+              </label>
+              <select
+                id="role"
+                name="role"
+                value={registerData.role}
+                onChange={handleRegisterInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                required
+              >
+                <option value="user">Usuario</option>
+                <option value="admin">Administrador</option>
+                <option value="operator">Operador</option>
+              </select>
+            </div>
+
+            <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Contraseña
               </label>
@@ -263,17 +293,17 @@ const LoginPage = () => {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Usuario
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Correo Electrónico
               </label>
               <input
-                type="text"
-                id="username"
-                name="username"
-                value={credentials.username}
-                onChange={handleInputChange}
+                type="email"
+                id="email"
+                name="email"
+                value={credentials.email}
+                onChange={handleEmailChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ingresa tu usuario"
+                placeholder="tu@email.com"
                 required
               />
             </div>
@@ -287,7 +317,7 @@ const LoginPage = () => {
                 id="password"
                 name="password"
                 value={credentials.password}
-                onChange={handleInputChange}
+                onChange={handleEmailChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Ingresa tu contraseña"
                 required
@@ -358,19 +388,7 @@ const LoginPage = () => {
         </Button>
 
         {/* Usuarios de prueba */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Usuarios de prueba:</h3>
-          <div className="space-y-2 text-sm text-gray-600">
-            <div className="bg-gray-50 p-3 rounded-md border border-gray-100">
-              <p><strong>Administrador:</strong></p>
-              <p>Usuario: admin | Contraseña: admin123</p>
-            </div>
-            <div className="bg-gray-50 p-3 rounded-md border border-gray-100">
-              <p><strong>Operador:</strong></p>
-              <p>Usuario: operador | Contraseña: op123</p>
-            </div>
-          </div>
-        </div>
+      
       </Card>
     </div>
   );
