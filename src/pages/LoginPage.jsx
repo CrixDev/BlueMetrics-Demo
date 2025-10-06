@@ -65,7 +65,17 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error('Error de inicio de sesión:', error);
-      setError(error.message || 'Error al iniciar sesión');
+      
+      // Manejo específico de errores de login
+      if (error.message.includes('Invalid login credentials') || error.message.includes('invalid_credentials')) {
+        setError('Correo electrónico o contraseña incorrectos. Por favor, verifica tus datos.');
+      } else if (error.message.includes('Email not confirmed')) {
+        setError('Por favor, confirma tu correo electrónico antes de iniciar sesión.');
+      } else if (error.message.includes('User not found')) {
+        setError('No existe una cuenta con este correo electrónico. Por favor, regístrate primero.');
+      } else {
+        setError(error.message || 'Error al iniciar sesión. Por favor, intenta de nuevo.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -124,13 +134,34 @@ const LoginPage = () => {
 
       if (authError) throw authError;
 
+      // Verificar si el usuario ya existe (Supabase devuelve success pero con identities vacías)
+      if (authData?.user && authData.user.identities?.length === 0) {
+        // Cambiar automáticamente al modo login con el email pre-llenado
+        setCredentials({ email: registerData.email, password: '' });
+        setIsRegisterMode(false);
+        setError('Este correo electrónico ya está registrado. Por favor, inicia sesión con tu contraseña.');
+        return;
+      }
+
       // 2. Éxito - el perfil se crea automáticamente con el trigger
       setError('');
       setIsRegisterMode(false);
       alert('Cuenta creada exitosamente. Por favor, verifica tu correo electrónico.');
 
     } catch (error) {
-      setError(error.message);
+      // Manejo específico de errores comunes
+      if (error.message.includes('already registered') || error.message.includes('already exists')) {
+        // Cambiar automáticamente al modo login con el email pre-llenado
+        setCredentials({ email: registerData.email, password: '' });
+        setIsRegisterMode(false);
+        setError('Este correo electrónico ya está registrado. Por favor, inicia sesión con tu contraseña.');
+      } else if (error.message.includes('password')) {
+        setError('La contraseña debe tener al menos 6 caracteres.');
+      } else if (error.message.includes('email')) {
+        setError('Por favor, ingresa un correo electrónico válido.');
+      } else {
+        setError(error.message || 'Error al crear la cuenta. Por favor, intenta de nuevo.');
+      }
       console.error('Error en registro:', error);
     } finally {
       setIsLoading(false);
