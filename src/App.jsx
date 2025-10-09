@@ -9,6 +9,7 @@ import ConsumptionPage from './pages/ConsumptionPage'
 import WaterBalancePage from './pages/WaterBalancePage'
 import WellsPage from './pages/WellsPage'
 import WellDetailPage from './pages/WellDetailPage'
+import PTARPage from './pages/PTARPage'
 import AddDataPage from './pages/AddDataPage'
 import AlertsPage from './pages/AlertsPage'
 import PredictionsPage from './pages/PredictionsPage'
@@ -32,6 +33,7 @@ function App() {
         <Route path="/balance" element={<WaterBalancePage />} />
         <Route path="/pozos" element={<WellsPage />} />
         <Route path="/pozos/:id" element={<WellDetailPage />} />
+        <Route path="/ptar" element={<PTARPage />} />
         <Route path="/agregar-datos" element={<AddDataPage />} />
         <Route path="/alertas" element={<AlertsPage />} />
         <Route path="/predicciones" element={<PredictionsPage />} />

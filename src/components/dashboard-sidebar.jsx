@@ -1,6 +1,6 @@
 import { Button } from "../components/ui/button"
 import { useLocation, useNavigate } from "react-router"
-import { Mail } from "lucide-react"
+import { Mail, Recycle } from "lucide-react"
 import AquaNetLogoWhite from "./svg/AquaNetLogoWhite"
 import { useState } from "react"
 // import { useEffect } from "react"
@@ -51,6 +51,7 @@ export function DashboardSidebar() {
     { id: "consumption", label: "Consumo", path: "/consumo", active: location.pathname === "/consumo" },
     { id: "balance", label: "Balance Hídrico", path: "/balance", active: location.pathname === "/balance" },
     { id: "wells", label: "Pozos", path: "/pozos", active: location.pathname === "/pozos" },
+    { id: "ptar", label: "PTAR", path: "/ptar", active: location.pathname === "/ptar", icon: Recycle },
     { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", active: location.pathname === "/agregar-datos" },
     { id: "predictions", label: "Predicciones", path: "/predicciones", active: location.pathname === "/predicciones" },
     { id: "alerts", label: "Alertas", path: "/alertas", active: location.pathname === "/alertas" },

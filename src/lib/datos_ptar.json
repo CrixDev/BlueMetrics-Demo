@@ -1,0 +1,323 @@
+{
+  "ptar": {
+    "nombre": "Planta de Tratamiento de Aguas Residuales",
+    "ubicacion": "Zona Industrial",
+    "capacidad_maxima_m3_dia": 500,
+    "estado": "operativa"
+  },
+  "datos_anuales": [
+    {
+      "año": "2022",
+      "aguas_negras_m3": 85000,
+      "agua_tratada_m3": 80000,
+      "consumo_pozos_riego_m3": 75000,
+      "eficiencia_tratamiento_porcentaje": 94.1,
+      "observaciones": "Año con operación estable"
+    },
+    {
+      "año": "2023",
+      "aguas_negras_m3": 92000,
+      "agua_tratada_m3": 88000,
+      "consumo_pozos_riego_m3": 82000,
+      "eficiencia_tratamiento_porcentaje": 95.7,
+      "observaciones": "Incremento en volumen procesado"
+    },
+    {
+      "año": "2024",
+      "aguas_negras_m3": 98000,
+      "agua_tratada_m3": 94000,
+      "consumo_pozos_riego_m3": 89000,
+      "eficiencia_tratamiento_porcentaje": 95.9,
+      "observaciones": "Mejora en eficiencia de tratamiento"
+    },
+    {
+      "año": "2025 (hasta junio)",
+      "aguas_negras_m3": 52000,
+      "agua_tratada_m3": 50000,
+      "consumo_pozos_riego_m3": 47000,
+      "eficiencia_tratamiento_porcentaje": 96.2,
+      "observaciones": "Primer semestre con alta eficiencia"
+    }
+  ],
+  "datos_mensuales": {
+    "aguas_negras": [
+      {
+        "año": "2022",
+        "enero": 7000,
+        "febrero": 6800,
+        "marzo": 7200,
+        "abril": 7100,
+        "mayo": 7300,
+        "junio": 7400,
+        "julio": 7500,
+        "agosto": 7200,
+        "septiembre": 6900,
+        "octubre": 7100,
+        "noviembre": 6800,
+        "diciembre": 6700
+      },
+      {
+        "año": "2023",
+        "enero": 7500,
+        "febrero": 7300,
+        "marzo": 7700,
+        "abril": 7600,
+        "mayo": 7800,
+        "junio": 7900,
+        "julio": 8000,
+        "agosto": 7700,
+        "septiembre": 7400,
+        "octubre": 7600,
+        "noviembre": 7300,
+        "diciembre": 7200
+      },
+      {
+        "año": "2024",
+        "enero": 8000,
+        "febrero": 7800,
+        "marzo": 8200,
+        "abril": 8100,
+        "mayo": 8300,
+        "junio": 8400,
+        "julio": 8500,
+        "agosto": 8200,
+        "septiembre": 7900,
+        "octubre": 8100,
+        "noviembre": 7800,
+        "diciembre": 7700
+      },
+      {
+        "año": "2025",
+        "enero": 8500,
+        "febrero": 8300,
+        "marzo": 8700,
+        "abril": 8600,
+        "mayo": 8900,
+        "junio": 9000,
+        "julio": null,
+        "agosto": null,
+        "septiembre": null,
+        "octubre": null,
+        "noviembre": null,
+        "diciembre": null
+      }
+    ],
+    "agua_tratada": [
+      {
+        "año": "2022",
+        "enero": 6500,
+        "febrero": 6400,
+        "marzo": 6800,
+        "abril": 6700,
+        "mayo": 6900,
+        "junio": 7000,
+        "julio": 7100,
+        "agosto": 6800,
+        "septiembre": 6500,
+        "octubre": 6700,
+        "noviembre": 6400,
+        "diciembre": 6200
+      },
+      {
+        "año": "2023",
+        "enero": 7200,
+        "febrero": 7000,
+        "marzo": 7400,
+        "abril": 7300,
+        "mayo": 7500,
+        "junio": 7600,
+        "julio": 7700,
+        "agosto": 7400,
+        "septiembre": 7100,
+        "octubre": 7300,
+        "noviembre": 7000,
+        "diciembre": 6900
+      },
+      {
+        "año": "2024",
+        "enero": 7700,
+        "febrero": 7500,
+        "marzo": 7900,
+        "abril": 7800,
+        "mayo": 8000,
+        "junio": 8100,
+        "julio": 8200,
+        "agosto": 7900,
+        "septiembre": 7600,
+        "octubre": 7800,
+        "noviembre": 7500,
+        "diciembre": 7400
+      },
+      {
+        "año": "2025",
+        "enero": 8200,
+        "febrero": 8000,
+        "marzo": 8400,
+        "abril": 8300,
+        "mayo": 8600,
+        "junio": 8700,
+        "julio": null,
+        "agosto": null,
+        "septiembre": null,
+        "octubre": null,
+        "noviembre": null,
+        "diciembre": null
+      }
+    ],
+    "consumo_pozos_riego": [
+      {
+        "año": "2022",
+        "enero": 6000,
+        "febrero": 5900,
+        "marzo": 6300,
+        "abril": 6200,
+        "mayo": 6400,
+        "junio": 6500,
+        "julio": 6600,
+        "agosto": 6300,
+        "septiembre": 6000,
+        "octubre": 6200,
+        "noviembre": 5900,
+        "diciembre": 5700
+      },
+      {
+        "año": "2023",
+        "enero": 6700,
+        "febrero": 6500,
+        "marzo": 6900,
+        "abril": 6800,
+        "mayo": 7000,
+        "junio": 7100,
+        "julio": 7200,
+        "agosto": 6900,
+        "septiembre": 6600,
+        "octubre": 6800,
+        "noviembre": 6500,
+        "diciembre": 6400
+      },
+      {
+        "año": "2024",
+        "enero": 7200,
+        "febrero": 7000,
+        "marzo": 7400,
+        "abril": 7300,
+        "mayo": 7500,
+        "junio": 7600,
+        "julio": 7700,
+        "agosto": 7400,
+        "septiembre": 7100,
+        "octubre": 7300,
+        "noviembre": 7000,
+        "diciembre": 6900
+      },
+      {
+        "año": "2025",
+        "enero": 7700,
+        "febrero": 7500,
+        "marzo": 7900,
+        "abril": 7800,
+        "mayo": 8100,
+        "junio": 8200,
+        "julio": null,
+        "agosto": null,
+        "septiembre": null,
+        "octubre": null,
+        "noviembre": null,
+        "diciembre": null
+      }
+    ]
+  },
+  "datos_trimestrales": {
+    "aguas_negras": [
+      {
+        "año": "2022",
+        "primer_trimestre": 21000,
+        "segundo_trimestre": 21800,
+        "tercer_trimestre": 21600,
+        "cuarto_trimestre": 20600
+      },
+      {
+        "año": "2023",
+        "primer_trimestre": 22500,
+        "segundo_trimestre": 23300,
+        "tercer_trimestre": 23100,
+        "cuarto_trimestre": 22100
+      },
+      {
+        "año": "2024",
+        "primer_trimestre": 24000,
+        "segundo_trimestre": 24800,
+        "tercer_trimestre": 24600,
+        "cuarto_trimestre": 23600
+      },
+      {
+        "año": "2025",
+        "primer_trimestre": 25500,
+        "segundo_trimestre": 26500,
+        "tercer_trimestre": null,
+        "cuarto_trimestre": null
+      }
+    ],
+    "agua_tratada": [
+      {
+        "año": "2022",
+        "primer_trimestre": 19700,
+        "segundo_trimestre": 20600,
+        "tercer_trimestre": 20400,
+        "cuarto_trimestre": 19300
+      },
+      {
+        "año": "2023",
+        "primer_trimestre": 21600,
+        "segundo_trimestre": 22400,
+        "tercer_trimestre": 22200,
+        "cuarto_trimestre": 21200
+      },
+      {
+        "año": "2024",
+        "primer_trimestre": 23100,
+        "segundo_trimestre": 23900,
+        "tercer_trimestre": 23700,
+        "cuarto_trimestre": 22700
+      },
+      {
+        "año": "2025",
+        "primer_trimestre": 24600,
+        "segundo_trimestre": 25600,
+        "tercer_trimestre": null,
+        "cuarto_trimestre": null
+      }
+    ],
+    "consumo_pozos_riego": [
+      {
+        "año": "2022",
+        "primer_trimestre": 18200,
+        "segundo_trimestre": 19100,
+        "tercer_trimestre": 18900,
+        "cuarto_trimestre": 17800
+      },
+      {
+        "año": "2023",
+        "primer_trimestre": 20100,
+        "segundo_trimestre": 20900,
+        "tercer_trimestre": 20700,
+        "cuarto_trimestre": 19700
+      },
+      {
+        "año": "2024",
+        "primer_trimestre": 21600,
+        "segundo_trimestre": 22400,
+        "tercer_trimestre": 22200,
+        "cuarto_trimestre": 21200
+      },
+      {
+        "año": "2025",
+        "primer_trimestre": 23100,
+        "segundo_trimestre": 24100,
+        "tercer_trimestre": null,
+        "cuarto_trimestre": null
+      }
+    ]
+  }
+}
+

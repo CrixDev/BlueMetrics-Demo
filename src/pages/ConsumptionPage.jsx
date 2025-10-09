@@ -188,11 +188,40 @@ export default function ConsumptionPage() {
 
   // Datos de consumo por categoría
   const getCategoryData = () => {
-    const total = dashboardData.waterUsage.reduce((sum, item) => sum + item.volume, 0)
-    return dashboardData.waterUsage.map(item => ({
-      name: item.name,
-      value: item.volume,
-      percentage: ((item.volume / total) * 100).toFixed(1)
+    return [
+      {
+        name: 'Pozos Total',
+        value: 12500,
+        percentage: 85.5,
+        meta: 15000
+      },
+      {
+        name: 'Servicios',
+        value: 3750,
+        percentage: 78.2,
+        meta: 4800
+      },
+      {
+        name: 'Riego',
+        value: 8750,
+        percentage: 89.3,
+        meta: 9800
+      },
+      {
+        name: 'Torres de enfriamiento',
+        value: 2800,
+        percentage: 93.3,
+        meta: 3000
+      },
+      {
+        name: 'PTAR',
+        value: 1500,
+        percentage: 75.0,
+        meta: 2000
+      }
+    ].map(item => ({
+      ...item,
+      percentage: ((item.value / item.meta) * 100).toFixed(1)
     }))
   }
 
@@ -352,9 +381,9 @@ export default function ConsumptionPage() {
                       {consumoPozos.toLocaleString()} m³
                     </p>
                     <div className="flex items-center gap-1 mt-1">
-                      <TrendingUpIcon className={`h-4 w-4 ${parseFloat(consumptionTrend) > 0 ? 'text-destructive' : 'text-green-500'}`} />
-                      <span className={`text-sm ${parseFloat(consumptionTrend) > 0 ? 'text-destructive' : 'text-green-500'}`}>
-                        {Math.abs(consumptionTrend)}% vs anterior
+                      <TrendingUpIcon className={`h-4 w-4 ${parseFloat(consumptionTrend) > 0 ? 'text-destructive' : 'text-red-500'}`} />
+                      <span className={`text-sm ${parseFloat(consumptionTrend) > 0 ? 'text-destructive' : 'text-red-500'}`}>
+                        {Math.abs(consumptionTrend)}% vs mes anterior
                       </span>
                     </div>
                   </div>
@@ -373,7 +402,7 @@ export default function ConsumptionPage() {
                     <p className="text-2xl font-bold text-foreground">
                       {serviciosTotal.toLocaleString()} m³
                     </p>
-                    <p className="text-sm text-blue-500 mt-1">Mensual</p>
+                    <p className="text-sm text-blue-500 mt-1">vs mes anterior</p>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
                     <Building2 className="h-6 w-6 text-blue-500" />
@@ -390,7 +419,7 @@ export default function ConsumptionPage() {
                     <p className="text-2xl font-bold text-foreground">
                       {riegoTotal.toLocaleString()} m³
                     </p>
-                    <p className="text-sm text-green-500 mt-1">Mensual</p>
+                    <p className="text-sm text-green-500 mt-1">vs mes anterior</p>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
                     <Waves className="h-6 w-6 text-green-500" />
@@ -442,7 +471,7 @@ export default function ConsumptionPage() {
                 <h3 className="text-lg font-semibold">
                   {viewMode === 'servicios' ? 'Consumo de Servicios' : 
                    viewMode === 'riego' ? 'Consumo de Riego' : 
-                   'Consumo Total'} - {periodView === 'monthly' ? 'Mensual' : 'Anual'}
+                   'Consumo Total'} - {periodView === 'monthly' ? 'vs mes anterior' : 'Anual'}
                 </h3>
               </CardHeader>
               <CardContent>
@@ -496,7 +525,7 @@ export default function ConsumptionPage() {
                         }}
                         className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                       >
-                        <option value="monthly">Mensual</option>
+                        <option value="monthly">vs mes anterior</option>
                         <option value="yearly">Anual</option>
                       </select>
                     </div>
@@ -575,6 +604,33 @@ export default function ConsumptionPage() {
           {/* Análisis detallado */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Consumo por pozos */}
+           
+            {/* Resumen de Consumo por Categoría */}
+            <Card>
+              <CardHeader>
+                <h3 className="text-lg font-semibold">Resumen por categoría vs meta del año</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {categoryData.map((category, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">{category.name}</span>
+                        <span className="text-lg font-bold">{category.value.toLocaleString()} m³</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full" 
+                          style={{ width: `${category.percentage}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">{category.percentage}% meta del año</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <h3 className="text-lg font-semibold">Rendimiento por Pozo</h3>
@@ -606,6 +662,15 @@ export default function ConsumptionPage() {
                           <p className="font-medium">{well.efficiency}%</p>
                         </div>
                       </div>
+                      <div className="mt-2">
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div 
+                            className="bg-blue-500 h-2 rounded-full" 
+                            style={{ width: `${well.efficiency}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">{well.efficiency}% meta del año</p>
+                      </div>
                     </div>
                   ))}
                   </div>
@@ -635,6 +700,15 @@ export default function ConsumptionPage() {
                             <p className="font-medium">{well.efficiency}%</p>
                           </div>
                         </div>
+                        <div className="mt-2">
+                          <div className="w-full bg-muted rounded-full h-2">
+                            <div 
+                              className="bg-green-500 h-2 rounded-full" 
+                              style={{ width: `${well.efficiency}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">{well.efficiency}% meta del año</p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -642,31 +716,6 @@ export default function ConsumptionPage() {
               </CardContent>
             </Card>
 
-            {/* Resumen de Consumo por Categoría */}
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Resumen por Categoría</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {categoryData.map((category, index) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium">{category.name}</span>
-                        <span className="text-lg font-bold">{category.value.toLocaleString()} m³</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full" 
-                          style={{ width: `${category.percentage}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">{category.percentage}% del total</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Alertas recientes */}
             <Card>

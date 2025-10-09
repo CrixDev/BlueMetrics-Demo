@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card } from "../components/ui/card"
@@ -34,6 +34,23 @@ export default function WellDetailPage() {
   const [dateRange, setDateRange] = useState('all') // 'all', 'last6months', 'lastyear', 'custom'
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
+  const [visualizationType, setVisualizationType] = useState('general') // 'general', 'consumo-pozo'
+  
+  // Actualizar métricas seleccionadas cuando cambia el tipo de visualización
+  useEffect(() => {
+    if (visualizationType === 'consumo-pozo') {
+      setSelectedMetrics(['consumoServicios', 'consumoRiego', 'total'])
+      setTimeFilter('monthly') // Forzar vista mensual para consumo por pozo
+    } else {
+      setSelectedMetrics(['realConsumption', 'availableForConsumption'])
+    }
+  }, [visualizationType])
+
+  // Tipos de visualización disponibles
+  const visualizationTypes = [
+    { key: 'general', label: 'Vista General' },
+    { key: 'consumo-pozo', label: 'Consumo por Pozo - Meses' }
+  ]
 
   // Datos específicos del Pozo 12 basados en el JSON reorganizado
   const wellData = {
@@ -137,9 +154,7 @@ export default function WellDetailPage() {
     { key: 'realConsumption', label: 'Consumo Real (m³)', color: '#dc2626' },
     { key: 'consumoServicios', label: 'Consumo Servicios (m³)', color: '#f59e0b' },
     { key: 'consumoRiego', label: 'Consumo Riego (m³)', color: '#10b981' },
-    { key: 'availableForConsumption', label: 'm³ Disponibles', color: '#16a34a' },
-    { key: 'm3CededByAnnex', label: 'm³ Cedidos por Anexo', color: '#2563eb' },
-    { key: 'm3CededByTitle', label: 'm³ Cedidos por Título', color: '#7c3aed' }
+    { key: 'availableForConsumption', label: 'm³ Disponibles', color: '#16a34a' }
   ]
 
   // Filtrar datos por rango de fechas
@@ -185,34 +200,67 @@ export default function WellDetailPage() {
     return data;
   };
 
-  // Preparar datos para los gráficos según el filtro de tiempo
+  // Preparar datos para los gráficos según el filtro de tiempo y tipo de visualización
   const getChartData = () => {
     let sourceData = []
     let labelKey = 'year'
     
-    switch (timeFilter) {
-      case 'weekly':
-        sourceData = wellData.weeklyData || []
-        labelKey = 'period'
-        break
-      case 'quarterly':
-        sourceData = wellData.quarterlyData || []
-        labelKey = 'quarter'
-        break
-      case 'monthly':
-        sourceData = wellData.monthlyData || []
-        labelKey = 'period'
-        break
-      case 'yearly':
-      default:
-        sourceData = wellData.yearlyData || []
-        labelKey = 'year'
-        break
+    // Si es visualización de consumo por pozo, forzar vista mensual
+    if (visualizationType === 'consumo-pozo') {
+      sourceData = wellData.monthlyData || []
+      labelKey = 'period'
+    } else {
+      switch (timeFilter) {
+        case 'weekly':
+          sourceData = wellData.weeklyData || []
+          labelKey = 'period'
+          break
+        case 'quarterly':
+          sourceData = wellData.quarterlyData || []
+          labelKey = 'quarter'
+          break
+        case 'monthly':
+          sourceData = wellData.monthlyData || []
+          labelKey = 'period'
+          break
+        case 'yearly':
+        default:
+          sourceData = wellData.yearlyData || []
+          labelKey = 'year'
+          break
+      }
     }
     
     // Aplicar filtros de fecha
     const filteredData = filterDataByDateRange(sourceData);
     
+    if (visualizationType === 'consumo-pozo') {
+      // Para la vista de consumo por pozo, usar datos mensuales del JSON
+      const monthNames = {
+        'enero': 'Ene', 'febrero': 'Feb', 'marzo': 'Mar', 
+        'abril': 'Abr', 'mayo': 'May', 'junio': 'Jun',
+        'julio': 'Jul', 'agosto': 'Ago', 'septiembre': 'Sep', 
+        'octubre': 'Oct', 'noviembre': 'Nov', 'diciembre': 'Dic'
+      }
+      
+      const monthlyData = []
+      datosPozo12.datos_mensuales.consumo_mensual.forEach(yearData => {
+        Object.entries(monthNames).forEach(([month, shortMonth]) => {
+          if (yearData[month] !== null) {
+            monthlyData.push({
+              period: `${shortMonth} ${yearData.año}`,
+              consumoServicios: yearData[month] * 0.6, // Estimado 60% para servicios
+              consumoRiego: yearData[month] * 0.4, // Estimado 40% para riego
+              total: yearData[month]
+            })
+          }
+        })
+      })
+      
+      return monthlyData
+    }
+    
+    // Vista general
     return filteredData.map(data => ({
       [labelKey]: timeFilter === 'yearly' 
         ? data.year.toString().replace(' (hasta mayo)', '')
@@ -373,26 +421,26 @@ export default function WellDetailPage() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Año
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500  tracking-wider">
+                          AÑO
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          m³ cedidos por anexo
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500  tracking-wider">
+                          m³ CEDIDOS POR ANO
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          m³ cedidos por título
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500  tracking-wider">
+                          m³ CEDIDOS POR TÍTULO
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                         m³ disponibles para consumir
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500  tracking-wider">
+                         m³ DISPONIBLES PARA CONSUMIR
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Consumo real (m³) 
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500  tracking-wider">
+                        CONSUMO REAL (m³) 
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Estado
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500  tracking-wider">
+                        ESTADO
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Observaciones
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500  tracking-wider">
+                        OBSERVACIONES
                         </th>
                       </tr>
                     </thead>
@@ -462,6 +510,21 @@ export default function WellDetailPage() {
                   </h2>
                   <div className="flex flex-wrap items-center gap-4">
                     <div className="flex items-center gap-2">
+                      <BarChart3Icon className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm text-gray-500">Tipo de Visualización:</span>
+                      <select 
+                        value={visualizationType} 
+                        onChange={(e) => setVisualizationType(e.target.value)}
+                        className="text-sm border border-gray-300 rounded px-2 py-1"
+                      >
+                        {visualizationTypes.map(type => (
+                          <option key={type.key} value={type.key}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <FilterIcon className="h-4 w-4 text-gray-500" />
                       <span className="text-sm text-gray-500">Período:</span>
                       <select 
@@ -527,28 +590,59 @@ export default function WellDetailPage() {
                 <div className="mb-6">
                   <h3 className="text-sm font-medium text-gray-700 mb-3">Selecciona las métricas a visualizar:</h3>
                   <div className="flex flex-wrap gap-2">
-                    {availableMetrics.map((metric) => (
-                      <Button
-                        key={metric.key}
-                        size="sm"
-                        variant={selectedMetrics.includes(metric.key) ? "default" : "outline"}
-                        onClick={() => toggleMetric(metric.key)}
-                        className={selectedMetrics.includes(metric.key) ? 
-                          "border-2" : 
-                          "border border-gray-300 hover:border-gray-400"
-                        }
-                        style={selectedMetrics.includes(metric.key) ? 
-                          { backgroundColor: metric.color, borderColor: metric.color } : 
-                          {}
-                        }
-                      >
-                        <div 
-                          className="w-3 h-3 rounded-full mr-2" 
-                          style={{ backgroundColor: metric.color }}
-                        ></div>
-                        {metric.label}
-                      </Button>
-                    ))}
+                    {visualizationType === 'consumo-pozo' ? (
+                      // Métricas específicas para vista de consumo por pozo
+                      [
+                        { key: 'consumoServicios', label: 'Consumo Servicios (m³)', color: '#f59e0b' },
+                        { key: 'consumoRiego', label: 'Consumo Riego (m³)', color: '#10b981' },
+                        { key: 'total', label: 'Consumo Total (m³)', color: '#dc2626' }
+                      ].map((metric) => (
+                        <Button
+                          key={metric.key}
+                          size="sm"
+                          variant={selectedMetrics.includes(metric.key) ? "default" : "outline"}
+                          onClick={() => toggleMetric(metric.key)}
+                          className={selectedMetrics.includes(metric.key) ? 
+                            "border-2" : 
+                            "border border-gray-300 hover:border-gray-400"
+                          }
+                          style={selectedMetrics.includes(metric.key) ? 
+                            { backgroundColor: metric.color, borderColor: metric.color } : 
+                            {}
+                          }
+                        >
+                          <div 
+                            className="w-3 h-3 rounded-full mr-2" 
+                            style={{ backgroundColor: metric.color }}
+                          ></div>
+                          {metric.label}
+                        </Button>
+                      ))
+                    ) : (
+                      // Métricas para vista general
+                      availableMetrics.map((metric) => (
+                        <Button
+                          key={metric.key}
+                          size="sm"
+                          variant={selectedMetrics.includes(metric.key) ? "default" : "outline"}
+                          onClick={() => toggleMetric(metric.key)}
+                          className={selectedMetrics.includes(metric.key) ? 
+                            "border-2" : 
+                            "border border-gray-300 hover:border-gray-400"
+                          }
+                          style={selectedMetrics.includes(metric.key) ? 
+                            { backgroundColor: metric.color, borderColor: metric.color } : 
+                            {}
+                          }
+                        >
+                          <div 
+                            className="w-3 h-3 rounded-full mr-2" 
+                            style={{ backgroundColor: metric.color }}
+                          ></div>
+                          {metric.label}
+                        </Button>
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -557,7 +651,14 @@ export default function WellDetailPage() {
                   chartType={chartType}
                   chartData={chartData}
                   selectedMetrics={selectedMetrics}
-                  availableMetrics={availableMetrics}
+                  availableMetrics={visualizationType === 'consumo-pozo' ? 
+                    [
+                      { key: 'consumoServicios', label: 'Consumo Servicios (m³)', color: '#f59e0b' },
+                      { key: 'consumoRiego', label: 'Consumo Riego (m³)', color: '#10b981' },
+                      { key: 'total', label: 'Consumo Total (m³)', color: '#dc2626' }
+                    ] : 
+                    availableMetrics
+                  }
                 />
 
                 {/* Estadísticas del gráfico */}

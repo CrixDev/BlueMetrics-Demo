@@ -316,6 +316,111 @@
         "notas": "Primera mitad semana santa"
       },
       {
+        "periodo": "01 ene - 07 ene 2023",
+        "consumo_servicios": 4200,
+        "consumo_riego": 1500,
+        "total_pozos": 5700,
+        "notas": "Inicio de año"
+      },
+      {
+        "periodo": "08 ene - 14 ene 2023",
+        "consumo_servicios": 4500,
+        "consumo_riego": 1800,
+        "total_pozos": 6300,
+        "notas": null
+      },
+      {
+        "periodo": "15 ene - 21 ene 2023",
+        "consumo_servicios": 4800,
+        "consumo_riego": 2000,
+        "total_pozos": 6800,
+        "notas": "Incremento en servicios"
+      },
+      {
+        "periodo": "01 jul - 07 jul 2023",
+        "consumo_servicios": 6500,
+        "consumo_riego": 2500,
+        "total_pozos": 9000,
+        "notas": "Alta temporada"
+      },
+      {
+        "periodo": "08 jul - 14 jul 2023",
+        "consumo_servicios": 6800,
+        "consumo_riego": 2300,
+        "total_pozos": 9100,
+        "notas": null
+      },
+      {
+        "periodo": "01 ene - 07 ene 2024",
+        "consumo_servicios": 5000,
+        "consumo_riego": 1800,
+        "total_pozos": 6800,
+        "notas": "Inicio de año 2024"
+      },
+      {
+        "periodo": "08 ene - 14 ene 2024",
+        "consumo_servicios": 5200,
+        "consumo_riego": 2000,
+        "total_pozos": 7200,
+        "notas": null
+      },
+      {
+        "periodo": "01 jul - 07 jul 2024",
+        "consumo_servicios": 7500,
+        "consumo_riego": 3000,
+        "total_pozos": 10500,
+        "notas": "Pico de consumo verano"
+      },
+      {
+        "periodo": "08 jul - 14 jul 2024",
+        "consumo_servicios": 7800,
+        "consumo_riego": 2800,
+        "total_pozos": 10600,
+        "notas": "Mantenimiento alto consumo"
+      },
+      {
+        "periodo": "01 ene - 07 ene 2025",
+        "consumo_servicios": 6000,
+        "consumo_riego": 2200,
+        "total_pozos": 8200,
+        "notas": "Inicio 2025 con alto consumo"
+      },
+      {
+        "periodo": "08 ene - 14 ene 2025",
+        "consumo_servicios": 6300,
+        "consumo_riego": 2400,
+        "total_pozos": 8700,
+        "notas": null
+      },
+      {
+        "periodo": "15 ene - 21 ene 2025",
+        "consumo_servicios": 6500,
+        "consumo_riego": 2600,
+        "total_pozos": 9100,
+        "notas": "Tendencia al alza"
+      },
+      {
+        "periodo": "01 mar - 07 mar 2025",
+        "consumo_servicios": 7200,
+        "consumo_riego": 3000,
+        "total_pozos": 10200,
+        "notas": "Incremento significativo"
+      },
+      {
+        "periodo": "08 mar - 14 mar 2025",
+        "consumo_servicios": 7500,
+        "consumo_riego": 3200,
+        "total_pozos": 10700,
+        "notas": "Consumo crítico"
+      },
+      {
+        "periodo": "15 mar - 21 mar 2025",
+        "consumo_servicios": 7800,
+        "consumo_riego": 3400,
+        "total_pozos": 11200,
+        "notas": "Alerta por alto consumo"
+      },
+      {
         "periodo": "13 abr- 20 abr 2022",
         "consumo_servicios": 3487,
         "consumo_riego": 4039.4,
