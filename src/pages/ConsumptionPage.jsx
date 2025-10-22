@@ -1,12 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import ChartComponent from "../components/ChartComponent"
 import DashboardChart from "../components/DashboardChart"
+import ConsumptionTable from "../components/ConsumptionTable"
 import datosPozo12 from '../lib/datos_pozo_12.json'
+import consumptionPointsData from '../lib/consumption-points.json'
 import { dashboardData } from '../lib/dashboard-data'
+import { supabase } from '../supabaseClient'
 import { 
   FilterIcon, 
   TrendingUpIcon, 
@@ -19,7 +22,9 @@ import {
   Truck,
   Building2,
   Waves,
-  Factory
+  Factory,
+  TableIcon,
+  Loader2Icon
 } from 'lucide-react'
 
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth';
@@ -32,6 +37,95 @@ export default function ConsumptionPage() {
   const [viewMode, setViewMode] = useState('Consumo Total') // 'servicios', 'riego', 'conjunto'
   const [periodView, setPeriodView] = useState('monthly') // 'monthly', 'yearly'
   const [selectedYearsComparison, setSelectedYearsComparison] = useState(['2024', '2025']) // Años para comparar
+  
+  // Estados para el nuevo sistema de tablas detalladas
+  const [activeTab, setActiveTab] = useState('pozos_servicios') // Tab activa para las tablas
+  const [selectedWeek, setSelectedWeek] = useState(2) // Semana seleccionada (1 o 2)
+  const [showComparison, setShowComparison] = useState(true) // Mostrar comparación entre semanas
+  
+  // Estados para datos de Supabase
+  const [weeklyReadings, setWeeklyReadings] = useState([])
+  const [availableWeeks, setAvailableWeeks] = useState([])
+  const [consumptionPoints, setConsumptionPoints] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  // Cargar semanas disponibles desde Supabase
+  useEffect(() => {
+    fetchWeeklyReadings()
+  }, [])
+
+  const fetchWeeklyReadings = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // Obtener todas las lecturas semanales ordenadas por número de semana
+      const { data, error: fetchError } = await supabase
+        .from('lecturas_semana')
+        .select('*')
+        .order('numero_semana', { ascending: true })
+      
+      if (fetchError) throw fetchError
+      
+      console.log('✅ Lecturas semanales obtenidas:', data)
+      
+      setWeeklyReadings(data || [])
+      
+      // Crear lista de semanas disponibles
+      const weeks = (data || []).map(week => ({
+        weekNumber: week.numero_semana,
+        startDate: week.fecha_inicio,
+        endDate: week.fecha_fin
+      }))
+      
+      setAvailableWeeks(weeks)
+      
+      // Si hay semanas, seleccionar la última por defecto
+      if (weeks.length > 0) {
+        setSelectedWeek(weeks[weeks.length - 1].weekNumber)
+      }
+
+      // Convertir datos de Supabase al formato de puntos de consumo
+      processConsumptionPoints(data)
+      
+    } catch (err) {
+      console.error('❌ Error al cargar lecturas:', err)
+      setError(err.message)
+      
+      // Fallback a datos del JSON si hay error
+      setAvailableWeeks(consumptionPointsData.metadata.weeks)
+      // Mantener los puntos del JSON como fallback
+      setConsumptionPoints(consumptionPointsData.categories)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Procesar datos de Supabase para convertirlos en formato de puntos de consumo
+  const processConsumptionPoints = (weeklyData) => {
+    // Usar las categorías del JSON como estructura base
+    const categories = consumptionPointsData.categories.map(category => ({
+      ...category,
+      points: category.points.map(point => {
+        // Construir weeklyData desde Supabase
+        const weeklyDataFromDB = weeklyData.map(week => {
+          const reading = week[point.id]
+          return {
+            week: week.numero_semana,
+            reading: reading !== null && reading !== undefined ? parseFloat(reading) : 0
+          }
+        }).filter(w => w.reading !== null)
+
+        return {
+          ...point,
+          weeklyData: weeklyDataFromDB.length > 0 ? weeklyDataFromDB : point.weeklyData // Fallback al JSON
+        }
+      })
+    }))
+
+    setConsumptionPoints(categories)
+  }
 
   // Obtener datos de consumo por categoría y período
   const getConsumptionDataByCategory = (category, period = 'monthly', year = '2025') => {
@@ -748,6 +842,106 @@ export default function ConsumptionPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Sección de Tablas Detalladas por Punto de Consumo */}
+          <div className="mt-8">
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                    <TableIcon className="h-6 w-6 text-primary" />
+                    Detalle por Punto de Medición
+                  </h2>
+                  <p className="text-muted-foreground mt-1">Vista detallada de todos los medidores del campus</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {/* Selector de semana */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium">Semana:</label>
+                    <select
+                      value={selectedWeek}
+                      onChange={(e) => setSelectedWeek(parseInt(e.target.value))}
+                      className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <option>Cargando...</option>
+                      ) : availableWeeks.length > 0 ? (
+                        availableWeeks.map(week => (
+                          <option key={week.weekNumber} value={week.weekNumber}>
+                            Semana {week.weekNumber} ({week.startDate} - {week.endDate})
+                          </option>
+                        ))
+                      ) : (
+                        <option>No hay semanas disponibles</option>
+                      )}
+                    </select>
+                    {loading && (
+                      <Loader2Icon className="h-4 w-4 animate-spin text-primary" />
+                    )}
+                  </div>
+                  {/* Toggle comparación */}
+                  <Button
+                    variant={showComparison ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowComparison(!showComparison)}
+                  >
+                    {showComparison ? 'Con Comparación' : 'Sin Comparación'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabs de categorías */}
+            <div className="mb-6 overflow-x-auto">
+              <div className="flex gap-2 border-b border-muted pb-2">
+                {loading ? (
+                  <div className="px-4 py-2 text-sm text-muted-foreground">Cargando categorías...</div>
+                ) : consumptionPoints.length === 0 ? (
+                  <div className="px-4 py-2 text-sm text-muted-foreground">No hay categorías disponibles</div>
+                ) : (
+                  consumptionPoints.map(category => (
+                    <button
+                      key={category.id}
+                      onClick={() => setActiveTab(category.id)}
+                      className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+                        activeTab === category.id
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'
+                      }`}
+                    >
+                      {category.name}
+                      <span className="ml-2 text-xs opacity-70">
+                        ({category.points.length})
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Descripción de la categoría activa */}
+            {!loading && consumptionPoints.find(cat => cat.id === activeTab) && (
+              <div className="mb-4 p-4 bg-primary/5 border-l-4 border-primary rounded">
+                <p className="text-sm text-muted-foreground">
+                  {consumptionPoints.find(cat => cat.id === activeTab).description}
+                </p>
+              </div>
+            )}
+
+            {/* Tabla de la categoría activa */}
+            {!loading && consumptionPoints.map(category => (
+              category.id === activeTab && (
+                <ConsumptionTable
+                  key={category.id}
+                  title={category.name}
+                  data={category.points}
+                  weekNumber={selectedWeek}
+                  showComparison={showComparison}
+                />
+              )
+            ))}
           </div>
         </main>
       </div>

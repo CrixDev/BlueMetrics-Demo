@@ -11,6 +11,7 @@ import WellsPage from './pages/WellsPage'
 import WellDetailPage from './pages/WellDetailPage'
 import PTARPage from './pages/PTARPage'
 import AddDataPage from './pages/AddDataPage'
+import AddWeeklyReadingsPage from './pages/AddWeeklyReadingsPage'
 import AlertsPage from './pages/AlertsPage'
 import PredictionsPage from './pages/PredictionsPage'
 import ContactPage from './pages/ContactPage'
@@ -35,6 +36,7 @@ function App() {
         <Route path="/pozos/:id" element={<WellDetailPage />} />
         <Route path="/ptar" element={<PTARPage />} />
         <Route path="/agregar-datos" element={<AddDataPage />} />
+        <Route path="/agregar-lecturas" element={<AddWeeklyReadingsPage />} />
         <Route path="/alertas" element={<AlertsPage />} />
         <Route path="/predicciones" element={<PredictionsPage />} />
         <Route path="/contacto" element={<ContactPage />} />
