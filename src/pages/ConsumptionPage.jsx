@@ -557,8 +557,108 @@ export default function ConsumptionPage() {
             </Card>
           </div>
 
+            {/* Sección de Tablas Detalladas por Punto de Consumo */}
+            <div className="mt-8">
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                    <TableIcon className="h-6 w-6 text-primary" />
+                    Detalle por Punto de Medición
+                  </h2>
+                  <p className="text-muted-foreground mt-1">Vista detallada de todos los medidores del campus</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {/* Selector de semana */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium">Semana:</label>
+                    <select
+                      value={selectedWeek}
+                      onChange={(e) => setSelectedWeek(parseInt(e.target.value))}
+                      className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <option>Cargando...</option>
+                      ) : availableWeeks.length > 0 ? (
+                        availableWeeks.map(week => (
+                          <option key={week.weekNumber} value={week.weekNumber}>
+                            Semana {week.weekNumber} ({week.startDate} - {week.endDate})
+                          </option>
+                        ))
+                      ) : (
+                        <option>No hay semanas disponibles</option>
+                      )}
+                    </select>
+                    {loading && (
+                      <Loader2Icon className="h-4 w-4 animate-spin text-primary" />
+                    )}
+                  </div>
+                  {/* Toggle comparación */}
+                  <Button
+                    variant={showComparison ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowComparison(!showComparison)}
+                  >
+                    {showComparison ? 'Con Comparación' : 'Sin Comparación'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabs de categorías */}
+            <div className="mb-6 overflow-x-auto">
+              <div className="flex gap-2 border-b border-muted pb-2">
+                {loading ? (
+                  <div className="px-4 py-2 text-sm text-muted-foreground">Cargando categorías...</div>
+                ) : consumptionPoints.length === 0 ? (
+                  <div className="px-4 py-2 text-sm text-muted-foreground">No hay categorías disponibles</div>
+                ) : (
+                  consumptionPoints.map(category => (
+                    <button
+                      key={category.id}
+                      onClick={() => setActiveTab(category.id)}
+                      className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+                        activeTab === category.id
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'
+                      }`}
+                    >
+                      {category.name}
+                      <span className="ml-2 text-xs opacity-70">
+                        ({category.points.length})
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Descripción de la categoría activa */}
+            {!loading && consumptionPoints.find(cat => cat.id === activeTab) && (
+              <div className="mb-4 p-4 bg-primary/5 border-l-4 border-primary rounded">
+                <p className="text-sm text-muted-foreground">
+                  {consumptionPoints.find(cat => cat.id === activeTab).description}
+                </p>
+              </div>
+            )}
+
+            {/* Tabla de la categoría activa */}
+            {!loading && consumptionPoints.map(category => (
+              category.id === activeTab && (
+                <ConsumptionTable
+                  key={category.id}
+                  title={category.name}
+                  data={category.points}
+                  weekNumber={selectedWeek}
+                  showComparison={showComparison}
+                />
+              )
+            ))}
+          </div>
+
           {/* Bento Grid: Gráfica a la izquierda, Filtros a la derecha */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 mt-6">
             {/* Gráfica principal - 2 columnas */}
             <Card className="lg:col-span-2">
               <CardHeader>
@@ -844,105 +944,7 @@ export default function ConsumptionPage() {
             </Card>
           </div>
 
-          {/* Sección de Tablas Detalladas por Punto de Consumo */}
-          <div className="mt-8">
-            <div className="mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                    <TableIcon className="h-6 w-6 text-primary" />
-                    Detalle por Punto de Medición
-                  </h2>
-                  <p className="text-muted-foreground mt-1">Vista detallada de todos los medidores del campus</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {/* Selector de semana */}
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium">Semana:</label>
-                    <select
-                      value={selectedWeek}
-                      onChange={(e) => setSelectedWeek(parseInt(e.target.value))}
-                      className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <option>Cargando...</option>
-                      ) : availableWeeks.length > 0 ? (
-                        availableWeeks.map(week => (
-                          <option key={week.weekNumber} value={week.weekNumber}>
-                            Semana {week.weekNumber} ({week.startDate} - {week.endDate})
-                          </option>
-                        ))
-                      ) : (
-                        <option>No hay semanas disponibles</option>
-                      )}
-                    </select>
-                    {loading && (
-                      <Loader2Icon className="h-4 w-4 animate-spin text-primary" />
-                    )}
-                  </div>
-                  {/* Toggle comparación */}
-                  <Button
-                    variant={showComparison ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowComparison(!showComparison)}
-                  >
-                    {showComparison ? 'Con Comparación' : 'Sin Comparación'}
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Tabs de categorías */}
-            <div className="mb-6 overflow-x-auto">
-              <div className="flex gap-2 border-b border-muted pb-2">
-                {loading ? (
-                  <div className="px-4 py-2 text-sm text-muted-foreground">Cargando categorías...</div>
-                ) : consumptionPoints.length === 0 ? (
-                  <div className="px-4 py-2 text-sm text-muted-foreground">No hay categorías disponibles</div>
-                ) : (
-                  consumptionPoints.map(category => (
-                    <button
-                      key={category.id}
-                      onClick={() => setActiveTab(category.id)}
-                      className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
-                        activeTab === category.id
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'
-                      }`}
-                    >
-                      {category.name}
-                      <span className="ml-2 text-xs opacity-70">
-                        ({category.points.length})
-                      </span>
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Descripción de la categoría activa */}
-            {!loading && consumptionPoints.find(cat => cat.id === activeTab) && (
-              <div className="mb-4 p-4 bg-primary/5 border-l-4 border-primary rounded">
-                <p className="text-sm text-muted-foreground">
-                  {consumptionPoints.find(cat => cat.id === activeTab).description}
-                </p>
-              </div>
-            )}
-
-            {/* Tabla de la categoría activa */}
-            {!loading && consumptionPoints.map(category => (
-              category.id === activeTab && (
-                <ConsumptionTable
-                  key={category.id}
-                  title={category.name}
-                  data={category.points}
-                  weekNumber={selectedWeek}
-                  showComparison={showComparison}
-                />
-              )
-            ))}
-          </div>
+        
         </main>
       </div>
     </div>

@@ -8,39 +8,59 @@
   "datos_anuales": [
     {
       "año": "2022",
-      "aguas_negras_m3": 85000,
-      "agua_tratada_m3": 80000,
+      "agua_entrada_ptar_m3": 85000,
+      "agua_salida_ptar_m3": 80000,
       "consumo_pozos_riego_m3": 75000,
       "eficiencia_tratamiento_porcentaje": 94.1,
+      "dqo_promedio_mg_l": 245,
+      "ph_promedio": 7.2,
+      "uv_promedio_watts_m2": 28,
+      "conductividad_promedio_us_cm": 1250,
+      "volumen_riego_utilizado_m3": 72000,
       "observaciones": "Año con operación estable"
     },
     {
       "año": "2023",
-      "aguas_negras_m3": 92000,
-      "agua_tratada_m3": 88000,
+      "agua_entrada_ptar_m3": 92000,
+      "agua_salida_ptar_m3": 88000,
       "consumo_pozos_riego_m3": 82000,
       "eficiencia_tratamiento_porcentaje": 95.7,
+      "dqo_promedio_mg_l": 238,
+      "ph_promedio": 7.3,
+      "uv_promedio_watts_m2": 30,
+      "conductividad_promedio_us_cm": 1220,
+      "volumen_riego_utilizado_m3": 79000,
       "observaciones": "Incremento en volumen procesado"
     },
     {
       "año": "2024",
-      "aguas_negras_m3": 98000,
-      "agua_tratada_m3": 94000,
+      "agua_entrada_ptar_m3": 98000,
+      "agua_salida_ptar_m3": 94000,
       "consumo_pozos_riego_m3": 89000,
       "eficiencia_tratamiento_porcentaje": 95.9,
+      "dqo_promedio_mg_l": 232,
+      "ph_promedio": 7.4,
+      "uv_promedio_watts_m2": 32,
+      "conductividad_promedio_us_cm": 1200,
+      "volumen_riego_utilizado_m3": 85000,
       "observaciones": "Mejora en eficiencia de tratamiento"
     },
     {
       "año": "2025 (hasta junio)",
-      "aguas_negras_m3": 52000,
-      "agua_tratada_m3": 50000,
+      "agua_entrada_ptar_m3": 52000,
+      "agua_salida_ptar_m3": 50000,
       "consumo_pozos_riego_m3": 47000,
       "eficiencia_tratamiento_porcentaje": 96.2,
+      "dqo_promedio_mg_l": 228,
+      "ph_promedio": 7.5,
+      "uv_promedio_watts_m2": 33,
+      "conductividad_promedio_us_cm": 1180,
+      "volumen_riego_utilizado_m3": 45000,
       "observaciones": "Primer semestre con alta eficiencia"
     }
   ],
   "datos_mensuales": {
-    "aguas_negras": [
+    "agua_entrada_ptar": [
       {
         "año": "2022",
         "enero": 7000,
@@ -102,7 +122,7 @@
         "diciembre": null
       }
     ],
-    "agua_tratada": [
+    "agua_salida_ptar": [
       {
         "año": "2022",
         "enero": 6500,
@@ -228,7 +248,7 @@
     ]
   },
   "datos_trimestrales": {
-    "aguas_negras": [
+    "agua_entrada_ptar": [
       {
         "año": "2022",
         "primer_trimestre": 21000,
@@ -258,7 +278,7 @@
         "cuarto_trimestre": null
       }
     ],
-    "agua_tratada": [
+    "agua_salida_ptar": [
       {
         "año": "2022",
         "primer_trimestre": 19700,
