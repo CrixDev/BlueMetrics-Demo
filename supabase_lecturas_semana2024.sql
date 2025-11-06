@@ -1,5 +1,5 @@
--- Tabla para registrar las lecturas semanales de todos los puntos de consumo
-CREATE TABLE IF NOT EXISTS public.lecturas_semana (
+-- Tabla para registrar las lecturas semanales de todos los puntos de consumo del año 2024
+CREATE TABLE IF NOT EXISTS public.lecturas_semana2024 (
     -- Identificador de la semana
     id SERIAL PRIMARY KEY,
     numero_semana INTEGER NOT NULL UNIQUE,
@@ -178,11 +178,11 @@ CREATE TABLE IF NOT EXISTS public.lecturas_semana (
 );
 
 -- Índices para mejorar el rendimiento
-CREATE INDEX idx_lecturas_semana_numero ON public.lecturas_semana(numero_semana);
-CREATE INDEX idx_lecturas_semana_fechas ON public.lecturas_semana(fecha_inicio, fecha_fin);
+CREATE INDEX idx_lecturas_semana2024_numero ON public.lecturas_semana2024(numero_semana);
+CREATE INDEX idx_lecturas_semana2024_fechas ON public.lecturas_semana2024(fecha_inicio, fecha_fin);
 
 -- Función para actualizar el campo updated_at automáticamente
-CREATE OR REPLACE FUNCTION update_lecturas_semana_updated_at()
+CREATE OR REPLACE FUNCTION update_lecturas_semana2024_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
@@ -191,37 +191,37 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger para actualizar updated_at
-CREATE TRIGGER trigger_update_lecturas_semana_updated_at
-    BEFORE UPDATE ON public.lecturas_semana
+CREATE TRIGGER trigger_update_lecturas_semana2024_updated_at
+    BEFORE UPDATE ON public.lecturas_semana2024
     FOR EACH ROW
-    EXECUTE FUNCTION update_lecturas_semana_updated_at();
+    EXECUTE FUNCTION update_lecturas_semana2024_updated_at();
 
 -- Comentarios en la tabla
-COMMENT ON TABLE public.lecturas_semana IS 'Tabla para registrar las lecturas semanales de todos los puntos de consumo de agua del campus';
-COMMENT ON COLUMN public.lecturas_semana.numero_semana IS 'Número de la semana (1, 2, 3, ...)';
-COMMENT ON COLUMN public.lecturas_semana.fecha_inicio IS 'Fecha de inicio de la semana';
-COMMENT ON COLUMN public.lecturas_semana.fecha_fin IS 'Fecha de fin de la semana';
+COMMENT ON TABLE public.lecturas_semana2024 IS 'Tabla para registrar las lecturas semanales de todos los puntos de consumo de agua del campus - Año 2024';
+COMMENT ON COLUMN public.lecturas_semana2024.numero_semana IS 'Número de la semana (1, 2, 3, ...)';
+COMMENT ON COLUMN public.lecturas_semana2024.fecha_inicio IS 'Fecha de inicio de la semana';
+COMMENT ON COLUMN public.lecturas_semana2024.fecha_fin IS 'Fecha de fin de la semana';
 
 -- Habilitar Row Level Security (RLS)
-ALTER TABLE public.lecturas_semana ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lecturas_semana2024 ENABLE ROW LEVEL SECURITY;
 
 -- Política para permitir lectura a todos los usuarios autenticados
 CREATE POLICY "Permitir lectura a usuarios autenticados" 
-    ON public.lecturas_semana
+    ON public.lecturas_semana2024
     FOR SELECT
     TO authenticated
     USING (true);
 
 -- Política para permitir inserción solo a usuarios autenticados
 CREATE POLICY "Permitir inserción a usuarios autenticados" 
-    ON public.lecturas_semana
+    ON public.lecturas_semana2024
     FOR INSERT
     TO authenticated
     WITH CHECK (true);
 
 -- Política para permitir actualización solo a usuarios autenticados
 CREATE POLICY "Permitir actualización a usuarios autenticados" 
-    ON public.lecturas_semana
+    ON public.lecturas_semana2024
     FOR UPDATE
     TO authenticated
     USING (true)
@@ -229,13 +229,13 @@ CREATE POLICY "Permitir actualización a usuarios autenticados"
 
 -- Política para permitir eliminación solo a usuarios autenticados
 CREATE POLICY "Permitir eliminación a usuarios autenticados" 
-    ON public.lecturas_semana
+    ON public.lecturas_semana2024
     FOR DELETE
     TO authenticated
     USING (true);
 
--- Insertar las primeras dos semanas de ejemplo basadas en los datos del JSON
-INSERT INTO public.lecturas_semana (
+-- Insertar las primeras dos semanas de ejemplo del año 2024
+INSERT INTO public.lecturas_semana2024 (
     numero_semana, 
     fecha_inicio, 
     fecha_fin,
@@ -249,32 +249,23 @@ INSERT INTO public.lecturas_semana (
 ) VALUES 
 (
     1,
-    '2025-10-06',
-    '2025-10-12',
-    133500,
-    47800,
-    40200,
-    33850,
-    29650,
+    '2024-01-01',
+    '2024-01-07',
+    125000,
+    45000,
+    38000,
+    31500,
+    28000,
     NULL
 ),
 (
     2,
-    '2025-10-13',
-    '2025-10-19',
-    142250,
-    50700,
-    42500,
-    35750,
-    31300,
+    '2024-01-08',
+    '2024-01-14',
+    132000,
+    47500,
+    40000,
+    33000,
+    29500,
     NULL
 );
-
-
-
-
-
-
-
-
-

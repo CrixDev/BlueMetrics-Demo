@@ -20,9 +20,11 @@ import {
   RefreshCwIcon
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
+import { getTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers'
 
 export default function AddWeeklyReadingsPage() {
   const [selectedWeek, setSelectedWeek] = useState(null)
+  const [selectedYear, setSelectedYear] = useState(DEFAULT_YEAR)
   const [newWeekData, setNewWeekData] = useState({ startDate: '', endDate: '' })
   const [readings, setReadings] = useState({})
   const [activeCategory, setActiveCategory] = useState('pozos_servicios')
@@ -36,18 +38,19 @@ export default function AddWeeklyReadingsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Cargar semanas existentes desde Supabase
+  // Cargar semanas existentes desde Supabase cuando cambia el año
   useEffect(() => {
     fetchExistingWeeks()
-  }, [])
+  }, [selectedYear])
 
   const fetchExistingWeeks = async () => {
     try {
       setLoading(true)
       setError(null)
 
+      const tableName = getTableNameByYear(selectedYear)
       const { data, error: fetchError } = await supabase
-        .from('lecturas_semana')
+        .from(tableName)
         .select('numero_semana, fecha_inicio, fecha_fin')
         .order('numero_semana', { ascending: true })
 
@@ -83,8 +86,9 @@ export default function AddWeeklyReadingsPage() {
 
   const loadWeekReadings = async (weekNumber) => {
     try {
+      const tableName = getTableNameByYear(selectedYear)
       const { data, error: fetchError } = await supabase
-        .from('lecturas_semana')
+        .from(tableName)
         .select('*')
         .eq('numero_semana', weekNumber)
         .single()
@@ -180,9 +184,11 @@ export default function AddWeeklyReadingsPage() {
 
       console.log('💾 Guardando datos:', weekData)
 
+      const tableName = getTableNameByYear(selectedYear)
+      
       // Verificar si la semana ya existe
       const { data: existingData } = await supabase
-        .from('lecturas_semana')
+        .from(tableName)
         .select('id')
         .eq('numero_semana', selectedWeek)
         .single()
@@ -190,7 +196,7 @@ export default function AddWeeklyReadingsPage() {
       if (existingData) {
         // UPDATE - Actualizar semana existente
         const { error: updateError } = await supabase
-          .from('lecturas_semana')
+          .from(tableName)
           .update(weekData)
           .eq('numero_semana', selectedWeek)
 
@@ -206,7 +212,7 @@ export default function AddWeeklyReadingsPage() {
         }
 
         const { error: insertError } = await supabase
-          .from('lecturas_semana')
+          .from(tableName)
           .insert([weekData])
 
         if (insertError) throw insertError
@@ -234,9 +240,10 @@ export default function AddWeeklyReadingsPage() {
     const previousWeek = selectedWeek - 1
 
     try {
+      const tableName = getTableNameByYear(selectedYear)
       // Obtener datos de la semana anterior desde Supabase
       const { data, error: fetchError } = await supabase
-        .from('lecturas_semana')
+        .from(tableName)
         .select('*')
         .eq('numero_semana', previousWeek)
         .single()
@@ -303,9 +310,10 @@ export default function AddWeeklyReadingsPage() {
     const newWeekNumber = existingWeeks.length + 1
 
     try {
+      const tableName = getTableNameByYear(selectedYear)
       // Insertar nueva semana en Supabase
       const { error: insertError } = await supabase
-        .from('lecturas_semana')
+        .from(tableName)
         .insert([{
           numero_semana: newWeekNumber,
           fecha_inicio: newWeekData.startDate,
@@ -382,11 +390,29 @@ export default function AddWeeklyReadingsPage() {
                     Agregar Lecturas Semanales
                   </h1>
                   <p className="text-muted-foreground">
-                    Sistema optimizado para entrada rápida de datos de consumo
+                    Sistema optimizado para entrada rápida de datos de consumo - Año {selectedYear}
                   </p>
                 </div>
                 
                 <div className="flex items-center gap-3">
+                  {/* Selector de Año */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium">Año:</label>
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => {
+                        setSelectedYear(e.target.value)
+                        setSelectedWeek(null)
+                        setReadings({})
+                      }}
+                      className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      {AVAILABLE_YEARS.map(year => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   {/* Auto-save status */}
                   <div className="flex items-center gap-2 text-sm">
                     {autoSaveStatus === 'saving' && (

@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth';
+import { getTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers';
 
 export default function ConsumptionPage() {
   const [timeFrame, setTimeFrame] = useState('monthly')
@@ -37,6 +38,7 @@ export default function ConsumptionPage() {
   const [viewMode, setViewMode] = useState('Consumo Total') // 'servicios', 'riego', 'conjunto'
   const [periodView, setPeriodView] = useState('monthly') // 'monthly', 'yearly'
   const [selectedYearsComparison, setSelectedYearsComparison] = useState(['2024', '2025']) // Años para comparar
+  const [selectedYearForReadings, setSelectedYearForReadings] = useState(DEFAULT_YEAR) // Año para lecturas semanales
   
   // Estados para el nuevo sistema de tablas detalladas
   const [activeTab, setActiveTab] = useState('pozos_servicios') // Tab activa para las tablas
@@ -50,19 +52,20 @@ export default function ConsumptionPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Cargar semanas disponibles desde Supabase
+  // Cargar semanas disponibles desde Supabase cuando cambia el año de lecturas
   useEffect(() => {
     fetchWeeklyReadings()
-  }, [])
+  }, [selectedYearForReadings])
 
   const fetchWeeklyReadings = async () => {
     try {
       setLoading(true)
       setError(null)
       
+      const tableName = getTableNameByYear(selectedYearForReadings)
       // Obtener todas las lecturas semanales ordenadas por número de semana
       const { data, error: fetchError } = await supabase
-        .from('lecturas_semana')
+        .from(tableName)
         .select('*')
         .order('numero_semana', { ascending: true })
       
@@ -564,11 +567,25 @@ export default function ConsumptionPage() {
                 <div>
                   <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
                     <TableIcon className="h-6 w-6 text-primary" />
-                    Detalle por Punto de Medición
+                    Detalle por Punto de Medición - Año {selectedYearForReadings}
                   </h2>
                   <p className="text-muted-foreground mt-1">Vista detallada de todos los medidores del campus</p>
                 </div>
                 <div className="flex items-center gap-3">
+                  {/* Selector de Año para Lecturas */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium">Año:</label>
+                    <select
+                      value={selectedYearForReadings}
+                      onChange={(e) => setSelectedYearForReadings(e.target.value)}
+                      className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                      disabled={loading}
+                    >
+                      {AVAILABLE_YEARS.map(year => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
+                    </select>
+                  </div>
                   {/* Selector de semana */}
                   <div className="flex items-center gap-2">
                     <label className="text-sm font-medium">Semana:</label>
