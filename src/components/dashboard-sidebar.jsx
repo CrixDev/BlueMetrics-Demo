@@ -1,6 +1,6 @@
 import { Button } from "../components/ui/button"
 import { useLocation, useNavigate } from "react-router"
-import { Mail, Recycle, PlusCircle } from "lucide-react"
+import { Mail, Recycle, PlusCircle, Flame } from "lucide-react"
 import AquaNetLogoWhite from "./svg/AquaNetLogoWhite"
 import { useState } from "react"
 // import { useEffect } from "react"
@@ -48,12 +48,14 @@ export function DashboardSidebar() {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard Principal", path: "/dashboard", active: location.pathname === "/dashboard" },
-    { id: "consumption", label: "Consumo", path: "/consumo", active: location.pathname === "/consumo" },
+    { id: "consumption", label: "Consumo Agua", path: "/consumo", active: location.pathname === "/consumo" },
     { id: "balance", label: "Balance Hídrico", path: "/balance", active: location.pathname === "/balance" },
     { id: "wells", label: "Pozos", path: "/pozos", active: location.pathname === "/pozos" },
     { id: "ptar", label: "PTAR", path: "/ptar", active: location.pathname === "/ptar", icon: Recycle },
     { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", active: location.pathname === "/agregar-datos" },
-    { id: "add-readings", label: "Agregar Lecturas", path: "/agregar-lecturas", active: location.pathname === "/agregar-lecturas", icon: PlusCircle },
+    { id: "add-readings", label: "Agregar Lecturas Agua", path: "/agregar-lecturas", active: location.pathname === "/agregar-lecturas", icon: PlusCircle },
+    { id: "gas-consumption", label: "Consumo Gas", path: "/consumo-gas", active: location.pathname === "/consumo-gas", icon: Flame },
+    { id: "add-gas-readings", label: "Agregar Lecturas Gas", path: "/agregar-lecturas-gas", active: location.pathname === "/agregar-lecturas-gas", icon: Flame },
     { id: "predictions", label: "Predicciones", path: "/predicciones", active: location.pathname === "/predicciones" },
     { id: "alerts", label: "Alertas", path: "/alertas", active: location.pathname === "/alertas" },
   ]

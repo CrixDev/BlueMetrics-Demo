@@ -1,0 +1,609 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "lastUpdate": "2025-01-10",
+    "resourceType": "gas",
+    "weeks": [
+      {
+        "weekNumber": 1,
+        "startDate": "2025-01-06",
+        "endDate": "2025-01-12"
+      },
+      {
+        "weekNumber": 2,
+        "startDate": "2025-01-13",
+        "endDate": "2025-01-19"
+      }
+    ]
+  },
+  "categories": [
+    {
+      "id": "acometidas_campus",
+      "name": "Acometidas Principales Campus",
+      "description": "Medidores principales de gas en las acometidas del campus",
+      "points": [
+        {
+          "id": "campus_acometida_principal_digital",
+          "name": "Campus Acometida Ppal digital",
+          "type": "medidor_digital",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "campus_acometida_principal_analogica",
+          "name": "Campus Acometida Ppal analógica",
+          "type": "medidor_analogico",
+          "unit": "m³",
+          "weeklyData": []
+        }
+      ]
+    },
+    {
+      "id": "edificios_culturales",
+      "name": "Edificios Culturales y Administrativos",
+      "description": "Medidores de gas en edificios culturales y áreas administrativas",
+      "points": [
+        {
+          "id": "domo_cultural",
+          "name": "Domo Cultural",
+          "type": "medidor_edificio",
+          "unit": "m³",
+          "weeklyData": []
+        }
+      ]
+    },
+    {
+      "id": "comedores_restaurantes",
+      "name": "Comedores y Restaurantes",
+      "description": "Medidores de gas en áreas de alimentos y bebidas",
+      "points": [
+        {
+          "id": "comedor_centrales_tec_food",
+          "name": "1. Comedor Centrales Tec Food",
+          "type": "comedor",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "dona_tota",
+          "name": "1.1 Doña Tota",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "chilaquiles_tec",
+          "name": "1.2 Chilaquiles Tec",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "carls_junior",
+          "name": "1.3 Carl´s Junior",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "centrales_local",
+          "name": "1.4 Centrales Local",
+          "type": "local_comida",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "davilas_grill_team",
+          "name": "1.5 Davila´s ( Grill Team )",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "pizza_little_caesars",
+          "name": "1.6 Pizza Little Caesars",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "ciap_super_salads",
+          "name": "Ciap-Super Salads",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "nikkori",
+          "name": "2.1 Nikkori",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "nectar_works",
+          "name": "2.2 Nectar Works",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "sr_latino",
+          "name": "Sr. Latino",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "la_dia",
+          "name": "La Dia",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "expedition",
+          "name": "Expedition",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "bread_expedition",
+          "name": "Bread Expedition",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "matthew_expedition",
+          "name": "Matthew Expedition",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "comedor_estudiantes",
+          "name": "Comedor Estudiantes",
+          "type": "comedor",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "campus_norte_comedor_d",
+          "name": "Campus Norte-Comedor D",
+          "type": "comedor",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "wellness_supersalads",
+          "name": "Wellness SuperSalads",
+          "type": "restaurante",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "pabellon_tec_cocina_estudiantes_2do_piso",
+          "name": "Pabellon Tec Cocina Estudiantes 2do. Piso",
+          "type": "cocina",
+          "unit": "m³",
+          "weeklyData": []
+        }
+      ]
+    },
+    {
+      "id": "calderas_calefaccion",
+      "name": "Calderas y Sistemas de Calefacción",
+      "description": "Medidores de gas en calderas y sistemas de calefacción",
+      "points": [
+        {
+          "id": "caldera_1_leon",
+          "name": "Caldera 1 (Leon)",
+          "type": "caldera",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "caldera_2",
+          "name": "Caldera 2",
+          "type": "caldera",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "caldera_3",
+          "name": "Caldera 3",
+          "type": "caldera",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "mega_calefaccion_1",
+          "name": "Mega Calefacción 1",
+          "type": "calefaccion",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "mega_calefaccion_2",
+          "name": "Mega Calefacción 2",
+          "type": "calefaccion",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "mega_calefaccion_3",
+          "name": "Mega Calefacción 3",
+          "type": "calefaccion",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "mega_calefaccion_4",
+          "name": "Mega Calefacción 4",
+          "type": "calefaccion",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "mega_calefaccion_5",
+          "name": "Mega Calefacción 5",
+          "type": "calefaccion",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "calefaccion_1_bryan",
+          "name": "Calefacción 1 Bryan",
+          "type": "calefaccion",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "calefaccion_2_aerco",
+          "name": "Calefacción 2 Aerco",
+          "type": "calefaccion",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "campus_norte_edificio_d_calefaccion",
+          "name": "Campus Norte-Edificio D Calefacción",
+          "type": "calefaccion",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "wellness_general_calefaccion",
+          "name": "Wellness General (Calefacción)",
+          "type": "calefaccion",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "wellness_calentador_sotano_regaderas",
+          "name": "Wellness Calentador Sotano (Regaderas)",
+          "type": "calentador",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "residencias_abc_calefaccion",
+          "name": "Residencias ABC calefacción",
+          "type": "calefaccion",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "residencias_abc_regaderas",
+          "name": "Residencias ABC regaderas",
+          "type": "calentador",
+          "unit": "m³",
+          "weeklyData": []
+        }
+      ]
+    },
+    {
+      "id": "edificios_academicos",
+      "name": "Edificios Académicos",
+      "description": "Medidores de gas en edificios académicos y laboratorios",
+      "points": [
+        {
+          "id": "biotecnologia",
+          "name": "Biotecnología",
+          "type": "laboratorio",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "aulas_1",
+          "name": "Aulas 1",
+          "type": "edificio_academico",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "aulas_4",
+          "name": "Aulas 4",
+          "type": "edificio_academico",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "aulas_7",
+          "name": "Aulas 7",
+          "type": "edificio_academico",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "biblioteca",
+          "name": "2. Biblioteca",
+          "type": "edificio_academico",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "centro_congresos_vestidores",
+          "name": "Centro Congresos. Vestidores",
+          "type": "vestidores",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "cedes",
+          "name": "Cedes",
+          "type": "edificio_administrativo",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "cedes_trabajadores_vestidores",
+          "name": "Cedes Trabajadores Vestidores",
+          "type": "vestidores",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "guarderia",
+          "name": "Guardería",
+          "type": "edificio_servicio",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "escamilla",
+          "name": "Escamilla",
+          "type": "edificio_academico",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "casa_solar",
+          "name": "Casa solar",
+          "type": "edificio_especial",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "auditorio_luis_elizondo",
+          "name": "Auditorio Luis Elizondo",
+          "type": "auditorio",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "pabellon_tec_semillero",
+          "name": "Pabellon Tec semillero",
+          "type": "edificio_academico",
+          "unit": "m³",
+          "weeklyData": []
+        }
+      ]
+    },
+    {
+      "id": "instalaciones_deportivas",
+      "name": "Instalaciones Deportivas",
+      "description": "Medidores de gas en áreas deportivas y recreativas",
+      "points": [
+        {
+          "id": "arena_borrego",
+          "name": "Arena Borrego",
+          "type": "instalacion_deportiva",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "estadio_borrego_acometida_digital",
+          "name": "Estadio Borrego Acometida digital",
+          "type": "medidor_digital",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "estadio_borrego_acometida_analogica",
+          "name": "Estadio Borrego Acometida analógica",
+          "type": "medidor_analogico",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "estadio_yarda",
+          "name": "Estadio Yarda",
+          "type": "instalacion_deportiva",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "wellness_acometida_digital",
+          "name": "Wellness Acometida digital",
+          "type": "medidor_digital",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "wellness_acometida_analogica",
+          "name": "Wellness Acometida analógica",
+          "type": "medidor_analogico",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "wellness_alberca",
+          "name": "Wellness Alberca",
+          "type": "instalacion_deportiva",
+          "unit": "m³",
+          "weeklyData": []
+        }
+      ]
+    },
+    {
+      "id": "residencias_estudiantiles",
+      "name": "Residencias Estudiantiles",
+      "description": "Medidores de gas en residencias y dormitorios estudiantiles",
+      "points": [
+        {
+          "id": "estudiantes_acometida_principal_digital",
+          "name": "Estudiantes Acometida Ppal digital",
+          "type": "medidor_digital",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "estudiantes_acometida_principal_analogico",
+          "name": "Estudientes Acometida Ppal analógico",
+          "type": "medidor_analogico",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "residencias_1",
+          "name": "Residencias 1",
+          "type": "residencia",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "residencias_2",
+          "name": "Residencias 2",
+          "type": "residencia",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "residencias_3",
+          "name": "Residencias 3",
+          "type": "residencia",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "residencias_4",
+          "name": "Residencias 4",
+          "type": "residencia",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "residencias_5",
+          "name": "Residencias 5",
+          "type": "residencia",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "residencias_7",
+          "name": "Residencias 7",
+          "type": "residencia",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "residencias_8",
+          "name": "Residencias 8",
+          "type": "residencia",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "residencias_abc_locales_comida",
+          "name": "Residencias ABC locales comida",
+          "type": "local_comida",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "estudiantes_11",
+          "name": "Estudiantes 11",
+          "type": "edificio_estudiantes",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "estudiantes_12",
+          "name": "Estudiantes 12",
+          "type": "edificio_estudiantes",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "estudiantes_13",
+          "name": "Estudiantes 13",
+          "type": "edificio_estudiantes",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "estudiantes_15_y_10",
+          "name": "Estudiantes 15 y 10",
+          "type": "edificio_estudiantes",
+          "unit": "m³",
+          "weeklyData": []
+        }
+      ]
+    },
+    {
+      "id": "campus_norte",
+      "name": "Campus Norte",
+      "description": "Medidores de gas en el Campus Norte",
+      "points": [
+        {
+          "id": "campus_norte_acometida_externa",
+          "name": "Campus Norte Acometida externa",
+          "type": "medidor_principal",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "campus_norte_acometida_interna",
+          "name": "Campus Norte Acometida interna",
+          "type": "medidor_principal",
+          "unit": "m³",
+          "weeklyData": []
+        }
+      ]
+    },
+    {
+      "id": "otros_edificios",
+      "name": "Otros Edificios",
+      "description": "Otros medidores de gas en el campus",
+      "points": [
+        {
+          "id": "jubileo",
+          "name": "Jubileo",
+          "type": "edificio_especial",
+          "unit": "m³",
+          "weeklyData": []
+        },
+        {
+          "id": "cdb1",
+          "name": "CDB1 (ESTE NO JAVIER GZA)",
+          "type": "edificio_especial",
+          "unit": "m³",
+          "weeklyData": []
+        }
+      ]
+    }
+  ]
+}

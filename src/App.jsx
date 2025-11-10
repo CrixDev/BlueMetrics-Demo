@@ -12,11 +12,14 @@ import WellDetailPage from './pages/WellDetailPage'
 import PTARPage from './pages/PTARPage'
 import AddDataPage from './pages/AddDataPage'
 import AddWeeklyReadingsPage from './pages/AddWeeklyReadingsPage'
+import GasConsumptionPage from './pages/GasConsumptionPage'
+import AddWeeklyGasReadingsPage from './pages/AddWeeklyGasReadingsPage'
 import AlertsPage from './pages/AlertsPage'
 import PredictionsPage from './pages/PredictionsPage'
 import ContactPage from './pages/ContactPage'
 import ConfirmationPage from './pages/ConfirmationPage'
 import CorreosPage from './pages/CorreosPage'
+import ExcelToSqlPage from './pages/ExcelToSqlPage'
 
 
 function App() {
@@ -37,9 +40,12 @@ function App() {
         <Route path="/ptar" element={<PTARPage />} />
         <Route path="/agregar-datos" element={<AddDataPage />} />
         <Route path="/agregar-lecturas" element={<AddWeeklyReadingsPage />} />
+        <Route path="/consumo-gas" element={<GasConsumptionPage />} />
+        <Route path="/agregar-lecturas-gas" element={<AddWeeklyGasReadingsPage />} />
         <Route path="/alertas" element={<AlertsPage />} />
         <Route path="/predicciones" element={<PredictionsPage />} />
         <Route path="/contacto" element={<ContactPage />} />
+        <Route path="/excel-to-sql" element={<ExcelToSqlPage />} />
 
         {/* Ruta de administradores - TEMPORALMENTE DESACTIVADA - Todos pueden acceder */}
         <Route path="/correos" element={<CorreosPage />} />
