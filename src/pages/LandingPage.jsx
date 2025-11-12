@@ -17,9 +17,11 @@ import {
   Star,
   Play,
   Menu,
-  X
+  X,
+  TrendingUp
 } from 'lucide-react'
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import ComplexWaterBackground from '../components/WaterBackground'
 import Braveform from '../components/BrevoForm'
 
@@ -30,24 +32,24 @@ const LandingPage = () => {
 
   const benefits = [
     {
-      icon: <Target className="w-12 h-12 text-blue-600" />,
-      title: "Controla tu huella hídrica",
-      description: "Conoce en tiempo real cuánta agua consumes, dónde se desperdicia y cómo puedes optimizar cada litro.",
-      image: "🎯",
+      icon: <Droplets className="w-12 h-12 text-cyan-400" />,
+      title: "Control de huella hídrica en tiempo real",
+      description: "Conoce en tiempo real cuánta agua consumes, dónde se desperdicia y cómo puedes optimizar cada litro. Monitoreo continuo de 100+ puntos de consumo con alertas inteligentes.",
+      iconVisual: <Droplets className="w-16 h-16 text-cyan-400" />,
       position: "left"
     },
     {
-      icon: <BarChart3 className="w-12 h-12 text-blue-600" />,
+      icon: <BarChart3 className="w-12 h-12 text-blue-400" />,
       title: "Decisiones basadas en datos",
-      description: "Accede a reportes inteligentes y dashboards intuitivos que facilitan la planeación, cumplimiento regulatorio y la sostenibilidad empresarial.",
-      image: "📊",
+      description: "Accede a reportes inteligentes y dashboards intuitivos que facilitan la planeación, cumplimiento regulatorio y la sostenibilidad empresarial. Visualizaciones interactivas y análisis predictivo.",
+      iconVisual: <BarChart3 className="w-16 h-16 text-blue-400" />,
       position: "right"
     },
     {
-      icon: <Shield className="w-12 h-12 text-blue-600" />,
-      title: "Tecnología que impulsa confianza",
-      description: "Integramos sensores, analítica avanzada e inteligencia artificial para garantizar información precisa y soluciones adaptadas a tu operación.",
-      image: "🛡️",
+      icon: <Zap className="w-12 h-12 text-cyan-400" />,
+      title: "Tecnología con sensores e IA",
+      description: "Integramos sensores, analítica avanzada e inteligencia artificial para garantizar información precisa y soluciones adaptadas a tu operación. Predicciones con machine learning.",
+      iconVisual: <Zap className="w-16 h-16 text-cyan-400" />,
       position: "left"
     }
   ];
@@ -89,7 +91,7 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 z-50">
+      <header className="fixed top-0 w-full bg-[#0A1628]/95 backdrop-blur-md border-b border-white/10 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
@@ -99,14 +101,14 @@ const LandingPage = () => {
             
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors">Características</a>
-              <a href="#about" className="text-gray-700 hover:text-blue-600 transition-colors">Nosotros</a>
+              <a href="#features" className="text-gray-300 hover:text-cyan-400 transition-colors">Características</a>
+              <a href="#about" className="text-gray-300 hover:text-cyan-400 transition-colors">Nosotros</a>
              
               <Button 
                 onClick={handleContactRedirect}
                 variant="outline"
                 size="sm"
-                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                className="border-cyan-400/50 text-white hover:text-cyan-400 hover:bg-cyan-500/10"
               >
                 Contacto
               </Button>
@@ -115,7 +117,7 @@ const LandingPage = () => {
                 onClick={handleLogin}
                 variant="default"
                 size="sm"
-                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                className="bg-blue-600 text-white hover:bg-blue-700"
               >
                 Iniciar sesión
               </Button>
@@ -132,16 +134,16 @@ const LandingPage = () => {
 
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-100 py-4">
+            <div className="md:hidden border-t border-white/10 py-4 bg-[#0A1628]">
               <nav className="flex flex-col space-y-4">
-                <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors">Características</a>
-                <a href="#about" className="text-gray-700 hover:text-blue-600 transition-colors">Nosotros</a>
-                <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contacto</a>
+                <a href="#features" className="text-gray-300 hover:text-cyan-400 transition-colors">Características</a>
+                <a href="#about" className="text-gray-300 hover:text-cyan-400 transition-colors">Nosotros</a>
+                <a href="#contact" className="text-gray-300 hover:text-cyan-400 transition-colors">Contacto</a>
                 <Button 
                   onClick={handleContactRedirect}
                   variant="outline"
                   size="sm"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50 w-fit"
+                  className="border-cyan-400/50 text-cyan-400 hover:bg-cyan-500/10 w-fit"
                 >
                   Contacto
                 </Button>
@@ -152,212 +154,261 @@ const LandingPage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-32  relative overflow-hidden">
-        {/* Advanced Water Animation Background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-50/20 to-white/80">
-          <ComplexWaterBackground 
-            enableCanvas={true} 
-            intensity="high"
-          />
+      <section className="pt-32 pb-20 relative overflow-hidden bg-gradient-to-br from-[#0A1628] via-[#1A2F5A] to-[#0F1B35] min-h-screen flex items-center">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)`,
+            backgroundSize: '40px 40px'
+          }}></div>
         </div>
-        <div className="relative z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="text-left">
-              <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-6">
-                <Waves className="w-4 h-4 mr-2" />
-                Innovación en gestión hídrica
-              </div>
-              
-              <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-                Mide, analiza y optimiza tu 
-                <span className="text-blue-600 block">consumo de agua</span>
-                <span className="text-gray-600 text-4xl lg:text-5xl">con precisión digital</span>
-              </h1>
-              
-              <p className="text-xl text-gray-600 mb-8 max-w-lg">
-                En BlueMetrics transformamos los datos en decisiones inteligentes. Nuestra plataforma te ayuda a gestionar el agua de forma eficiente, reducir costos y avanzar hacia un futuro sostenible.
-              </p>
 
-              {/* Features List */}
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                {features.map((feature, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    <div className="text-blue-600">{feature.icon}</div>
-                    <span className="text-gray-700 text-sm">{feature.text}</span>
-                  </div>
-                ))}
-              </div>
+        {/* Gradient Orbs */}
+        <div className="absolute top-20 left-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl"></div>
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="text-center max-w-5xl mx-auto">
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 rounded-full text-blue-300 text-sm font-medium mb-8"
+            >
+              <Zap className="w-4 h-4" />
+              Inteligencia Hídrica Avanzada
+            </motion.div>
+            
+            {/* Main Heading */}
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6"
+            >
+              <span className="text-white">Bluemetrics: La </span>
+              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                Inteligencia Hídrica y Energética
+              </span>
+              <span className="text-white"> que su Operación Necesita</span>
+            </motion.h1>
+            
+            {/* Subtitle */}
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="text-lg sm:text-xl text-gray-300 mb-6 max-w-4xl mx-auto leading-relaxed"
+            >
+              Monitoreo en tiempo real, predicciones con IA y optimización de 100+ puntos de consumo. Transforme sus datos en ahorros y sostenibilidad.
+            </motion.p>
 
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  onClick={handleContactRedirect}
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg group"
-                >
-                  Contáctanos
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-                <Button 
-                  onClick={() => {
-                    console.log('Botón Ver demo clickeado');
-                    handleDashboardRedirect();
-                  }}
-                  variant="outline"
-                  size="lg"
-                  disabled={isNavigating}
-                  className={`border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 text-lg transition-all duration-200 hover:border-blue-300 hover:text-blue-600 ${
-                    isNavigating ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  {isNavigating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-2"></div>
-                      Cargando...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-5 h-5 mr-2" />
-                      Ver demo
-                    </>
-                  )}
-                </Button>
-              </div>
+            {/* Target Audience */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="text-base sm:text-lg text-cyan-400 font-medium mb-10"
+            >
+              Diseñado para instalaciones de alto consumo: Campus, Hospitales e Industria
+            </motion.p>
 
-              <p className="text-sm text-gray-500 mt-4">
-                ✨ Cuéntanos de tu proyecto y te generaremos una solución a la medida
-              </p>
-            </div>
-
-            {/* Hero Visual */}
-            <div className="relative">
-              <div className="relative bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl p-8 shadow-xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent rounded-2xl"></div>
-                <div className="relative">
-                  {/* Mock Dashboard Preview */}
-                  <div className="bg-white rounded-xl shadow-lg p-6 mb-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-gray-900">Consumo en Tiempo Real</h3>
-                      <div className="flex items-center text-green-600 text-sm">
-                        <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                        Activo
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">2.8k</div>
-                        <div className="text-xs text-gray-500">m³ Diarios</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">94%</div>
-                        <div className="text-xs text-gray-500">Eficiencia</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-600">12</div>
-                        <div className="text-xs text-gray-500">Pozos</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white rounded-lg shadow-md p-4">
-                      <div className="flex items-center mb-2">
-                        <Target className="w-5 h-5 text-blue-600 mr-2" />
-                        <span className="text-sm font-medium">Alertas</span>
-                      </div>
-                      <div className="text-lg font-bold">2 Activas</div>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-4">
-                      <div className="flex items-center mb-2">
-                        <BarChart3 className="w-5 h-5 text-green-600 mr-2" />
-                        <span className="text-sm font-medium">Ahorro</span>
-                      </div>
-                      <div className="text-lg font-bold">$12.5k</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Floating elements */}
-              <div className="absolute -top-4 -right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                IA Activa
-              </div>
-              <div className="absolute -bottom-4 -left-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                24/7 Monitoreo
-              </div>
-            </div>
+            {/* CTA Buttons */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            >
+              <Button 
+                onClick={handleContactRedirect}
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-blue-500/50 transition-all duration-300 group flex items-center gap-2"
+              >
+                <Zap className="w-5 h-5" />
+                Agende una Demostración
+              </Button>
+              <Button 
+                onClick={() => {
+                  console.log('Botón Ver Caso de Estudio clickeado');
+                  handleDashboardRedirect();
+                }}
+                variant="outline"
+                size="lg"
+                disabled={isNavigating}
+                className="border-2 border-blue-400/50 text-white hover:text-cyan-400 hover:bg-blue-500/20 px-8 py-6 text-lg rounded-xl backdrop-blur-sm transition-all duration-300 flex items-center gap-2"
+              >
+                {isNavigating ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Cargando...
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="w-5 h-5" />
+                    Ver Caso de Estudio
+                  </>
+                )}
+              </Button>
+            </motion.div>
           </div>
-        </div>
+
+          {/* Features Grid */}
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="mt-20 grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto"
+          >
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.9 + index * 0.1 }}
+                className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 transition-all duration-300"
+              >
+                <div className="text-cyan-400 mb-3 flex justify-center">{feature.icon}</div>
+                <span className="text-white text-sm font-medium">{feature.text}</span>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
       {/* Benefits Section - Zigzag Layout */}
-      <section id="features" className="py-20 bg-gray-50">
+      <section id="features" className="py-20 bg-gradient-to-b from-[#0F1B35] to-[#1A2F5A] relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Características <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Principales</span>
+            </h2>
+            <p className="text-xl text-cyan-200">Descubre cómo Bluemetrics transforma la gestión hídrica y energética</p>
+          </motion.div>
+
           {benefits.map((benefit, index) => (
-            <div key={index} className={`mb-20 ${index === benefits.length - 1 ? 'mb-0' : ''}`}>
+            <motion.div 
+              key={index} 
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.2 }}
+              className={`mb-20 ${index === benefits.length - 1 ? 'mb-0' : ''}`}
+            >
               <div className={`grid lg:grid-cols-2 gap-12 items-center ${benefit.position === 'right' ? 'lg:grid-flow-col-dense' : ''}`}>
                 {/* Content */}
                 <div className={`${benefit.position === 'right' ? 'lg:col-start-2' : ''}`}>
-                  <div className="mb-6">
-                    {benefit.icon}
-                  </div>
-                  <h3 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6">
-                    {benefit.title}
-                  </h3>
-                  <p className="text-xl text-gray-600 leading-relaxed mb-8">
-                    {benefit.description}
-                  </p>
-                  <Button 
-                    onClick={handleContactRedirect}
-                    variant="outline" 
-                    className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                  <motion.div 
+                    initial={{ opacity: 0, x: benefit.position === 'right' ? 50 : -50 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    className="mb-6"
                   >
-                    Conoce más
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+                    {benefit.icon}
+                  </motion.div>
+                  <motion.h3 
+                    initial={{ opacity: 0, x: benefit.position === 'right' ? 50 : -50 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                    className="text-3xl lg:text-4xl font-bold text-white mb-6"
+                  >
+                    {benefit.title}
+                  </motion.h3>
+                  <motion.p 
+                    initial={{ opacity: 0, x: benefit.position === 'right' ? 50 : -50 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                    className="text-xl text-gray-300 leading-relaxed mb-8"
+                  >
+                    {benefit.description}
+                  </motion.p>
+                  <motion.div
+                    initial={{ opacity: 0, x: benefit.position === 'right' ? 50 : -50 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.5 }}
+                  >
+                    <Button 
+                      onClick={handleContactRedirect}
+                      variant="outline" 
+                      className="border-cyan-400 text-white hover:text-cyan-400 hover:bg-cyan-500/10 backdrop-blur-sm"
+                    >
+                      Conoce más
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </motion.div>
                 </div>
 
                 {/* Visual */}
                 <div className={`${benefit.position === 'right' ? 'lg:col-start-1' : ''}`}>
-                  <div className="relative">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8 text-center">
-                      <div className="text-8xl mb-4">{benefit.image}</div>
-                      <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <motion.div 
+                    initial={{ opacity: 0, x: benefit.position === 'right' ? -50 : 50 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    className="relative"
+                  >
+                    <div className="bg-gradient-to-br from-cyan-900/20 to-blue-900/20 backdrop-blur-sm border border-cyan-500/20 rounded-2xl p-8 text-center">
+                      <div className="flex justify-center mb-6">{benefit.iconVisual}</div>
+                      <div className="bg-[#0A1628]/80 backdrop-blur-md rounded-xl p-6 shadow-lg border border-white/10">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="text-center">
-                            <div className="text-2xl font-bold text-blue-600">
-                              {index === 0 ? '94%' : index === 1 ? '30%' : '99.9%'}
+                            <div className="text-2xl font-bold text-cyan-400">
+                              {index === 0 ? '100+' : index === 1 ? '30%' : '99.9%'}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              {index === 0 ? 'Precisión' : index === 1 ? 'Ahorro' : 'Uptime'}
+                            <div className="text-sm text-gray-400">
+                              {index === 0 ? 'Puntos' : index === 1 ? 'Ahorro' : 'Precisión'}
                             </div>
                           </div>
                           <div className="text-center">
-                            <div className="text-2xl font-bold text-green-600">
-                              {index === 0 ? '24/7' : index === 1 ? '5min' : '2.8k'}
+                            <div className="text-2xl font-bold text-blue-400">
+                              {index === 0 ? '24/7' : index === 1 ? '5min' : 'IA'}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              {index === 0 ? 'Monitoreo' : index === 1 ? 'Reportes' : 'Sensores'}
+                            <div className="text-sm text-gray-400">
+                              {index === 0 ? 'Monitoreo' : index === 1 ? 'Reportes' : 'Predicciones'}
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
 
       {/* About Us Section */}
-      <section id="about" className="py-20 bg-white">
+      <section id="about" className="py-20 bg-gradient-to-b from-[#1A2F5A] to-[#0A1628] relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-8">Quiénes somos</h2>
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-4xl font-bold text-white mb-8"
+          >
+            Quiénes <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">somos</span>
+          </motion.h2>
           
-          <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="space-y-6 text-lg text-gray-300 leading-relaxed"
+          >
             <p>
               En BlueMetrics creemos que el agua es el recurso más valioso de nuestro planeta. 
               Por eso desarrollamos una plataforma digital que ayuda a empresas, instituciones y 
@@ -375,37 +426,36 @@ const LandingPage = () => {
               ambiental. Con BlueMetrics, transformamos la gestión hídrica en una ventaja 
               competitiva y un paso firme hacia el futuro.
             </p>
-          </div>
+          </motion.div>
 
           {/* Team Values */}
           <div className="grid md:grid-cols-3 gap-8 mt-16">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-blue-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Equipo Experto</h3>
-              <p className="text-gray-600">Profesionales especializados en tecnología hídrica</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Globe className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Impacto Global</h3>
-              <p className="text-gray-600">Soluciones que trascienden fronteras</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="w-8 h-8 text-yellow-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Innovación</h3>
-              <p className="text-gray-600">Tecnología de vanguardia para el futuro</p>
-            </div>
+            {[
+              { icon: Users, title: "Equipo Experto", description: "Profesionales especializados en tecnología hídrica", color: "blue" },
+              { icon: Globe, title: "Impacto Global", description: "Soluciones que trascienden fronteras", color: "blue" },
+              { icon: Star, title: "Innovación", description: "Tecnología de vanguardia para el futuro", color: "blue" }
+            ].map((value, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.4 + index * 0.1 }}
+                className="text-center "
+              >
+                <div className={`w-16 h-16 bg-${value.color}-100 rounded-full flex items-center justify-center mx-auto mb-4`}>
+                  <value.icon className={`w-8 h-8 text-${value.color}-600`} />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{value.title}</h3>
+                <p className="text-white">{value.description}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 relative bg-gradient-to-r from-blue-600/90 to-blue-700/90 bg-fixed">
+      <section className="py-20 relative bg-gradient-to-br from-[#0A1628] via-[#1A2F5A] to-[#0F1B35] overflow-hidden">
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-fixed" 
@@ -414,51 +464,79 @@ const LandingPage = () => {
             backgroundAttachment: 'fixed'
           }}
         ></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/80 to-blue-700/80"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20"></div>
+        {/* Gradient Orbs */}
+        <div className="absolute top-10 right-10 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"></div>
         <div className="relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">
-              Resultados que hablan por sí solos
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+              <span className="bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">Resultados</span> que hablan por sí solos
             </h2>
-            <p className="text-blue-100 text-lg">
-              Empresas de todo el mundo confían en BlueMetrics
+            <p className="text-cyan-200 text-lg">
+              Instituciones confían en BlueMetrics para transformar su gestión hídrica
             </p>
-          </div>
+          </motion.div>
           
           <div className="grid md:grid-cols-4 gap-8 text-center text-white">
-            <div>
-              <div className="text-4xl font-bold mb-2">150+</div>
-              <div className="text-blue-100">Pozos Monitoreados</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold mb-2">99.9%</div>
-              <div className="text-blue-100">Tiempo de Actividad</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold mb-2">30%</div>
-              <div className="text-blue-100">Ahorro en Costos</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold mb-2">24/7</div>
-              <div className="text-blue-100">Monitoreo Continuo</div>
-            </div>
+            {[
+              { value: "100+", label: "Puntos de Consumo" },
+              { value: "99.9%", label: "Tiempo de Actividad" },
+              { value: "30%", label: "Ahorro en Costos" },
+              { value: "24/7", label: "Monitoreo Continuo" }
+            ].map((stat, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+              >
+                <div className="text-4xl lg:text-5xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">{stat.value}</div>
+                <div className="text-gray-300">{stat.label}</div>
+              </motion.div>
+            ))}
           </div>
         </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gradient-to-b from-[#0F1B35] to-[#1A2F5A] relative overflow-hidden">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-gray-900 mb-6">
-            ¿Listo para transformar tu gestión hídrica?
-          </h2>
-          <p className="text-xl text-gray-600 mb-10">
-            Únete a las empresas que ya confían en BlueMetrics para optimizar 
-            sus recursos hídricos y construir un futuro sostenible.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-4xl font-bold text-white mb-6"
+          >
+            ¿Listo para transformar tu <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">gestión hídrica</span>?
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-xl text-gray-300 mb-10"
+          >
+            Únete a las instituciones que ya confían en BlueMetrics para optimizar 
+            sus recursos hídricos y energéticos, construyendo un futuro sostenible.
+          </motion.p>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+          >
             <Button 
               onClick={handleContactRedirect}
               size="lg"
@@ -470,95 +548,113 @@ const LandingPage = () => {
               onClick={handleContactRedirect}
               variant="outline"
               size="lg"
-              className="border-blue-600 text-blue-600 hover:bg-blue-50 px-10 py-4 text-lg"
+              className="border-cyan-400 text-white hover:text-cyan-400 hover:bg-cyan-500/10 backdrop-blur-sm px-10 py-4 text-lg"
             >
               Más información
             </Button>
-          </div>
-          <p className="text-sm text-gray-500 mt-6">
-            💡 Sin compromiso • Configuración en 24 horas • Soporte especializado
-          </p>
+          </motion.div>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="text-sm text-gray-400 mt-6 flex items-center justify-center gap-4 flex-wrap"
+          >
+            <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-cyan-400" /> Sin compromiso</span>
+            <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-cyan-400" /> Configuración en 24 horas</span>
+            <span className="flex items-center gap-2"><Shield className="w-4 h-4 text-cyan-400" /> Soporte especializado</span>
+          </motion.p>
         </div>
       </section>
 
       {/* Contact Section with Form */}
-      <section id="contact" className="py-20 bg-gradient-to-br from-blue-50 via-blue-100/50 to-white relative overflow-hidden">
+      <section id="contact" className="py-20 bg-gradient-to-b from-[#1A2F5A] to-[#0F1B35] relative overflow-hidden">
         {/* Decorative background elements */}
         <div className="absolute inset-0">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-blue-200/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-          <div className="absolute top-10 right-10 w-72 h-72 bg-blue-300/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-blue-400/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+          <div className="absolute top-10 left-10 w-72 h-72 bg-cyan-500/20 rounded-full blur-3xl"></div>
+          <div className="absolute top-10 right-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-cyan-600/20 rounded-full blur-3xl"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             {/* Icon header */}
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-full mb-6 shadow-lg">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.5 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-cyan-600 to-blue-600 rounded-full mb-6 shadow-lg"
+            >
               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-            </div>
+            </motion.div>
             
-            <h2 className="text-4xl lg:text-5xl font-bold text-blue-900 mb-6">
-              <span className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-4xl lg:text-5xl font-bold text-white mb-6"
+            >
+              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                 Contáctanos
               </span>
-            </h2>
-            <p className="text-xl text-blue-700 max-w-3xl mx-auto leading-relaxed">
-              ¿Tienes preguntas? Nos encantaría ayudarte a encontrar la solución perfecta para tu empresa.
-              <span className="block mt-2 text-lg text-blue-600">
-                Transforma tu gestión hídrica con tecnología inteligente.
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed"
+            >
+              ¿Tienes preguntas? Nos encantaría ayudarte a encontrar la solución perfecta para tu institución.
+              <span className="block mt-2 text-lg text-cyan-400">
+                Transforma tu gestión hídrica y energética con tecnología inteligente.
               </span>
-            </p>
+            </motion.p>
           </div>
           
           <div className="max-w-2xl mx-auto">
             <div className="relative">
               {/* Decorative gradient border */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 rounded-2xl blur opacity-75"></div>
-              <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden">
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 rounded-2xl blur opacity-50"></div>
+              <div className="relative bg-[#0A1628] border border-cyan-500/20 rounded-2xl shadow-2xl overflow-hidden">
                 <Braveform />
               </div>
             </div>
             
             {/* Features below form */}
             <div className="mt-12 grid md:grid-cols-3 gap-6 text-center">
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-blue-100">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-full mb-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">Respuesta Rápida</h3>
-                <p className="text-blue-700">Te contactamos en menos de 24 horas</p>
-              </div>
-              
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-blue-100">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-full mb-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">Sin Compromiso</h3>
-                <p className="text-blue-700">Demo gratuita sin obligaciones</p>
-              </div>
-              
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-blue-100">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-full mb-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">Soporte Especializado</h3>
-                <p className="text-blue-700">Equipo experto en gestión hídrica</p>
-              </div>
+              {[
+                { icon: "M13 10V3L4 14h7v7l9-11h-7z", title: "Respuesta Rápida", description: "Te contactamos en menos de 24 horas" },
+                { icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z", title: "Sin Compromiso", description: "Demo gratuita sin obligaciones" },
+                { icon: "M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z", title: "Soporte Especializado", description: "Equipo experto en gestión hídrica" }
+              ].map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.5 + index * 0.1 }}
+                  className="bg-[#0A1628]/60 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-cyan-500/20">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full mb-4">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={feature.icon} />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
+                  <p className="text-gray-300">{feature.description}</p>
+                </motion.div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16">
+      <footer className="bg-gradient-to-b from-[#0A1628] to-[#050A14] text-white py-16 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-8">
             <div>
@@ -612,25 +708,25 @@ const LandingPage = () => {
             <div>
               <h3 className="font-semibold  mb-6">Plataforma</h3>
               <ul className="space-y-3 text-gray-400">
-                <li><button onClick={handleContactRedirect} className="hover:text-white transition-colors">Dashboard</button></li>
-                <li><button onClick={handleContactRedirect} className="hover:text-white transition-colors">Pozos</button></li>
-                <li><button onClick={handleContactRedirect} className="hover:text-white transition-colors">Consumo</button></li>
-                <li><button onClick={handleContactRedirect} className="hover:text-white transition-colors">Balance Hídrico</button></li>
-                <li><button onClick={handleContactRedirect} className="hover:text-white transition-colors">Consulta</button></li>
+                <li><button onClick={handleContactRedirect} className="hover:text-cyan-400 transition-colors">Dashboard</button></li>
+                <li><button onClick={handleContactRedirect} className="hover:text-cyan-400 transition-colors">Pozos</button></li>
+                <li><button onClick={handleContactRedirect} className="hover:text-cyan-400 transition-colors">Consumo</button></li>
+                <li><button onClick={handleContactRedirect} className="hover:text-cyan-400 transition-colors">Balance Hídrico</button></li>
+                <li><button onClick={handleContactRedirect} className="hover:text-cyan-400 transition-colors">Consulta</button></li>
               </ul>
             </div>
             
             <div>
               <h3 className="font-semibold mb-6">Información</h3>
               <ul className="space-y-3 text-gray-400">
-                <li className="hover:text-white transition-colors">contacto@bluemetrics.mx</li>
-                <li className="hover:text-white transition-colors">+52 844 544 7606</li>
-                <li className="hover:text-white transition-colors">Soporte 24/7</li>
+                <li className="hover:text-cyan-400 transition-colors">contacto@bluemetrics.mx</li>
+                <li className="hover:text-cyan-400 transition-colors">+52 844 544 7606</li>
+                <li className="hover:text-cyan-400 transition-colors">Soporte 24/7</li>
                 <li>
                   <Button 
                     onClick={handleContactRedirect}
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-white mt-2"
+                    className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white mt-2"
                   >
                     Contáctanos
                   </Button>
@@ -639,7 +735,7 @@ const LandingPage = () => {
             </div>
           </div>
           
-          <div className="border-t border-gray-800 mt-12 pt-8">
+          <div className="border-t border-white/10 mt-12 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <p className="text-gray-400 text-sm">
                 © 2024 BlueMetrics. Todos los derechos reservados.
