@@ -1,6 +1,10 @@
 import { Button } from "../components/ui/button"
 import { useLocation, useNavigate } from "react-router"
-import { Mail, Recycle, PlusCircle, Flame } from "lucide-react"
+import { 
+  Mail, Recycle, PlusCircle, Flame, LayoutDashboard, 
+  Droplets, Scale, Drill, Database, FileInput, 
+  TrendingUp, Bell, ChevronDown, ChevronRight 
+} from "lucide-react"
 import AquaNetLogoWhite from "./svg/AquaNetLogoWhite"
 import { useState } from "react"
 // import { useEffect } from "react"
@@ -12,6 +16,23 @@ export function DashboardSidebar() {
   // const [userRole, setUserRole] = useState(null)
   // TEMPORALMENTE DESACTIVADO - Todos tienen acceso de admin para pruebas
   const [userRole, setUserRole] = useState('admin')
+  
+  // Estado para secciones colapsables
+  const [expandedSections, setExpandedSections] = useState({
+    general: true,
+    water: true,
+    gas: true,
+    data: true,
+    analysis: true,
+    admin: true
+  })
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }))
+  }
 
   // useEffect(() => {
   //   const getUserRole = async () => {
@@ -46,24 +67,61 @@ export function DashboardSidebar() {
   //   getUserRole()
   // }, [])
 
-  const menuItems = [
-    { id: "dashboard", label: "Dashboard Principal", path: "/dashboard", active: location.pathname === "/dashboard" },
-    { id: "consumption", label: "Consumo Agua", path: "/consumo", active: location.pathname === "/consumo" },
-    { id: "balance", label: "Balance Hídrico", path: "/balance", active: location.pathname === "/balance" },
-    { id: "wells", label: "Pozos", path: "/pozos", active: location.pathname === "/pozos" },
-    { id: "ptar", label: "PTAR", path: "/ptar", active: location.pathname === "/ptar", icon: Recycle },
-    { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", active: location.pathname === "/agregar-datos" },
-    { id: "add-readings", label: "Agregar Lecturas Agua", path: "/agregar-lecturas", active: location.pathname === "/agregar-lecturas", icon: PlusCircle },
-    { id: "gas-consumption", label: "Consumo Gas", path: "/consumo-gas", active: location.pathname === "/consumo-gas", icon: Flame },
-    { id: "add-gas-readings", label: "Agregar Lecturas Gas", path: "/agregar-lecturas-gas", active: location.pathname === "/agregar-lecturas-gas", icon: Flame },
-    { id: "predictions", label: "Predicciones", path: "/predicciones", active: location.pathname === "/predicciones" },
-    { id: "alerts", label: "Alertas", path: "/alertas", active: location.pathname === "/alertas" },
+  // Estructura de menú organizada por secciones
+  const menuSections = [
+    {
+      id: 'general',
+      label: 'General',
+      items: [
+        { id: "dashboard", label: "Dashboard Principal", path: "/dashboard", icon: LayoutDashboard }
+      ]
+    },
+    {
+      id: 'water',
+      label: 'Gestión Hídrica',
+      items: [
+        { id: "consumption", label: "Consumo Agua", path: "/consumo", icon: Droplets },
+        { id: "balance", label: "Balance Hídrico", path: "/balance", icon: Scale },
+        { id: "wells", label: "Pozos", path: "/pozos", icon: Drill },
+        { id: "ptar", label: "PTAR", path: "/ptar", icon: Recycle }
+      ]
+    },
+    {
+      id: 'gas',
+      label: 'Gestión de Gas',
+      items: [
+        { id: "gas-consumption", label: "Consumo Gas", path: "/consumo-gas", icon: Flame },
+        { id: "add-gas-readings", label: "Lecturas Gas", path: "/agregar-lecturas-gas", icon: PlusCircle }
+      ]
+    },
+    {
+      id: 'data',
+      label: 'Administración de Datos',
+      items: [
+        { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", icon: Database },
+        { id: "add-readings", label: "Lecturas Agua", path: "/agregar-lecturas", icon: FileInput }
+      ]
+    },
+    {
+      id: 'analysis',
+      label: 'Análisis',
+      items: [
+        { id: "predictions", label: "Predicciones", path: "/predicciones", icon: TrendingUp },
+        { id: "alerts", label: "Alertas", path: "/alertas", icon: Bell }
+      ]
+    }
   ]
 
-  // SOLO agregar Correos si el rol es admin
-  const allMenuItems = userRole === 'admin' 
-    ? [...menuItems, { id: "correos", label: "Correos", path: "/correos", active: location.pathname === "/correos", icon: Mail }]
-    : menuItems
+  // Agregar sección de administración solo para admins
+  if (userRole === 'admin') {
+    menuSections.push({
+      id: 'admin',
+      label: 'Administración',
+      items: [
+        { id: "correos", label: "Correos", path: "/correos", icon: Mail, badge: "Admin" }
+      ]
+    })
+  }
 
   const handleNavigation = (path) => {
     navigate(path)
@@ -81,27 +139,53 @@ export function DashboardSidebar() {
       </div>
 
       {/* Menú de navegación */}
-      <div className="p-4">
-        <nav className="space-y-2">
-          {allMenuItems.map((item) => (
-            <Button
-              key={item.id}
-              variant={item.active ? "default" : "ghost"}
-              className={`w-full justify-start ${
-                item.active
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              }`}
-              onClick={() => handleNavigation(item.path)}
-            >
-              {item.icon && <item.icon className="w-4 h-4 mr-2" />}
-              {item.label}
-              {item.id === "correos" && (
-                <span className="ml-auto bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
-                  Admin
-                </span>
+      <div className="p-4 overflow-y-auto h-[calc(100vh-80px)]">
+        <nav className="space-y-4">
+          {menuSections.map((section) => (
+            <div key={section.id} className="space-y-1">
+              {/* Section Header */}
+              <button
+                onClick={() => toggleSection(section.id)}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-sidebar-foreground/70 hover:text-sidebar-foreground transition-colors uppercase tracking-wider"
+              >
+                <span>{section.label}</span>
+                {expandedSections[section.id] ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+
+              {/* Section Items */}
+              {expandedSections[section.id] && (
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    const isActive = location.pathname === item.path
+                    return (
+                      <Button
+                        key={item.id}
+                        variant={isActive ? "default" : "ghost"}
+                        size="sm"
+                        className={`w-full justify-start ${
+                          isActive
+                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        }`}
+                        onClick={() => handleNavigation(item.path)}
+                      >
+                        <item.icon className="w-4 h-4 mr-2" />
+                        {item.label}
+                        {item.badge && (
+                          <span className="ml-auto bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+                            {item.badge}
+                          </span>
+                        )}
+                      </Button>
+                    )
+                  })}
+                </div>
               )}
-            </Button>
+            </div>
           ))}
         </nav>
       </div>

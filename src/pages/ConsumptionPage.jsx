@@ -6,6 +6,8 @@ import { Button } from "../components/ui/button"
 import ChartComponent from "../components/ChartComponent"
 import DashboardChart from "../components/DashboardChart"
 import ConsumptionTable from "../components/ConsumptionTable"
+import WeeklyComparisonChart from "../components/WeeklyComparisonChart"
+import WeeklyComparisonTable from "../components/WeeklyComparisonTable"
 import datosPozo12 from '../lib/datos_pozo_12.json'
 import consumptionPointsData from '../lib/consumption-points.json'
 import { dashboardData } from '../lib/dashboard-data'
@@ -52,10 +54,20 @@ export default function ConsumptionPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // Estados para comparativas semanales
+  const [selectedPoint, setSelectedPoint] = useState('medidor_general_pozos')
+  const [weeklyReadings2024, setWeeklyReadings2024] = useState([])
+  const [weeklyReadings2025, setWeeklyReadings2025] = useState([])
+
   // Cargar semanas disponibles desde Supabase cuando cambia el año de lecturas
   useEffect(() => {
     fetchWeeklyReadings()
   }, [selectedYearForReadings])
+
+  // Cargar datos de ambos años para comparativas
+  useEffect(() => {
+    fetchBothYearsData()
+  }, [selectedPoint])
 
   const fetchWeeklyReadings = async () => {
     try {
@@ -128,6 +140,49 @@ export default function ConsumptionPage() {
     }))
 
     setConsumptionPoints(categories)
+  }
+
+  // Función para cargar datos de ambos años para comparación
+  const fetchBothYearsData = async () => {
+    try {
+      // Cargar datos 2024
+      const { data: data2024, error: error2024 } = await supabase
+        .from('lecturas_semana2024')
+        .select('numero_semana, ' + selectedPoint)
+        .order('numero_semana', { ascending: true })
+      
+      if (error2024) {
+        console.error('Error cargando 2024:', error2024)
+      } else {
+        const formatted2024 = data2024
+          .filter(d => d[selectedPoint] !== null)
+          .map(d => ({
+            week: d.numero_semana,
+            reading: parseFloat(d[selectedPoint]) || 0
+          }))
+        setWeeklyReadings2024(formatted2024)
+      }
+
+      // Cargar datos 2025
+      const { data: data2025, error: error2025 } = await supabase
+        .from('lecturas_semana')
+        .select('numero_semana, ' + selectedPoint)
+        .order('numero_semana', { ascending: true })
+      
+      if (error2025) {
+        console.error('Error cargando 2025:', error2025)
+      } else {
+        const formatted2025 = data2025
+          .filter(d => d[selectedPoint] !== null)
+          .map(d => ({
+            week: d.numero_semana,
+            reading: parseFloat(d[selectedPoint]) || 0
+          }))
+        setWeeklyReadings2025(formatted2025)
+      }
+    } catch (err) {
+      console.error('Error al cargar datos de ambos años:', err)
+    }
   }
 
   // Obtener datos de consumo por categoría y período
@@ -672,6 +727,103 @@ export default function ConsumptionPage() {
                 />
               )
             ))}
+          </div>
+
+          {/* Nueva Sección: Comparativas Semanales con Gráficas y Tablas */}
+          <div className="mt-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <BarChart3Icon className="h-6 w-6 text-primary" />
+                Análisis de Comparativas Semanales
+              </h2>
+              <p className="text-muted-foreground mt-1">
+                Comparación detallada entre años con indicadores de color y cantidad
+              </p>
+            </div>
+
+            {/* Selector de punto de medición */}
+            <Card className="mb-6">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <label className="text-sm font-medium">Selecciona punto de medición:</label>
+                  <select
+                    value={selectedPoint}
+                    onChange={(e) => setSelectedPoint(e.target.value)}
+                    className="flex-1 max-w-md px-4 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <optgroup label="Pozos de Servicios">
+                      <option value="medidor_general_pozos">Medidor General de Pozos</option>
+                      <option value="pozo_11">Pozo 11</option>
+                      <option value="pozo_12">Pozo 12</option>
+                      <option value="pozo_14">Pozo 14</option>
+                      <option value="pozo_7">Pozo 7</option>
+                      <option value="pozo_3">Pozo 3</option>
+                    </optgroup>
+                    <optgroup label="Pozos de Riego">
+                      <option value="pozo_4_riego">Pozo 4 Riego</option>
+                      <option value="pozo_8_riego">Pozo 8 Riego</option>
+                      <option value="pozo_15_riego">Pozo 15 Riego</option>
+                      <option value="total_pozos_riego">Total Pozos Riego</option>
+                    </optgroup>
+                    <optgroup label="Residencias">
+                      <option value="residencias_10_15">Residencias 10 y 15</option>
+                      <option value="residencias_1_antiguo">Residencias 1 (Antiguo)</option>
+                      <option value="residencias_2_ote">Residencias 2 Oriente</option>
+                      <option value="residencias_3">Residencias 3</option>
+                      <option value="residencias_4">Residencias 4</option>
+                      <option value="residencias_5">Residencias 5</option>
+                    </optgroup>
+                    <optgroup label="Edificios Principales">
+                      <option value="wellness_edificio">Wellness Edificio</option>
+                      <option value="biblioteca">Biblioteca</option>
+                      <option value="cetec">CETEC</option>
+                      <option value="biotecnologia">Biotecnología</option>
+                      <option value="arena_borrego">Arena Borrego</option>
+                      <option value="centro_congresos">Centro de Congresos</option>
+                      <option value="auditorio_luis_elizondo">Auditorio Luis Elizondo</option>
+                      <option value="nucleo">Núcleo</option>
+                      <option value="expedition">Expedition</option>
+                    </optgroup>
+                    <optgroup label="Torres de Enfriamiento">
+                      <option value="wellness_torre_enfriamiento">Wellness Torre Enfriamiento</option>
+                      <option value="cah3_torre_enfriamiento">CAH3 Torre Enfriamiento</option>
+                      <option value="megacentral_te_2">Megacentral TE 2</option>
+                      <option value="estadio_banorte_te">Estadio Banorte TE</option>
+                    </optgroup>
+                    <optgroup label="Circuitos">
+                      <option value="circuito_8_campus">Circuito 8" Campus</option>
+                      <option value="circuito_6_residencias">Circuito 6" Residencias</option>
+                      <option value="circuito_4_a7_ce">Circuito 4" A7 CE</option>
+                      <option value="circuito_planta_fisica">Circuito Planta Física</option>
+                      <option value="circuito_megacentral">Circuito Megacentral</option>
+                    </optgroup>
+                  </select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Gráfica de comparación */}
+            <div className="mb-6">
+              <WeeklyComparisonChart
+                title={consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición"}
+                currentYearData={weeklyReadings2025}
+                previousYearData={weeklyReadings2024}
+                currentYear="2025"
+                previousYear="2024"
+                unit="m³"
+              />
+            </div>
+
+            {/* Tabla tipo Excel de comparación */}
+            <div className="mb-6">
+              <WeeklyComparisonTable
+                title="Tabla Comparativa Semanal 2024 vs 2025"
+                data2024={weeklyReadings2024}
+                data2025={weeklyReadings2025}
+                pointName={consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición"}
+                unit="m³"
+              />
+            </div>
           </div>
 
           {/* Bento Grid: Gráfica a la izquierda, Filtros a la derecha */}
