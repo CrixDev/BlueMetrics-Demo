@@ -1,0 +1,45 @@
+{
+  "pozo": {
+    "id": "Pozo 14",
+    "ubicacion": "Campus Monterrey",
+    "anexo": "06NVL114666/24ELGR14",
+    "titulo": "06NVL108500/24EMOC14",
+    "m3_por_anexo": 88000
+  },
+  "especificaciones_anuales": [
+    {
+      "año": "2024",
+      "m3_cedidos_por_anexo": 28000,
+      "m3_cedidos_por_titulo": 82000,
+      "consumo_real_m3": 43652.5,
+      "m3_disponibles_para_consumir": 60000,
+      "observaciones": "Consumo en crecimiento"
+    },
+    {
+      "año": "2025 (hasta julio)",
+      "m3_cedidos_por_anexo": 28000,
+      "m3_cedidos_por_titulo": 82000,
+      "consumo_real_m3": 49850.7,
+      "m3_disponibles_para_consumir": 60000,
+      "observaciones": "Alto consumo"
+    }
+  ],
+  "datos_semanales": {
+    "lecturas_acumuladas": [
+      { "fecha": "2024-10-06", "lectura": 40200 },
+      { "fecha": "2024-10-13", "lectura": 40420 },
+      { "fecha": "2025-01-05", "lectura": 43060 },
+      { "fecha": "2025-06-08", "lectura": 48200 },
+      { "fecha": "2025-07-06", "lectura": 49320 }
+    ],
+    "consumo_semanal_detallado": [
+      {
+        "periodo": "06 oct - 13 oct 2024",
+        "consumo_servicios": 180,
+        "consumo_riego": 40,
+        "total_pozos": 220,
+        "notas": "Operación normal"
+      }
+    ]
+  }
+}

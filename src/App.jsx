@@ -20,6 +20,7 @@ import ContactPage from './pages/ContactPage'
 import ConfirmationPage from './pages/ConfirmationPage'
 import CorreosPage from './pages/CorreosPage'
 import ExcelToSqlPage from './pages/ExcelToSqlPage'
+import AnalysisSectionPage from './pages/AnalysisSectionPage'
 
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
         <Route path="/agregar-lecturas-gas" element={<AddWeeklyGasReadingsPage />} />
         <Route path="/alertas" element={<AlertsPage />} />
         <Route path="/predicciones" element={<PredictionsPage />} />
+        <Route path="/analisis" element={<AnalysisSectionPage />} />
         <Route path="/contacto" element={<ContactPage />} />
         <Route path="/excel-to-sql" element={<ExcelToSqlPage />} />
 

@@ -1,0 +1,141 @@
+{
+  "pozo": {
+    "id": "Pozo 7",
+    "ubicacion": "Campus Monterrey",
+    "anexo": "06NVL114666/24ELGR07",
+    "titulo": "06NVL108500/24EMOC07",
+    "m3_por_anexo": 85000
+  },
+  "especificaciones_anuales": [
+    {
+      "año": "2022",
+      "m3_cedidos_por_anexo": 22000,
+      "m3_cedidos_por_titulo": 75000,
+      "consumo_real_m3": 18250.3,
+      "m3_disponibles_para_consumir": 63000,
+      "observaciones": "Consumo moderado"
+    },
+    {
+      "año": "2023",
+      "m3_cedidos_por_anexo": 24000,
+      "m3_cedidos_por_titulo": 78000,
+      "consumo_real_m3": 21340.6,
+      "m3_disponibles_para_consumir": 61000,
+      "observaciones": "Incremento gradual"
+    },
+    {
+      "año": "2024",
+      "m3_cedidos_por_anexo": 26000,
+      "m3_cedidos_por_titulo": 80000,
+      "consumo_real_m3": 31452.8,
+      "m3_disponibles_para_consumir": 59000,
+      "observaciones": "Consumo en aumento"
+    },
+    {
+      "año": "2025 (hasta julio)",
+      "m3_cedidos_por_anexo": 26000,
+      "m3_cedidos_por_titulo": 80000,
+      "consumo_real_m3": 36920.5,
+      "m3_disponibles_para_consumir": 59000,
+      "observaciones": "Consumo sostenido alto"
+    }
+  ],
+  "datos_semanales": {
+    "lecturas_acumuladas": [
+      { "fecha": "2024-10-06", "lectura": 29650 },
+      { "fecha": "2024-10-13", "lectura": 29830 },
+      { "fecha": "2024-10-20", "lectura": 30010 },
+      { "fecha": "2024-10-27", "lectura": 30190 },
+      { "fecha": "2024-11-03", "lectura": 30370 },
+      { "fecha": "2024-11-10", "lectura": 30550 },
+      { "fecha": "2024-11-17", "lectura": 30730 },
+      { "fecha": "2024-11-24", "lectura": 30910 },
+      { "fecha": "2024-12-01", "lectura": 31090 },
+      { "fecha": "2024-12-08", "lectura": 31270 },
+      { "fecha": "2024-12-15", "lectura": 31450 },
+      { "fecha": "2024-12-22", "lectura": 31630 },
+      { "fecha": "2024-12-29", "lectura": 31810 },
+      { "fecha": "2025-01-05", "lectura": 31990 },
+      { "fecha": "2025-01-12", "lectura": 32170 },
+      { "fecha": "2025-01-19", "lectura": 32350 },
+      { "fecha": "2025-01-26", "lectura": 32530 },
+      { "fecha": "2025-02-02", "lectura": 32710 },
+      { "fecha": "2025-02-09", "lectura": 32890 },
+      { "fecha": "2025-02-16", "lectura": 33070 },
+      { "fecha": "2025-02-23", "lectura": 33250 },
+      { "fecha": "2025-03-02", "lectura": 33430 },
+      { "fecha": "2025-03-09", "lectura": 33610 },
+      { "fecha": "2025-03-16", "lectura": 33790 },
+      { "fecha": "2025-03-23", "lectura": 33970 },
+      { "fecha": "2025-03-30", "lectura": 34150 },
+      { "fecha": "2025-04-06", "lectura": 34330 },
+      { "fecha": "2025-04-13", "lectura": 34510 },
+      { "fecha": "2025-04-20", "lectura": 34690 },
+      { "fecha": "2025-04-27", "lectura": 34870 },
+      { "fecha": "2025-05-04", "lectura": 35050 },
+      { "fecha": "2025-05-11", "lectura": 35280 },
+      { "fecha": "2025-05-18", "lectura": 35510 },
+      { "fecha": "2025-05-25", "lectura": 35740 },
+      { "fecha": "2025-06-01", "lectura": 35970 },
+      { "fecha": "2025-06-08", "lectura": 36200 },
+      { "fecha": "2025-06-15", "lectura": 36430 },
+      { "fecha": "2025-06-22", "lectura": 36660 },
+      { "fecha": "2025-06-29", "lectura": 36890 },
+      { "fecha": "2025-07-06", "lectura": 37120 }
+    ],
+    "consumo_semanal_detallado": [
+      {
+        "periodo": "06 oct - 13 oct 2024",
+        "consumo_servicios": 150,
+        "consumo_riego": 30,
+        "total_pozos": 180,
+        "notas": "Operación normal"
+      },
+      {
+        "periodo": "13 oct - 20 oct 2024",
+        "consumo_servicios": 155,
+        "consumo_riego": 25,
+        "total_pozos": 180,
+        "notas": null
+      },
+      {
+        "periodo": "20 oct - 27 oct 2024",
+        "consumo_servicios": 160,
+        "consumo_riego": 20,
+        "total_pozos": 180,
+        "notas": null
+      }
+    ]
+  },
+  "datos_mensuales": {
+    "lecturas_acumuladas": [
+      {
+        "año": "2024",
+        "enero": 28000,
+        "febrero": 28400,
+        "marzo": 28800,
+        "abril": 29200,
+        "mayo": 29600,
+        "junio": 30000,
+        "julio": 30400,
+        "agosto": 30800,
+        "septiembre": 31200,
+        "octubre": 31600,
+        "noviembre": 32000,
+        "diciembre": 32400,
+        "total_anual": 4400
+      },
+      {
+        "año": "2025 (ene–jul)",
+        "enero": 32800,
+        "febrero": 33400,
+        "marzo": 34200,
+        "abril": 35000,
+        "mayo": 35800,
+        "junio": 36600,
+        "julio": 37120,
+        "total_anual": 4720
+      }
+    ]
+  }
+}

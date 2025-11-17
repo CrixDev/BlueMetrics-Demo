@@ -125,6 +125,42 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Scrollbar personalizado para el sidebar */
+@layer utilities {
+  /* Ocultar scrollbar pero mantener funcionalidad */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+  
+  /* Scrollbar personalizado con colores del proyecto */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.25 0.04 240) oklch(0.15 0.02 240);
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: oklch(0.15 0.02 240);
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background: oklch(0.25 0.04 240);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.35 0.06 240);
+  }
+}
 /* Animación suave de ola */
 @keyframes wave {
   0% {

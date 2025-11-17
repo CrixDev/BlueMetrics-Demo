@@ -1,0 +1,45 @@
+{
+  "pozo": {
+    "id": "Pozo 15",
+    "ubicacion": "Campus Monterrey - Zona de Riego",
+    "anexo": "06NVL114666/24ELGR15",
+    "titulo": "06NVL108500/24EMOC15",
+    "m3_por_anexo": 78000
+  },
+  "especificaciones_anuales": [
+    {
+      "año": "2024",
+      "m3_cedidos_por_anexo": 24000,
+      "m3_cedidos_por_titulo": 70000,
+      "consumo_real_m3": 45820.7,
+      "m3_disponibles_para_consumir": 54000,
+      "observaciones": "Pozo de riego complementario"
+    },
+    {
+      "año": "2025 (hasta julio)",
+      "m3_cedidos_por_anexo": 24000,
+      "m3_cedidos_por_titulo": 70000,
+      "consumo_real_m3": 52680.4,
+      "m3_disponibles_para_consumir": 54000,
+      "observaciones": "Consumo en aumento"
+    }
+  ],
+  "datos_semanales": {
+    "lecturas_acumuladas": [
+      { "fecha": "2024-10-06", "lectura": 44600 },
+      { "fecha": "2024-10-13", "lectura": 44830 },
+      { "fecha": "2025-01-05", "lectura": 47200 },
+      { "fecha": "2025-06-08", "lectura": 51300 },
+      { "fecha": "2025-07-06", "lectura": 52680 }
+    ],
+    "consumo_semanal_detallado": [
+      {
+        "periodo": "06 oct - 13 oct 2024",
+        "consumo_servicios": 0,
+        "consumo_riego": 230,
+        "total_pozos": 230,
+        "notas": "Pozo exclusivo de riego"
+      }
+    ]
+  }
+}

@@ -6,6 +6,8 @@ import { Button } from "../components/ui/button"
 import ChartComponent from "../components/ChartComponent"
 import DashboardChart from "../components/DashboardChart"
 import ConsumptionTable from "../components/ConsumptionTable"
+import WeeklyComparisonChart from "../components/WeeklyComparisonChart"
+import WeeklyComparisonTable from "../components/WeeklyComparisonTable"
 import datosPozo12 from '../lib/datos_pozo_12.json'
 import gasConsumptionPointsData from '../lib/gas-consumption-points.json'
 import { dashboardData } from '../lib/dashboard-data'
@@ -53,10 +55,20 @@ export default function GasConsumptionPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // Estados para comparativas semanales
+  const [selectedPoint, setSelectedPoint] = useState('todos')
+  const [weeklyReadings2024, setWeeklyReadings2024] = useState([])
+  const [weeklyReadings2025, setWeeklyReadings2025] = useState([])
+
   // Cargar semanas disponibles desde Supabase cuando cambia el año de lecturas
   useEffect(() => {
     fetchWeeklyReadings()
   }, [selectedYearForReadings])
+
+  // Cargar datos de ambos años para comparativas
+  useEffect(() => {
+    fetchBothYearsData()
+  }, [selectedPoint])
 
   const fetchWeeklyReadings = async () => {
     try {
@@ -103,6 +115,96 @@ export default function GasConsumptionPage() {
       setConsumptionPoints(gasConsumptionPointsData.categories)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Función para cargar datos de ambos años para comparación
+  const fetchBothYearsData = async () => {
+    try {
+      // Si selectedPoint es "todos", sumar todas las lecturas
+      const shouldSumAll = selectedPoint === 'todos'
+      
+      // Cargar datos 2024
+      const { data: data2024, error: error2024 } = await supabase
+        .from('lecturas_semanales_gas_2024')
+        .select('*')
+        .order('numero_semana', { ascending: true })
+      
+      if (error2024) {
+        console.error('Error cargando gas 2024:', error2024)
+      } else {
+        let formatted2024
+        if (shouldSumAll) {
+          // Sumar todas las lecturas de cada semana
+          formatted2024 = data2024.map(week => {
+            let totalReading = 0
+            // Sumar todos los campos numéricos (lecturas) excepto numero_semana, fecha_inicio, fecha_fin, id
+            Object.keys(week).forEach(key => {
+              if (key !== 'numero_semana' && key !== 'fecha_inicio' && key !== 'fecha_fin' && key !== 'id' && week[key] !== null) {
+                const value = parseFloat(week[key])
+                if (!isNaN(value)) {
+                  totalReading += value
+                }
+              }
+            })
+            return {
+              week: week.numero_semana,
+              reading: totalReading
+            }
+          })
+        } else {
+          // Cargar solo el punto seleccionado
+          formatted2024 = data2024
+            .filter(d => d[selectedPoint] !== null)
+            .map(d => ({
+              week: d.numero_semana,
+              reading: parseFloat(d[selectedPoint]) || 0
+            }))
+        }
+        setWeeklyReadings2024(formatted2024)
+      }
+
+      // Cargar datos 2025
+      const { data: data2025, error: error2025 } = await supabase
+        .from('lecturas_semanales_gas_2025')
+        .select('*')
+        .order('numero_semana', { ascending: true })
+      
+      if (error2025) {
+        console.error('Error cargando gas 2025:', error2025)
+      } else {
+        let formatted2025
+        if (shouldSumAll) {
+          // Sumar todas las lecturas de cada semana
+          formatted2025 = data2025.map(week => {
+            let totalReading = 0
+            // Sumar todos los campos numéricos (lecturas) excepto numero_semana, fecha_inicio, fecha_fin, id
+            Object.keys(week).forEach(key => {
+              if (key !== 'numero_semana' && key !== 'fecha_inicio' && key !== 'fecha_fin' && key !== 'id' && week[key] !== null) {
+                const value = parseFloat(week[key])
+                if (!isNaN(value)) {
+                  totalReading += value
+                }
+              }
+            })
+            return {
+              week: week.numero_semana,
+              reading: totalReading
+            }
+          })
+        } else {
+          // Cargar solo el punto seleccionado
+          formatted2025 = data2025
+            .filter(d => d[selectedPoint] !== null)
+            .map(d => ({
+              week: d.numero_semana,
+              reading: parseFloat(d[selectedPoint]) || 0
+            }))
+        }
+        setWeeklyReadings2025(formatted2025)
+      }
+    } catch (err) {
+      console.error('Error al cargar datos de ambos años de gas:', err)
     }
   }
 
@@ -673,6 +775,80 @@ export default function GasConsumptionPage() {
                 />
               )
             ))}
+          </div>
+
+          {/* Nueva Sección: Comparativas Semanales con Gráficas y Tablas */}
+          <div className="mt-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <BarChart3Icon className="h-6 w-6 text-orange-500" />
+                Análisis de Comparativas Semanales
+              </h2>
+              <p className="text-muted-foreground mt-1">
+                Comparación detallada entre años con indicadores de color y cantidad
+              </p>
+            </div>
+
+            {/* Selector de punto de medición */}
+            <Card className="mb-6">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <label className="text-sm font-medium">Selecciona medidor de gas:</label>
+                  <select
+                    value={selectedPoint}
+                    onChange={(e) => setSelectedPoint(e.target.value)}
+                    className="flex-1 max-w-md px-4 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="todos">📊 TODOS LOS MEDIDORES (SUMA TOTAL)</option>
+                    <optgroup label="Acometidas Campus">
+                      <option value="acometida_campus_1">Acometida Campus 1</option>
+                      <option value="acometida_campus_2">Acometida Campus 2</option>
+                      <option value="acometida_campus_3">Acometida Campus 3</option>
+                    </optgroup>
+                    <optgroup label="Calderas">
+                      <option value="calderas_residencias">Calderas Residencias</option>
+                      <option value="calderas_campus">Calderas Campus</option>
+                      <option value="calderas_cetec">Calderas CETEC</option>
+                    </optgroup>
+                    <optgroup label="Comedores">
+                      <option value="comedor_residencias">Comedor Residencias</option>
+                      <option value="comedor_central">Comedor Central</option>
+                      <option value="comedor_estudiantil">Comedor Estudiantil</option>
+                    </optgroup>
+                    <optgroup label="Residencias">
+                      <option value="residencias_1">Residencias 1</option>
+                      <option value="residencias_2">Residencias 2</option>
+                      <option value="residencias_3">Residencias 3</option>
+                      <option value="residencias_4">Residencias 4</option>
+                      <option value="residencias_5">Residencias 5</option>
+                    </optgroup>
+                  </select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Gráfica de comparación */}
+            <div className="mb-6">
+              <WeeklyComparisonChart
+                title={selectedPoint === 'todos' ? 'Todos los Medidores (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Medidor de Gas")}
+                currentYearData={weeklyReadings2025}
+                previousYearData={weeklyReadings2024}
+                currentYear="2025"
+                previousYear="2024"
+                unit="m³"
+              />
+            </div>
+
+            {/* Tabla tipo Excel de comparación */}
+            <div className="mb-6">
+              <WeeklyComparisonTable
+                title="Tabla Comparativa Semanal 2024 vs 2025 - Consumo de Gas"
+                data2024={weeklyReadings2024}
+                data2025={weeklyReadings2025}
+                pointName={selectedPoint === 'todos' ? 'Todos los Medidores (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Medidor de Gas")}
+                unit="m³"
+              />
+            </div>
           </div>
 
           {/* Bento Grid: Gráfica a la izquierda, Filtros a la derecha */}

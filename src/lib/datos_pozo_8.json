@@ -1,0 +1,45 @@
+{
+  "pozo": {
+    "id": "Pozo 8",
+    "ubicacion": "Campus Monterrey - Zona de Riego",
+    "anexo": "06NVL114666/24ELGR08",
+    "titulo": "06NVL108500/24EMOC08",
+    "m3_por_anexo": 82000
+  },
+  "especificaciones_anuales": [
+    {
+      "año": "2024",
+      "m3_cedidos_por_anexo": 26000,
+      "m3_cedidos_por_titulo": 75000,
+      "consumo_real_m3": 51280.5,
+      "m3_disponibles_para_consumir": 56000,
+      "observaciones": "Pozo secundario de riego"
+    },
+    {
+      "año": "2025 (hasta julio)",
+      "m3_cedidos_por_anexo": 26000,
+      "m3_cedidos_por_titulo": 75000,
+      "consumo_real_m3": 59420.3,
+      "m3_disponibles_para_consumir": 56000,
+      "observaciones": "Consumo elevado"
+    }
+  ],
+  "datos_semanales": {
+    "lecturas_acumuladas": [
+      { "fecha": "2024-10-06", "lectura": 50850 },
+      { "fecha": "2024-10-13", "lectura": 51120 },
+      { "fecha": "2025-01-05", "lectura": 53900 },
+      { "fecha": "2025-06-08", "lectura": 57800 },
+      { "fecha": "2025-07-06", "lectura": 59420 }
+    ],
+    "consumo_semanal_detallado": [
+      {
+        "periodo": "06 oct - 13 oct 2024",
+        "consumo_servicios": 0,
+        "consumo_riego": 270,
+        "total_pozos": 270,
+        "notas": "Pozo exclusivo de riego"
+      }
+    ]
+  }
+}

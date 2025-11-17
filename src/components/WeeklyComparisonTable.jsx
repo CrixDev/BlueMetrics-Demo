@@ -140,6 +140,9 @@ export default function WeeklyComparisonTable({
           <div>
             <h3 className="text-lg font-semibold">{title}</h3>
             <p className="text-sm text-muted-foreground">{pointName}</p>
+            <p className="text-xs text-muted-foreground mt-1 italic">
+              * Consumo = Lectura semana actual - Lectura semana anterior
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -159,15 +162,17 @@ export default function WeeklyComparisonTable({
         {/* Resumen de totales */}
         <div className="grid grid-cols-3 gap-4 mt-4 p-4 bg-muted/30 rounded-lg">
           <div>
-            <p className="text-xs text-muted-foreground">Total 2024</p>
+            <p className="text-xs text-muted-foreground">Consumo Total 2024</p>
             <p className="text-xl font-bold text-foreground">{totals.total2024.toLocaleString()} {unit}</p>
+            <p className="text-xs text-muted-foreground mt-1">Suma de todas las semanas</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Total 2025</p>
+            <p className="text-xs text-muted-foreground">Consumo Total 2025</p>
             <p className="text-xl font-bold text-foreground">{totals.total2025.toLocaleString()} {unit}</p>
+            <p className="text-xs text-muted-foreground mt-1">Suma de todas las semanas</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Cambio Promedio</p>
+            <p className="text-xs text-muted-foreground">Variación Anual</p>
             <div className="flex items-center gap-2">
               {totals.avgChange > 0 ? (
                 <TrendingUpIcon className="h-5 w-5 text-red-500" />
@@ -184,6 +189,7 @@ export default function WeeklyComparisonTable({
                 {totals.avgChange > 0 ? '+' : ''}{totals.avgChange.toFixed(1)}%
               </p>
             </div>
+            <p className="text-xs text-muted-foreground mt-1">2025 vs 2024</p>
           </div>
         </div>
       </CardHeader>
@@ -195,13 +201,15 @@ export default function WeeklyComparisonTable({
               <tr>
                 <th className="p-3 text-left font-semibold text-sm border-r bg-muted/50">Semana</th>
                 <th className="p-3 text-right font-semibold text-sm border-r bg-blue-50 dark:bg-blue-900/20">
-                  2024 ({unit})
+                  <div>Consumo 2024</div>
+                  <div className="text-xs font-normal text-muted-foreground">({unit})</div>
                 </th>
                 <th className="p-3 text-right font-semibold text-sm border-r bg-green-50 dark:bg-green-900/20">
-                  2025 ({unit})
+                  <div>Consumo 2025</div>
+                  <div className="text-xs font-normal text-muted-foreground">({unit})</div>
                 </th>
                 <th className="p-3 text-center font-semibold text-sm bg-amber-50 dark:bg-amber-900/20">
-                  Comparación
+                  Variación
                 </th>
               </tr>
             </thead>

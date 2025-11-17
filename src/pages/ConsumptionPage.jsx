@@ -55,7 +55,7 @@ export default function ConsumptionPage() {
   const [error, setError] = useState(null)
 
   // Estados para comparativas semanales
-  const [selectedPoint, setSelectedPoint] = useState('medidor_general_pozos')
+  const [selectedPoint, setSelectedPoint] = useState('todos')
   const [weeklyReadings2024, setWeeklyReadings2024] = useState([])
   const [weeklyReadings2025, setWeeklyReadings2025] = useState([])
 
@@ -145,39 +145,86 @@ export default function ConsumptionPage() {
   // Función para cargar datos de ambos años para comparación
   const fetchBothYearsData = async () => {
     try {
+      // Si selectedPoint es "todos", sumar todas las lecturas
+      const shouldSumAll = selectedPoint === 'todos'
+      
       // Cargar datos 2024
       const { data: data2024, error: error2024 } = await supabase
         .from('lecturas_semana2024')
-        .select('numero_semana, ' + selectedPoint)
+        .select('*')
         .order('numero_semana', { ascending: true })
       
       if (error2024) {
         console.error('Error cargando 2024:', error2024)
       } else {
-        const formatted2024 = data2024
-          .filter(d => d[selectedPoint] !== null)
-          .map(d => ({
-            week: d.numero_semana,
-            reading: parseFloat(d[selectedPoint]) || 0
-          }))
+        let formatted2024
+        if (shouldSumAll) {
+          // Sumar todas las lecturas de cada semana
+          formatted2024 = data2024.map(week => {
+            let totalReading = 0
+            // Sumar todos los campos numéricos (lecturas) excepto numero_semana, fecha_inicio, fecha_fin, id
+            Object.keys(week).forEach(key => {
+              if (key !== 'numero_semana' && key !== 'fecha_inicio' && key !== 'fecha_fin' && key !== 'id' && week[key] !== null) {
+                const value = parseFloat(week[key])
+                if (!isNaN(value)) {
+                  totalReading += value
+                }
+              }
+            })
+            return {
+              week: week.numero_semana,
+              reading: totalReading
+            }
+          })
+        } else {
+          // Cargar solo el punto seleccionado
+          formatted2024 = data2024
+            .filter(d => d[selectedPoint] !== null)
+            .map(d => ({
+              week: d.numero_semana,
+              reading: parseFloat(d[selectedPoint]) || 0
+            }))
+        }
         setWeeklyReadings2024(formatted2024)
       }
 
       // Cargar datos 2025
       const { data: data2025, error: error2025 } = await supabase
         .from('lecturas_semana')
-        .select('numero_semana, ' + selectedPoint)
+        .select('*')
         .order('numero_semana', { ascending: true })
       
       if (error2025) {
         console.error('Error cargando 2025:', error2025)
       } else {
-        const formatted2025 = data2025
-          .filter(d => d[selectedPoint] !== null)
-          .map(d => ({
-            week: d.numero_semana,
-            reading: parseFloat(d[selectedPoint]) || 0
-          }))
+        let formatted2025
+        if (shouldSumAll) {
+          // Sumar todas las lecturas de cada semana
+          formatted2025 = data2025.map(week => {
+            let totalReading = 0
+            // Sumar todos los campos numéricos (lecturas) excepto numero_semana, fecha_inicio, fecha_fin, id
+            Object.keys(week).forEach(key => {
+              if (key !== 'numero_semana' && key !== 'fecha_inicio' && key !== 'fecha_fin' && key !== 'id' && week[key] !== null) {
+                const value = parseFloat(week[key])
+                if (!isNaN(value)) {
+                  totalReading += value
+                }
+              }
+            })
+            return {
+              week: week.numero_semana,
+              reading: totalReading
+            }
+          })
+        } else {
+          // Cargar solo el punto seleccionado
+          formatted2025 = data2025
+            .filter(d => d[selectedPoint] !== null)
+            .map(d => ({
+              week: d.numero_semana,
+              reading: parseFloat(d[selectedPoint]) || 0
+            }))
+        }
         setWeeklyReadings2025(formatted2025)
       }
     } catch (err) {
@@ -751,6 +798,7 @@ export default function ConsumptionPage() {
                     onChange={(e) => setSelectedPoint(e.target.value)}
                     className="flex-1 max-w-md px-4 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                   >
+                    <option value="todos">📊 TODOS LOS PUNTOS (SUMA TOTAL)</option>
                     <optgroup label="Pozos de Servicios">
                       <option value="medidor_general_pozos">Medidor General de Pozos</option>
                       <option value="pozo_11">Pozo 11</option>
@@ -805,7 +853,7 @@ export default function ConsumptionPage() {
             {/* Gráfica de comparación */}
             <div className="mb-6">
               <WeeklyComparisonChart
-                title={consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición"}
+                title={selectedPoint === 'todos' ? 'Todos los Puntos (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición")}
                 currentYearData={weeklyReadings2025}
                 previousYearData={weeklyReadings2024}
                 currentYear="2025"
@@ -817,10 +865,10 @@ export default function ConsumptionPage() {
             {/* Tabla tipo Excel de comparación */}
             <div className="mb-6">
               <WeeklyComparisonTable
-                title="Tabla Comparativa Semanal 2024 vs 2025"
+                title="Tabla Comparativa Semanal 2024 vs 2025 - Consumo Semanal"
                 data2024={weeklyReadings2024}
                 data2025={weeklyReadings2025}
-                pointName={consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición"}
+                pointName={selectedPoint === 'todos' ? 'Todos los Puntos (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición")}
                 unit="m³"
               />
             </div>

@@ -3,9 +3,8 @@ import { useLocation, useNavigate } from "react-router"
 import { 
   Mail, Recycle, PlusCircle, Flame, LayoutDashboard, 
   Droplets, Scale, Drill, Database, FileInput, 
-  TrendingUp, Bell, ChevronDown, ChevronRight 
+  TrendingUp, Bell, ChevronDown, ChevronRight, BarChart3 
 } from "lucide-react"
-import AquaNetLogoWhite from "./svg/AquaNetLogoWhite"
 import { useState } from "react"
 // import { useEffect } from "react"
 // import { supabase } from "../supabaseClient"
@@ -106,6 +105,7 @@ export function DashboardSidebar() {
       id: 'analysis',
       label: 'Análisis',
       items: [
+        { id: "analysis-section", label: "Centro de Análisis", path: "/analisis", icon: BarChart3 },
         { id: "predictions", label: "Predicciones", path: "/predicciones", icon: TrendingUp },
         { id: "alerts", label: "Alertas", path: "/alertas", icon: Bell }
       ]
@@ -132,14 +132,14 @@ export function DashboardSidebar() {
       {/* Logo de la empresa */}
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center justify-center">
-          <div className="h-12 w-12 rounded-xl flex items-center justify-center shadow-lg">
-            <AquaNetLogoWhite className="w-12 h-12" />
-          </div>
+          <h1 className="text-2xl font-bold text-sidebar-foreground tracking-wide">
+            BlueMetrics
+          </h1>
         </div>
       </div>
 
       {/* Menú de navegación */}
-      <div className="p-4 overflow-y-auto h-[calc(100vh-80px)]">
+      <div className="p-4 overflow-y-auto h-[calc(100vh-80px)] scrollbar-hide">
         <nav className="space-y-4">
           {menuSections.map((section) => (
             <div key={section.id} className="space-y-1">
