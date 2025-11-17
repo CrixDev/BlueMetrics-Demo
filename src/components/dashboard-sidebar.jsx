@@ -99,8 +99,7 @@ export function DashboardSidebar() {
       label: 'Administración de Datos',
       items: [
         { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", icon: Database },
-        { id: "add-readings", label: "Lecturas Agua", path: "/agregar-lecturas", icon: FileInput },
-        { id: "csv-to-sql-daily", label: "CSV a SQL Diario", path: "/csv-to-sql-daily", icon: FileSpreadsheet }
+        { id: "add-readings", label: "Lecturas Agua", path: "/agregar-lecturas", icon: FileInput }
       ]
     },
     {
