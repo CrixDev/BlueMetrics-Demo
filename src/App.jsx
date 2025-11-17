@@ -20,6 +20,8 @@ import ContactPage from './pages/ContactPage'
 import ConfirmationPage from './pages/ConfirmationPage'
 import CorreosPage from './pages/CorreosPage'
 import ExcelToSqlPage from './pages/ExcelToSqlPage'
+import CsvToSqlDailyPage from './pages/CsvToSqlDailyPage'
+import DailyReadingsPage from './pages/DailyReadingsPage'
 import AnalysisSectionPage from './pages/AnalysisSectionPage'
 
 
@@ -48,6 +50,8 @@ function App() {
         <Route path="/analisis" element={<AnalysisSectionPage />} />
         <Route path="/contacto" element={<ContactPage />} />
         <Route path="/excel-to-sql" element={<ExcelToSqlPage />} />
+        <Route path="/csv-to-sql-daily" element={<CsvToSqlDailyPage />} />
+        <Route path="/lecturas-diarias" element={<DailyReadingsPage />} />
 
         {/* Ruta de administradores - TEMPORALMENTE DESACTIVADA - Todos pueden acceder */}
         <Route path="/correos" element={<CorreosPage />} />

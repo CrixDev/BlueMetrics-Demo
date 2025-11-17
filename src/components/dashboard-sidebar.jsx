@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router"
 import { 
   Mail, Recycle, PlusCircle, Flame, LayoutDashboard, 
   Droplets, Scale, Drill, Database, FileInput, 
-  TrendingUp, Bell, ChevronDown, ChevronRight, BarChart3 
+  TrendingUp, Bell, ChevronDown, ChevronRight, BarChart3, FileSpreadsheet, Calendar
 } from "lucide-react"
 import { useState } from "react"
 // import { useEffect } from "react"
@@ -80,6 +80,7 @@ export function DashboardSidebar() {
       label: 'Gestión Hídrica',
       items: [
         { id: "consumption", label: "Consumo Agua", path: "/consumo", icon: Droplets },
+        { id: "daily-readings", label: "Lecturas Diarias", path: "/lecturas-diarias", icon: Calendar },
         { id: "balance", label: "Balance Hídrico", path: "/balance", icon: Scale },
         { id: "wells", label: "Pozos", path: "/pozos", icon: Drill },
         { id: "ptar", label: "PTAR", path: "/ptar", icon: Recycle }
@@ -98,7 +99,8 @@ export function DashboardSidebar() {
       label: 'Administración de Datos',
       items: [
         { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", icon: Database },
-        { id: "add-readings", label: "Lecturas Agua", path: "/agregar-lecturas", icon: FileInput }
+        { id: "add-readings", label: "Lecturas Agua", path: "/agregar-lecturas", icon: FileInput },
+        { id: "csv-to-sql-daily", label: "CSV a SQL Diario", path: "/csv-to-sql-daily", icon: FileSpreadsheet }
       ]
     },
     {
