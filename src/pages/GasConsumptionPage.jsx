@@ -57,17 +57,23 @@ export default function GasConsumptionPage() {
 
   // Estados para comparativas semanales
   const [selectedPoint, setSelectedPoint] = useState('todos')
+  const [weeklyReadings2023, setWeeklyReadings2023] = useState([])
   const [weeklyReadings2024, setWeeklyReadings2024] = useState([])
   const [weeklyReadings2025, setWeeklyReadings2025] = useState([])
+
+  // Estados para filtros de gráficas de comparación
+  const [comparisonChartType, setComparisonChartType] = useState('line') // 'line' o 'bar'
+  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2024', '2025']) // Array de años para comparar
+  const [availableYearsForComparison] = useState(['2023', '2024', '2025']) // Años disponibles para comparación
 
   // Cargar semanas disponibles desde Supabase cuando cambia el año de lecturas
   useEffect(() => {
     fetchWeeklyReadings()
   }, [selectedYearForReadings])
 
-  // Cargar datos de ambos años para comparativas
+  // Cargar datos de todos los años para comparativas
   useEffect(() => {
-    fetchBothYearsData()
+    fetchAllYearsData()
   }, [selectedPoint])
 
   const fetchWeeklyReadings = async () => {
@@ -118,94 +124,64 @@ export default function GasConsumptionPage() {
     }
   }
 
-  // Función para cargar datos de ambos años para comparación
-  const fetchBothYearsData = async () => {
+  // Función genérica para cargar datos de un año específico de GAS
+  const fetchYearData = async (year, tableName, setStateFunction) => {
     try {
-      // Si selectedPoint es "todos", sumar todas las lecturas
       const shouldSumAll = selectedPoint === 'todos'
       
-      // Cargar datos 2024
-      const { data: data2024, error: error2024 } = await supabase
-        .from('lecturas_semanales_gas_2024')
+      const { data, error } = await supabase
+        .from(tableName)
         .select('*')
         .order('numero_semana', { ascending: true })
       
-      if (error2024) {
-        console.error('Error cargando gas 2024:', error2024)
-      } else {
-        let formatted2024
-        if (shouldSumAll) {
-          // Sumar todas las lecturas de cada semana
-          formatted2024 = data2024.map(week => {
-            let totalReading = 0
-            // Sumar todos los campos numéricos (lecturas) excepto numero_semana, fecha_inicio, fecha_fin, id
-            Object.keys(week).forEach(key => {
-              if (key !== 'numero_semana' && key !== 'fecha_inicio' && key !== 'fecha_fin' && key !== 'id' && week[key] !== null) {
-                const value = parseFloat(week[key])
-                if (!isNaN(value)) {
-                  totalReading += value
-                }
-              }
-            })
-            return {
-              week: week.numero_semana,
-              reading: totalReading
-            }
-          })
-        } else {
-          // Cargar solo el punto seleccionado
-          formatted2024 = data2024
-            .filter(d => d[selectedPoint] !== null)
-            .map(d => ({
-              week: d.numero_semana,
-              reading: parseFloat(d[selectedPoint]) || 0
-            }))
-        }
-        setWeeklyReadings2024(formatted2024)
+      if (error) {
+        console.error(`Error cargando gas ${year}:`, error)
+        return
       }
 
-      // Cargar datos 2025
-      const { data: data2025, error: error2025 } = await supabase
-        .from('lecturas_semanales_gas_2025')
-        .select('*')
-        .order('numero_semana', { ascending: true })
-      
-      if (error2025) {
-        console.error('Error cargando gas 2025:', error2025)
-      } else {
-        let formatted2025
-        if (shouldSumAll) {
-          // Sumar todas las lecturas de cada semana
-          formatted2025 = data2025.map(week => {
-            let totalReading = 0
-            // Sumar todos los campos numéricos (lecturas) excepto numero_semana, fecha_inicio, fecha_fin, id
-            Object.keys(week).forEach(key => {
-              if (key !== 'numero_semana' && key !== 'fecha_inicio' && key !== 'fecha_fin' && key !== 'id' && week[key] !== null) {
-                const value = parseFloat(week[key])
-                if (!isNaN(value)) {
-                  totalReading += value
-                }
+      let formattedData
+      if (shouldSumAll) {
+        // Sumar todo el consumo de gas de cada semana
+        formattedData = data.map(week => {
+          let totalReading = 0
+          // Sumar todos los campos numéricos (consumo de gas) excepto numero_semana, fecha_inicio, fecha_fin, id
+          Object.keys(week).forEach(key => {
+            if (key !== 'numero_semana' && key !== 'fecha_inicio' && key !== 'fecha_fin' && key !== 'id' && week[key] !== null) {
+              const value = parseFloat(week[key])
+              if (!isNaN(value)) {
+                totalReading += value
               }
-            })
-            return {
-              week: week.numero_semana,
-              reading: totalReading
             }
           })
-        } else {
-          // Cargar solo el punto seleccionado
-          formatted2025 = data2025
-            .filter(d => d[selectedPoint] !== null)
-            .map(d => ({
-              week: d.numero_semana,
-              reading: parseFloat(d[selectedPoint]) || 0
-            }))
-        }
-        setWeeklyReadings2025(formatted2025)
+          return {
+            week: week.numero_semana,
+            reading: totalReading
+          }
+        })
+      } else {
+        // Cargar solo el punto seleccionado
+        formattedData = data
+          .filter(d => d[selectedPoint] !== null)
+          .map(d => ({
+            week: d.numero_semana,
+            reading: parseFloat(d[selectedPoint]) || 0
+          }))
       }
+      
+      setStateFunction(formattedData)
+      console.log(`✅ Datos de gas ${year} cargados:`, formattedData.length, 'semanas')
     } catch (err) {
-      console.error('Error al cargar datos de ambos años de gas:', err)
+      console.error(`❌ Error al cargar datos de gas ${year}:`, err)
     }
+  }
+
+  // Función para cargar datos de todos los años para comparación
+  const fetchAllYearsData = async () => {
+    await Promise.all([
+      fetchYearData('2023', 'lecturas_semanales_gas_2023', setWeeklyReadings2023),
+      fetchYearData('2024', 'lecturas_semanales_gas_2024', setWeeklyReadings2024),
+      fetchYearData('2025', 'lecturas_semanales_gas_2025', setWeeklyReadings2025)
+    ])
   }
 
   // Procesar datos de Supabase para convertirlos en formato de puntos de consumo
@@ -545,6 +521,25 @@ export default function GasConsumptionPage() {
     }
   }
 
+  // Preparar datos para WeeklyComparisonChart basado en años seleccionados
+  const getMultiYearChartData = () => {
+    const yearDataMap = {
+      '2023': weeklyReadings2023,
+      '2024': weeklyReadings2024,
+      '2025': weeklyReadings2025
+    }
+
+    const sortedSelectedYears = [...comparisonYearsToShow].sort()
+    
+    // Generar datos para todos los años seleccionados
+    return sortedSelectedYears.map(year => ({
+      year,
+      data: yearDataMap[year] || []
+    }))
+  }
+
+  const multiYearData = getMultiYearChartData()
+
 
   return (
     <RedirectIfNotAuth>
@@ -663,8 +658,161 @@ export default function GasConsumptionPage() {
             </Card>
           </div>
 
-            {/* Sección de Tablas Detalladas por Punto de Consumo */}
-            <div className="mt-8">
+          {/* Nueva Sección: Comparativas Semanales con Gráficas y Tablas */}
+          <div className="mt-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <BarChart3Icon className="h-6 w-6 text-orange-500" />
+                Análisis de Comparativas Semanales
+              </h2>
+              <p className="text-muted-foreground mt-1">
+                Comparación detallada entre años con indicadores de color y cantidad
+              </p>
+            </div>
+
+            {/* Bento Grid: Gráfica a la izquierda, Filtros a la derecha */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              {/* Gráfica de comparación - 2 columnas */}
+              <div className="lg:col-span-2">
+                <WeeklyComparisonChart
+                  title={selectedPoint === 'todos' ? 'Todos los Medidores (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Medidor de Gas")}
+                  unit="m³"
+                  chartType={comparisonChartType}
+                  showControls={false}
+                  multiYearData={multiYearData}
+                />
+              </div>
+
+              {/* Filtros a la derecha - 1 columna */}
+              <Card className="lg:col-span-1">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <TrendingUpIcon className="h-5 w-5 text-orange-500" />
+                    <h3 className="text-lg font-semibold">Filtros</h3>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Medidor de Gas */}
+                    <div className="border-b pb-3">
+                      <label className="text-sm font-semibold text-foreground mb-2 block">Medidor de Gas</label>
+                      <select
+                        value={selectedPoint}
+                        onChange={(e) => setSelectedPoint(e.target.value)}
+                        className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                      >
+                        <option value="todos">📊 TODOS LOS MEDIDORES</option>
+                        <optgroup label="Acometidas Principales Campus">
+                          <option value="campus_acometida_principal_digital">Campus Acometida Ppal digital</option>
+                          <option value="campus_acometida_principal_analogica">Campus Acometida Ppal analógica</option>
+                        </optgroup>
+                        <optgroup label="Edificios Culturales">
+                          <option value="domo_cultural">Domo Cultural</option>
+                        </optgroup>
+                        <optgroup label="Comedores y Restaurantes">
+                          <option value="comedor_centrales_tec_food">Comedor Centrales Tec Food</option>
+                          <option value="dona_tota">Doña Tota</option>
+                          <option value="chilaquiles_tec">Chilaquiles Tec</option>
+                          <option value="carls_junior">Carl´s Junior</option>
+                          <option value="comedor_estudiantes">Comedor Estudiantes</option>
+                          <option value="wellness_supersalads">Wellness SuperSalads</option>
+                        </optgroup>
+                        <optgroup label="Calderas y Calefacción">
+                          <option value="caldera_1_leon">Caldera 1 (Leon)</option>
+                          <option value="caldera_2">Caldera 2</option>
+                          <option value="caldera_3">Caldera 3</option>
+                          <option value="mega_calefaccion_1">Mega Calefacción 1</option>
+                          <option value="wellness_general_calefaccion">Wellness General (Calefacción)</option>
+                          <option value="residencias_abc_calefaccion">Residencias ABC calefacción</option>
+                        </optgroup>
+                        <optgroup label="Edificios Académicos">
+                          <option value="biotecnologia">Biotecnología</option>
+                          <option value="biblioteca">Biblioteca</option>
+                          <option value="aulas_1">Aulas 1</option>
+                          <option value="auditorio_luis_elizondo">Auditorio Luis Elizondo</option>
+                        </optgroup>
+                        <optgroup label="Instalaciones Deportivas">
+                          <option value="arena_borrego">Arena Borrego</option>
+                          <option value="wellness_acometida_digital">Wellness Acometida digital</option>
+                          <option value="wellness_alberca">Wellness Alberca</option>
+                        </optgroup>
+                        <optgroup label="Residencias Estudiantiles">
+                          <option value="estudiantes_acometida_principal_digital">Estudiantes Acometida Ppal digital</option>
+                          <option value="residencias_1">Residencias 1</option>
+                          <option value="residencias_2">Residencias 2</option>
+                          <option value="residencias_3">Residencias 3</option>
+                          <option value="residencias_4">Residencias 4</option>
+                          <option value="residencias_5">Residencias 5</option>
+                        </optgroup>
+                        <optgroup label="Campus Norte">
+                          <option value="campus_norte_acometida_externa">Campus Norte Acometida externa</option>
+                          <option value="campus_norte_acometida_interna">Campus Norte Acometida interna</option>
+                        </optgroup>
+                      </select>
+                    </div>
+
+                    {/* Tipo de Gráfico */}
+                    <div className="border-b pb-3">
+                      <label className="text-sm font-semibold text-foreground mb-2 block">Tipo de Gráfico</label>
+                      <select 
+                        value={comparisonChartType} 
+                        onChange={(e) => setComparisonChartType(e.target.value)}
+                        className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                      >
+                        <option value="line">Líneas</option>
+                        <option value="bar">Barras</option>
+                      </select>
+                    </div>
+
+                    {/* Selección de años para comparación */}
+                    <div className="pt-2">
+                      <label className="text-sm font-semibold text-foreground mb-2 block">Años a mostrar</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {availableYearsForComparison.map(year => (
+                          <Button
+                            key={year}
+                            variant={comparisonYearsToShow.includes(year) ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => {
+                              setComparisonYearsToShow(prev => {
+                                if (prev.includes(year)) {
+                                  // Si ya está seleccionado, quitarlo (mínimo 1 año)
+                                  return prev.length > 1 ? prev.filter(y => y !== year) : prev
+                                } else {
+                                  // Si no está seleccionado, agregarlo
+                                  return [...prev, year].sort()
+                                }
+                              })
+                            }}
+                            className={`text-xs transition-all duration-200 ${
+                              comparisonYearsToShow.includes(year) 
+                                ? 'bg-orange-500 text-white shadow-md hover:bg-orange-600' 
+                                : 'hover:bg-muted/50'
+                            }`}
+                          >
+                            {year}
+                          </Button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Seleccionados: {comparisonYearsToShow.join(', ')}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+
+
+
+          <div className="mt-8"></div>
+
+
+
+
+          {/* Sección de Tablas Detalladas por Medidor de Gas */}
+          <div className="mt-8">
             <div className="mb-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -777,368 +925,21 @@ export default function GasConsumptionPage() {
             ))}
           </div>
 
-          {/* Nueva Sección: Comparativas Semanales con Gráficas y Tablas */}
-          <div className="mt-8">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <BarChart3Icon className="h-6 w-6 text-orange-500" />
-                Análisis de Comparativas Semanales
-              </h2>
-              <p className="text-muted-foreground mt-1">
-                Comparación detallada entre años con indicadores de color y cantidad
-              </p>
-            </div>
-
-            {/* Selector de punto de medición */}
-            <Card className="mb-6">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <label className="text-sm font-medium">Selecciona medidor de gas:</label>
-                  <select
-                    value={selectedPoint}
-                    onChange={(e) => setSelectedPoint(e.target.value)}
-                    className="flex-1 max-w-md px-4 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  >
-                    <option value="todos">📊 TODOS LOS MEDIDORES (SUMA TOTAL)</option>
-                    <optgroup label="Acometidas Campus">
-                      <option value="acometida_campus_1">Acometida Campus 1</option>
-                      <option value="acometida_campus_2">Acometida Campus 2</option>
-                      <option value="acometida_campus_3">Acometida Campus 3</option>
-                    </optgroup>
-                    <optgroup label="Calderas">
-                      <option value="calderas_residencias">Calderas Residencias</option>
-                      <option value="calderas_campus">Calderas Campus</option>
-                      <option value="calderas_cetec">Calderas CETEC</option>
-                    </optgroup>
-                    <optgroup label="Comedores">
-                      <option value="comedor_residencias">Comedor Residencias</option>
-                      <option value="comedor_central">Comedor Central</option>
-                      <option value="comedor_estudiantil">Comedor Estudiantil</option>
-                    </optgroup>
-                    <optgroup label="Residencias">
-                      <option value="residencias_1">Residencias 1</option>
-                      <option value="residencias_2">Residencias 2</option>
-                      <option value="residencias_3">Residencias 3</option>
-                      <option value="residencias_4">Residencias 4</option>
-                      <option value="residencias_5">Residencias 5</option>
-                    </optgroup>
-                  </select>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Gráfica de comparación */}
-            <div className="mb-6">
-              <WeeklyComparisonChart
-                title={selectedPoint === 'todos' ? 'Todos los Medidores (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Medidor de Gas")}
-                currentYearData={weeklyReadings2025}
-                previousYearData={weeklyReadings2024}
-                currentYear="2025"
-                previousYear="2024"
-                unit="m³"
-              />
-            </div>
+            <div className="mt-8"></div>
 
             {/* Tabla tipo Excel de comparación */}
             <div className="mb-6">
               <WeeklyComparisonTable
-                title="Tabla Comparativa Semanal 2024 vs 2025 - Consumo de Gas"
-                data2024={weeklyReadings2024}
-                data2025={weeklyReadings2025}
+                title={`Tabla Comparativa Semanal ${comparisonYearsToShow.join(' vs ')} - Consumo de Gas`}
+                data2024={multiYearData.length > 1 ? multiYearData[multiYearData.length - 2].data : []}
+                data2025={multiYearData.length > 0 ? multiYearData[multiYearData.length - 1].data : []}
                 pointName={selectedPoint === 'todos' ? 'Todos los Medidores (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Medidor de Gas")}
                 unit="m³"
               />
             </div>
           </div>
 
-          {/* Bento Grid: Gráfica a la izquierda, Filtros a la derecha */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 mt-6">
-            {/* Gráfica principal - 2 columnas */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <h3 className="text-lg font-semibold">
-                  {viewMode === 'calderas' ? 'Consumo de Calderas' : 
-                   viewMode === 'comedores' ? 'Consumo de Comedores' : 
-                   'Consumo Total de Gas'} - {periodView === 'monthly' ? 'vs mes anterior' : 'Anual'}
-                </h3>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[500px]">
-                  <ChartComponent 
-                    data={comparisonData} 
-                    type={chartType} 
-                    options={chartOptions}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Filtros como tabla a la derecha - 1 columna */}
-            <Card className="lg:col-span-1">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <FilterIcon className="h-5 w-5 text-orange-500" />
-                  <h3 className="text-lg font-semibold">Filtros</h3>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Tabla de filtros */}
-                  <div className="space-y-3">
-                    {/* Categoría */}
-                    <div className="border-b pb-3">
-                      <label className="text-sm font-semibold text-foreground mb-2 block">Categoría</label>
-                      <select 
-                        value={viewMode} 
-                        onChange={(e) => {
-                          console.log('Categoría cambiada a:', e.target.value);
-                          setViewMode(e.target.value);
-                        }}
-                        className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
-                      >
-                        <option value="Consumo Total">Consumo Total</option>
-                        <option value="calderas">Solo Calderas</option>
-                        <option value="comedores">Solo Comedores</option>
-                      </select>
-                    </div>
-
-                    {/* Período */}
-                    <div className="border-b pb-3">
-                      <label className="text-sm font-semibold text-foreground mb-2 block">Período</label>
-                      <select 
-                        value={periodView} 
-                        onChange={(e) => {
-                          console.log('Período cambiado a:', e.target.value);
-                          setPeriodView(e.target.value);
-                        }}
-                        className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
-                      >
-                        <option value="monthly">vs mes anterior</option>
-                        <option value="yearly">Anual</option>
-                      </select>
-                    </div>
-
-                    {/* Año - solo si es mensual */}
-                    {periodView === 'monthly' && (
-                      <div className="border-b pb-3">
-                        <label className="text-sm font-semibold text-foreground mb-2 block">Año</label>
-                        <select 
-                          value={selectedYear} 
-                          onChange={(e) => {
-                            console.log('Año cambiado a:', e.target.value);
-                            setSelectedYear(e.target.value);
-                          }}
-                          className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
-                        >
-                          <option value="2022">2022</option>
-                          <option value="2023">2023</option>
-                          <option value="2024">2024</option>
-                          <option value="2025">2025</option>
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Tipo de Gráfico */}
-                    <div className="border-b pb-3">
-                      <label className="text-sm font-semibold text-foreground mb-2 block">Tipo de Gráfico</label>
-                      <select 
-                        value={chartType} 
-                        onChange={(e) => {
-                          console.log('Tipo de gráfico cambiado a:', e.target.value);
-                          setChartType(e.target.value);
-                        }}
-                        className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                      >
-                        <option value="bar">Barras</option>
-                        <option value="line">Líneas</option>
-                        <option value="area">Área</option>
-                      </select>
-                    </div>
-
-                    {/* Selección de años */}
-                    <div className="pt-2">
-                      <label className="text-sm font-semibold text-foreground mb-2 block">Años a mostrar</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {availableYears.map(year => (
-                          <Button
-                            key={year}
-                            variant={selectedYearsComparison.includes(year) ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => {
-                              console.log('Click en año:', year);
-                              handleYearComparisonToggle(year);
-                            }}
-                            className={`text-xs transition-all duration-200 ${
-                              selectedYearsComparison.includes(year) 
-                                ? 'bg-orange-500 text-white shadow-md' 
-                                : 'hover:bg-muted/50'
-                            }`}
-                          >
-                            {year}
-                          </Button>
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-3">
-                        Seleccionados: {selectedYearsComparison.length} año{selectedYearsComparison.length !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-
-          {/* Análisis detallado */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Consumo por pozos */}
-           
-            {/* Resumen de Consumo por Categoría */}
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Resumen por categoría vs meta del año</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {categoryData.map((category, index) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium">{category.name}</span>
-                        <span className="text-lg font-bold">{category.value.toLocaleString()} m³</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full" 
-                          style={{ width: `${category.percentage}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">{category.percentage}% meta del año</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Rendimiento por Pozo</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Pozos de Servicios */}
-                  <div>
-                    <h4 className="text-sm font-semibold text-blue-600 mb-2">Pozos de Servicios</h4>
-                    {wellData.filter(w => w.type === 'Servicios').map((well, index) => (
-                      <div key={index} className="border border-blue-200 rounded-lg p-3 mb-2 bg-blue-50/50">
-                      <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-sm">{well.name}</span>
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          well.status === 'alert' ? 'bg-destructive/10 text-destructive' :
-                          well.status === 'warning' ? 'bg-yellow-500/10 text-yellow-600' :
-                          'bg-green-500/10 text-green-600'
-                        }`}>
-                          {well.status === 'alert' ? 'Alerta' : well.status === 'warning' ? 'Advertencia' : 'Normal'}
-                        </span>
-                      </div>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                            <p className="text-muted-foreground text-xs">Consumo Diario</p>
-                          <p className="font-medium">{well.consumption} m³</p>
-                        </div>
-                        <div>
-                            <p className="text-muted-foreground text-xs">Eficiencia</p>
-                          <p className="font-medium">{well.efficiency}%</p>
-                        </div>
-                      </div>
-                      <div className="mt-2">
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div 
-                            className="bg-blue-500 h-2 rounded-full" 
-                            style={{ width: `${well.efficiency}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">{well.efficiency}% meta del año</p>
-                      </div>
-                    </div>
-                  ))}
-                  </div>
-                  
-                  {/* Pozos de Riego */}
-                  <div className="pt-2">
-                    <h4 className="text-sm font-semibold text-green-600 mb-2">Pozos de Riego</h4>
-                    {wellData.filter(w => w.type === 'Riego').map((well, index) => (
-                      <div key={index} className="border border-green-200 rounded-lg p-3 mb-2 bg-green-50/50">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-sm">{well.name}</span>
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            well.status === 'alert' ? 'bg-destructive/10 text-destructive' :
-                            well.status === 'warning' ? 'bg-yellow-500/10 text-yellow-600' :
-                            'bg-green-500/10 text-green-600'
-                          }`}>
-                            {well.status === 'alert' ? 'Alerta' : well.status === 'warning' ? 'Advertencia' : 'Normal'}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <p className="text-muted-foreground text-xs">Consumo Diario</p>
-                            <p className="font-medium">{well.consumption} m³</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Eficiencia</p>
-                            <p className="font-medium">{well.efficiency}%</p>
-                          </div>
-                        </div>
-                        <div className="mt-2">
-                          <div className="w-full bg-muted rounded-full h-2">
-                            <div 
-                              className="bg-green-500 h-2 rounded-full" 
-                              style={{ width: `${well.efficiency}%` }}
-                            ></div>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">{well.efficiency}% meta del año</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-
-            {/* Alertas recientes */}
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Alertas de Consumo</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {dashboardData.alerts.slice(0, 3).map((alert) => (
-                    <div key={alert.id} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <span className="font-medium text-sm">{alert.title}</span>
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          alert.type === 'critical' ? 'bg-destructive/10 text-destructive' :
-                          alert.type === 'warning' ? 'bg-yellow-500/10 text-yellow-600' :
-                          'bg-blue-500/10 text-blue-600'
-                        }`}>
-                          {alert.type === 'critical' ? 'Crítico' : alert.type === 'warning' ? 'Advertencia' : 'Info'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">{alert.message}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">{alert.timestamp}</span>
-                        <Button size="sm" variant="outline">
-                          {alert.action}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-        
+     
         </main>
       </div>
     </div>

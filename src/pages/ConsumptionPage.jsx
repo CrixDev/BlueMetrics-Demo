@@ -3,8 +3,6 @@ import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { Button } from "../components/ui/button"
-import ChartComponent from "../components/ChartComponent"
-import DashboardChart from "../components/DashboardChart"
 import ConsumptionTable from "../components/ConsumptionTable"
 import WeeklyComparisonChart from "../components/WeeklyComparisonChart"
 import WeeklyComparisonTable from "../components/WeeklyComparisonTable"
@@ -13,18 +11,15 @@ import consumptionPointsData from '../lib/consumption-points.json'
 import { dashboardData } from '../lib/dashboard-data'
 import { supabase } from '../supabaseClient'
 import { 
-  FilterIcon, 
   TrendingUpIcon, 
   AlertTriangleIcon, 
-  DropletIcon, 
-  ActivityIcon,
+  DropletIcon,
   BarChart3Icon,
   CalendarIcon,
   DownloadIcon,
   Truck,
   Building2,
   Waves,
-  Factory,
   TableIcon,
   Loader2Icon
 } from 'lucide-react'
@@ -34,13 +29,7 @@ import { getTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tabl
 
 export default function ConsumptionPage() {
   const [timeFrame, setTimeFrame] = useState('monthly')
-  const [selectedYear, setSelectedYear] = useState('2025')
-  const [selectedCategory, setSelectedCategory] = useState('all')
-  const [chartType, setChartType] = useState('bar')
-  const [viewMode, setViewMode] = useState('Consumo Total') // 'servicios', 'riego', 'conjunto'
-  const [periodView, setPeriodView] = useState('monthly') // 'monthly', 'yearly'
-  const [selectedYearsComparison, setSelectedYearsComparison] = useState(['2024', '2025']) // Años para comparar
-  const [selectedYearForReadings, setSelectedYearForReadings] = useState(DEFAULT_YEAR) // Año para lecturas semanales
+  const [selectedYearForReadings, setSelectedYearForReadings] = useState(DEFAULT_YEAR) // Año para consumo semanal
   
   // Estados para el nuevo sistema de tablas detalladas
   const [activeTab, setActiveTab] = useState('pozos_servicios') // Tab activa para las tablas
@@ -56,15 +45,21 @@ export default function ConsumptionPage() {
 
   // Estados para comparativas semanales
   const [selectedPoint, setSelectedPoint] = useState('todos')
+  const [weeklyReadings2023, setWeeklyReadings2023] = useState([])
   const [weeklyReadings2024, setWeeklyReadings2024] = useState([])
   const [weeklyReadings2025, setWeeklyReadings2025] = useState([])
 
-  // Cargar semanas disponibles desde Supabase cuando cambia el año de lecturas
+  // Estados para filtros de gráficas de comparación
+  const [comparisonChartType, setComparisonChartType] = useState('line') // 'line' o 'bar'
+  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2024', '2025']) // Array de años para comparar
+  const [availableYears] = useState(['2023', '2024', '2025']) // Años disponibles para comparación
+
+  // Cargar semanas disponibles desde Supabase cuando cambia el año de consumo
   useEffect(() => {
     fetchWeeklyReadings()
   }, [selectedYearForReadings])
 
-  // Cargar datos de ambos años para comparativas
+  // Cargar datos de todos los años para comparativas
   useEffect(() => {
     fetchBothYearsData()
   }, [selectedPoint])
@@ -75,7 +70,7 @@ export default function ConsumptionPage() {
       setError(null)
       
       const tableName = getTableNameByYear(selectedYearForReadings)
-      // Obtener todas las lecturas semanales ordenadas por número de semana
+      // Obtener todos los datos de consumo semanal ordenados por número de semana
       const { data, error: fetchError } = await supabase
         .from(tableName)
         .select('*')
@@ -83,7 +78,7 @@ export default function ConsumptionPage() {
       
       if (fetchError) throw fetchError
       
-      console.log('✅ Lecturas semanales obtenidas:', data)
+      console.log('✅ Datos de consumo semanal obtenidos:', data)
       
       setWeeklyReadings(data || [])
       
@@ -105,7 +100,7 @@ export default function ConsumptionPage() {
       processConsumptionPoints(data)
       
     } catch (err) {
-      console.error('❌ Error al cargar lecturas:', err)
+      console.error('❌ Error al cargar datos de consumo:', err)
       setError(err.message)
       
       // Fallback a datos del JSON si hay error
@@ -125,10 +120,10 @@ export default function ConsumptionPage() {
       points: category.points.map(point => {
         // Construir weeklyData desde Supabase
         const weeklyDataFromDB = weeklyData.map(week => {
-          const reading = week[point.id]
+          const consumption = week[point.id]
           return {
             week: week.numero_semana,
-            reading: reading !== null && reading !== undefined ? parseFloat(reading) : 0
+            reading: consumption !== null && consumption !== undefined ? parseFloat(consumption) : 0
           }
         }).filter(w => w.reading !== null)
 
@@ -142,180 +137,64 @@ export default function ConsumptionPage() {
     setConsumptionPoints(categories)
   }
 
-  // Función para cargar datos de ambos años para comparación
-  const fetchBothYearsData = async () => {
+  // Función genérica para cargar datos de un año específico
+  const fetchYearData = async (year, tableName, setStateFunction) => {
     try {
-      // Si selectedPoint es "todos", sumar todas las lecturas
       const shouldSumAll = selectedPoint === 'todos'
       
-      // Cargar datos 2024
-      const { data: data2024, error: error2024 } = await supabase
-        .from('lecturas_semana2024')
+      const { data, error } = await supabase
+        .from(tableName)
         .select('*')
         .order('numero_semana', { ascending: true })
       
-      if (error2024) {
-        console.error('Error cargando 2024:', error2024)
-      } else {
-        let formatted2024
-        if (shouldSumAll) {
-          // Sumar todas las lecturas de cada semana
-          formatted2024 = data2024.map(week => {
-            let totalReading = 0
-            // Sumar todos los campos numéricos (lecturas) excepto numero_semana, fecha_inicio, fecha_fin, id
-            Object.keys(week).forEach(key => {
-              if (key !== 'numero_semana' && key !== 'fecha_inicio' && key !== 'fecha_fin' && key !== 'id' && week[key] !== null) {
-                const value = parseFloat(week[key])
-                if (!isNaN(value)) {
-                  totalReading += value
-                }
-              }
-            })
-            return {
-              week: week.numero_semana,
-              reading: totalReading
-            }
-          })
-        } else {
-          // Cargar solo el punto seleccionado
-          formatted2024 = data2024
-            .filter(d => d[selectedPoint] !== null)
-            .map(d => ({
-              week: d.numero_semana,
-              reading: parseFloat(d[selectedPoint]) || 0
-            }))
-        }
-        setWeeklyReadings2024(formatted2024)
+      if (error) {
+        console.error(`Error cargando ${year}:`, error)
+        return
       }
 
-      // Cargar datos 2025
-      const { data: data2025, error: error2025 } = await supabase
-        .from('lecturas_semana')
-        .select('*')
-        .order('numero_semana', { ascending: true })
-      
-      if (error2025) {
-        console.error('Error cargando 2025:', error2025)
-      } else {
-        let formatted2025
-        if (shouldSumAll) {
-          // Sumar todas las lecturas de cada semana
-          formatted2025 = data2025.map(week => {
-            let totalReading = 0
-            // Sumar todos los campos numéricos (lecturas) excepto numero_semana, fecha_inicio, fecha_fin, id
-            Object.keys(week).forEach(key => {
-              if (key !== 'numero_semana' && key !== 'fecha_inicio' && key !== 'fecha_fin' && key !== 'id' && week[key] !== null) {
-                const value = parseFloat(week[key])
-                if (!isNaN(value)) {
-                  totalReading += value
-                }
+      let formattedData
+      if (shouldSumAll) {
+        // Sumar todo el consumo de cada semana
+        formattedData = data.map(week => {
+          let totalReading = 0
+          // Sumar todos los campos numéricos (consumo) excepto numero_semana, fecha_inicio, fecha_fin, id
+          Object.keys(week).forEach(key => {
+            if (key !== 'numero_semana' && key !== 'fecha_inicio' && key !== 'fecha_fin' && key !== 'id' && week[key] !== null) {
+              const value = parseFloat(week[key])
+              if (!isNaN(value)) {
+                totalReading += value
               }
-            })
-            return {
-              week: week.numero_semana,
-              reading: totalReading
             }
           })
-        } else {
-          // Cargar solo el punto seleccionado
-          formatted2025 = data2025
-            .filter(d => d[selectedPoint] !== null)
-            .map(d => ({
-              week: d.numero_semana,
-              reading: parseFloat(d[selectedPoint]) || 0
-            }))
-        }
-        setWeeklyReadings2025(formatted2025)
+          return {
+            week: week.numero_semana,
+            reading: totalReading
+          }
+        })
+      } else {
+        // Cargar solo el punto seleccionado
+        formattedData = data
+          .filter(d => d[selectedPoint] !== null)
+          .map(d => ({
+            week: d.numero_semana,
+            reading: parseFloat(d[selectedPoint]) || 0
+          }))
       }
+      
+      setStateFunction(formattedData)
+      console.log(`✅ Datos de ${year} cargados:`, formattedData.length, 'semanas')
     } catch (err) {
-      console.error('Error al cargar datos de ambos años:', err)
+      console.error(`❌ Error al cargar datos de ${year}:`, err)
     }
   }
 
-  // Obtener datos de consumo por categoría y período
-  const getConsumptionDataByCategory = (category, period = 'monthly', year = '2025') => {
-    // Datos base por año (consumo total mensual en m³)
-    const consumoBase = {
-      '2022': {
-        'enero': 8500, 'febrero': 8200, 'marzo': 8800, 'abril': 9000,
-        'mayo': 9500, 'junio': 10000, 'julio': 10500, 'agosto': 10800,
-        'septiembre': 10200, 'octubre': 9800, 'noviembre': 9200, 'diciembre': 8800
-      },
-      '2023': {
-        'enero': 8800, 'febrero': 8500, 'marzo': 9100, 'abril': 9300,
-        'mayo': 9800, 'junio': 10300, 'julio': 10800, 'agosto': 11100,
-        'septiembre': 10500, 'octubre': 10100, 'noviembre': 9500, 'diciembre': 9100
-      },
-      '2024': {
-        'enero': 9100, 'febrero': 8800, 'marzo': 9400, 'abril': 9600,
-        'mayo': 10100, 'junio': 10600, 'julio': 11100, 'agosto': 11400,
-        'septiembre': 10800, 'octubre': 10400, 'noviembre': 9800, 'diciembre': 9400
-      },
-      '2025': {
-        'enero': 9400, 'febrero': 9100, 'marzo': 9700, 'abril': 9900,
-        'mayo': 10400, 'junio': 10900, 'julio': 11400, 'agosto': 11700,
-        'septiembre': 11100, 'octubre': 10700, 'noviembre': 10100, 'diciembre': 9700
-      }
-    }
-
-    if (period === 'yearly') {
-      // Datos anuales por categoría
-      const years = ['2022', '2023', '2024', '2025']
-      return years.map(yearStr => {
-        const yearData = consumoBase[yearStr]
-        const totalAnual = Object.values(yearData).reduce((sum, val) => sum + val, 0)
-        let value = 0
-        
-        switch (category) {
-          case 'servicios':
-            value = Math.round((totalAnual * 0.3) / 1000) // 30% para servicios
-            break
-          case 'riego':
-            value = Math.round((totalAnual * 0.7) / 1000) // 70% para riego
-            break
-          case 'Consumo Total':
-          default:
-            value = Math.round(totalAnual / 1000)
-            break
-        }
-        
-        return {
-          name: yearStr,
-          value: value,
-          year: yearStr
-        }
-      })
-    } else {
-      // Datos mensuales por categoría
-      const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-      const monthAbbrev = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
-      const yearData = consumoBase[year]
-      
-      return monthNames.map((month, index) => {
-        const totalValue = yearData[month]
-          let value = 0
-          
-          switch (category) {
-            case 'servicios':
-            value = Math.round((totalValue * 0.3) / 1000) // 30% para servicios
-              break
-            case 'riego':
-            value = Math.round((totalValue * 0.7) / 1000) // 70% para riego
-              break
-            case 'Consumo Total':
-            default:
-              value = Math.round(totalValue / 1000)
-              break
-          }
-          
-          return {
-            name: monthAbbrev[index],
-            value: value,
-            month: month,
-            year: year
-          }
-      })
-    }
+  // Función para cargar datos de todos los años para comparación
+  const fetchBothYearsData = async () => {
+    await Promise.all([
+      fetchYearData('2023', 'lecturas_semana2023', setWeeklyReadings2023),
+      fetchYearData('2024', 'lecturas_semana2024', setWeeklyReadings2024),
+      fetchYearData('2025', 'lecturas_semana', setWeeklyReadings2025)
+    ])
   }
 
   // Procesar datos de consumo según filtros (función original mantenida para compatibilidad)
@@ -341,7 +220,7 @@ export default function ConsumptionPage() {
         }))
       case 'quarterly':
         const quarterlyData = datosPozo12.datos_trimestrales.consumo_trimestral
-        const yearData = quarterlyData.find(q => q.año.includes(selectedYear)) || quarterlyData[quarterlyData.length - 1]
+        const yearData = quarterlyData.find(q => q.año.includes('2025')) || quarterlyData[quarterlyData.length - 1]
         const quarters = ['primer_trimestre', 'segundo_trimestre', 'tercer_trimestre', 'cuarto_trimestre']
         const quarterLabels = ['Q1', 'Q2', 'Q3', 'Q4']
         
@@ -367,7 +246,7 @@ export default function ConsumptionPage() {
       case 'monthly':
       default:
         const monthlyData = datosPozo12.datos_mensuales.consumo_mensual
-        const lastYearWithData = monthlyData.find(year => year.año.includes(selectedYear)) || monthlyData[monthlyData.length - 1]
+        const lastYearWithData = monthlyData.find(year => year.año.includes('2025')) || monthlyData[monthlyData.length - 1]
         
         const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
         const monthAbbrev = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
@@ -462,88 +341,25 @@ export default function ConsumptionPage() {
   const consumoPozos = Math.round(currentConsumption / 1000) // Consumo actual de pozos
   const serviciosTotal = Math.round(dashboardData.waterUsage.find(item => item.name === 'Servicios')?.volume || 0)
   const riegoTotal = Math.round(dashboardData.waterUsage.find(item => item.name === 'Riego')?.volume || 0)
-  const m3CedidosTitulo1 = currentYearData.m3_cedidos_por_anexo
-  const m3CedidosTitulo2 = currentYearData.m3_cedidos_por_titulo
 
-  // Obtener datos para las nuevas gráficas
-  const currentViewData = getConsumptionDataByCategory(viewMode, periodView, selectedYear)
-  
-  // Años disponibles para comparación
-  const availableYears = ['2022', '2023', '2024', '2025']
-  
-  // Manejar selección de años para comparación
-  const handleYearComparisonToggle = (year) => {
-    console.log('Toggle año:', year);
-    setSelectedYearsComparison(prev => {
-      const newSelection = prev.includes(year) 
-        ? prev.filter(y => y !== year)
-        : [...prev, year];
-      console.log('Nueva selección de años:', newSelection);
-      return newSelection;
-    })
-  }
-  
-  // Crear datos de comparación con años anteriores
-  const getComparisonChartData = () => {
-    const datasets = []
-    const colors = [
-      { bg: 'rgba(59, 130, 246, 0.6)', border: 'rgb(59, 130, 246)' },
-      { bg: 'rgba(16, 185, 129, 0.6)', border: 'rgb(16, 185, 129)' },
-      { bg: 'rgba(245, 158, 11, 0.6)', border: 'rgb(245, 158, 11)' },
-      { bg: 'rgba(239, 68, 68, 0.6)', border: 'rgb(239, 68, 68)' },
-      { bg: 'rgba(139, 92, 246, 0.6)', border: 'rgb(139, 92, 246)' }
-    ]
-    
-    selectedYearsComparison.forEach((year, index) => {
-      const yearData = getConsumptionDataByCategory(viewMode, periodView, year)
-      const color = colors[index % colors.length]
-      
-      datasets.push({
-        label: `${viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} ${year}`,
-        data: yearData.map(item => item.value),
-        backgroundColor: color.bg,
-        borderColor: color.border,
-        borderWidth: 2
-      })
-    })
-    
-    return {
-      labels: currentViewData.map(item => item.name),
-      datasets: datasets
+  // Preparar datos para WeeklyComparisonChart basado en años seleccionados
+  const getMultiYearChartData = () => {
+    const yearDataMap = {
+      '2023': weeklyReadings2023,
+      '2024': weeklyReadings2024,
+      '2025': weeklyReadings2025
     }
+
+    const sortedSelectedYears = [...comparisonYearsToShow].sort()
+    
+    // Generar datos para todos los años seleccionados
+    return sortedSelectedYears.map(year => ({
+      year,
+      data: yearDataMap[year] || []
+    }))
   }
 
-  // Datos para gráfico de comparación histórica
-  const comparisonData = getComparisonChartData()
-
-  // Configuración de gráficos Chart.js
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top'
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} m³`
-          }
-        }
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: function(value) {
-            return value.toLocaleString() + ' m³'
-          }
-        }
-      }
-    }
-  }
-
+  const multiYearData = getMultiYearChartData()
 
   return (
     <RedirectIfNotAuth>
@@ -570,12 +386,12 @@ export default function ConsumptionPage() {
 
 
           {/* Métricas principales */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Consumo de Pozos</p>
+                    <p className="text-sm text-muted-foreground">Consumo de Pozos Total</p>
                     <p className="text-2xl font-bold text-foreground">
                       {consumoPozos.toLocaleString()} m³
                     </p>
@@ -597,7 +413,7 @@ export default function ConsumptionPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Servicios Total</p>
+                    <p className="text-sm text-muted-foreground">Consumo de Pozos de Servicios Total</p>
                     <p className="text-2xl font-bold text-foreground">
                       {serviciosTotal.toLocaleString()} m³
                     </p>
@@ -614,7 +430,7 @@ export default function ConsumptionPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Riego Total</p>
+                    <p className="text-sm text-muted-foreground">Consumo de Pozos de Riego Total</p>
                     <p className="text-2xl font-bold text-foreground">
                       {riegoTotal.toLocaleString()} m³
                     </p>
@@ -626,44 +442,169 @@ export default function ConsumptionPage() {
                 </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">m³ Cedidos por Anexo</p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {m3CedidosTitulo1.toLocaleString()} m³
-                    </p>
-                    <p className="text-sm text-amber-600 mt-1">Anual</p>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center">
-                    <Factory className="h-6 w-6 text-amber-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">m³ Cedidos por Título</p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {m3CedidosTitulo2.toLocaleString()} m³
-                    </p>
-                    <p className="text-sm text-purple-600 mt-1">Anual</p>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-purple-500/10 flex items-center justify-center">
-                    <ActivityIcon className="h-6 w-6 text-purple-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
-            {/* Sección de Tablas Detalladas por Punto de Consumo */}
-            <div className="mt-8">
+
+
+
+
+
+          
+          {/* Nueva Sección: Comparativas Semanales con Gráficas y Tablas */}
+          <div className="mt-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <BarChart3Icon className="h-6 w-6 text-primary" />
+                Análisis de Comparativas Semanales
+              </h2>
+              <p className="text-muted-foreground mt-1">
+                Comparación detallada entre años con indicadores de color y cantidad
+              </p>
+            </div>
+
+            {/* Bento Grid: Gráfica a la izquierda, Filtros a la derecha */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              {/* Gráfica de comparación - 2 columnas */}
+              <div className="lg:col-span-2">
+                <WeeklyComparisonChart
+                  title={selectedPoint === 'todos' ? 'Todos los Puntos (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición")}
+                  unit="m³"
+                  chartType={comparisonChartType}
+                  showControls={false}
+                  multiYearData={multiYearData}
+                />
+              </div>
+
+              {/* Filtros a la derecha - 1 columna */}
+              <Card className="lg:col-span-1">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <TrendingUpIcon className="h-5 w-5 text-primary" />
+                    <h3 className="text-lg font-semibold">Filtros</h3>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Punto de Medición */}
+                    <div className="border-b pb-3">
+                      <label className="text-sm font-semibold text-foreground mb-2 block">Punto de Medición</label>
+                      <select
+                        value={selectedPoint}
+                        onChange={(e) => setSelectedPoint(e.target.value)}
+                        className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                      >
+                        <option value="todos">📊 TODOS LOS PUNTOS</option>
+                        <optgroup label="Pozos de Servicios">
+                          <option value="medidor_general_pozos">Medidor General de Pozos</option>
+                          <option value="pozo_11">Pozo 11</option>
+                          <option value="pozo_12">Pozo 12</option>
+                          <option value="pozo_14">Pozo 14</option>
+                          <option value="pozo_7">Pozo 7</option>
+                          <option value="pozo_3">Pozo 3</option>
+                        </optgroup>
+                        <optgroup label="Pozos de Riego">
+                          <option value="pozo_4_riego">Pozo 4 Riego</option>
+                          <option value="pozo_8_riego">Pozo 8 Riego</option>
+                          <option value="pozo_15_riego">Pozo 15 Riego</option>
+                          <option value="total_pozos_riego">Total Pozos Riego</option>
+                        </optgroup>
+                        <optgroup label="Residencias">
+                          <option value="residencias_10_15">Residencias 10 y 15</option>
+                          <option value="residencias_1_antiguo">Residencias 1 (Antiguo)</option>
+                          <option value="residencias_2_ote">Residencias 2 Oriente</option>
+                          <option value="residencias_3">Residencias 3</option>
+                          <option value="residencias_4">Residencias 4</option>
+                          <option value="residencias_5">Residencias 5</option>
+                        </optgroup>
+                        <optgroup label="Edificios Principales">
+                          <option value="wellness_edificio">Wellness Edificio</option>
+                          <option value="biblioteca">Biblioteca</option>
+                          <option value="cetec">CETEC</option>
+                          <option value="biotecnologia">Biotecnología</option>
+                          <option value="arena_borrego">Arena Borrego</option>
+                          <option value="centro_congresos">Centro de Congresos</option>
+                          <option value="auditorio_luis_elizondo">Auditorio Luis Elizondo</option>
+                          <option value="nucleo">Núcleo</option>
+                          <option value="expedition">Expedition</option>
+                        </optgroup>
+                        <optgroup label="Torres de Enfriamiento">
+                          <option value="wellness_torre_enfriamiento">Wellness Torre Enfriamiento</option>
+                          <option value="cah3_torre_enfriamiento">CAH3 Torre Enfriamiento</option>
+                          <option value="megacentral_te_2">Megacentral TE 2</option>
+                          <option value="estadio_banorte_te">Estadio Banorte TE</option>
+                        </optgroup>
+                        <optgroup label="Circuitos">
+                          <option value="circuito_8_campus">Circuito 8" Campus</option>
+                          <option value="circuito_6_residencias">Circuito 6" Residencias</option>
+                          <option value="circuito_4_a7_ce">Circuito 4" A7 CE</option>
+                          <option value="circuito_planta_fisica">Circuito Planta Física</option>
+                          <option value="circuito_megacentral">Circuito Megacentral</option>
+                        </optgroup>
+                      </select>
+                    </div>
+
+                    {/* Tipo de Gráfico */}
+                    <div className="border-b pb-3">
+                      <label className="text-sm font-semibold text-foreground mb-2 block">Tipo de Gráfico</label>
+                      <select 
+                        value={comparisonChartType} 
+                        onChange={(e) => setComparisonChartType(e.target.value)}
+                        className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                      >
+                        <option value="line">Líneas</option>
+                        <option value="bar">Barras</option>
+                      </select>
+                    </div>
+
+                    {/* Selección de años para comparación */}
+                    <div className="pt-2">
+                      <label className="text-sm font-semibold text-foreground mb-2 block">Años a mostrar</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {availableYears.map(year => (
+                          <Button
+                            key={year}
+                            variant={comparisonYearsToShow.includes(year) ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => {
+                              setComparisonYearsToShow(prev => {
+                                if (prev.includes(year)) {
+                                  // Si ya está seleccionado, quitarlo (mínimo 1 año)
+                                  return prev.length > 1 ? prev.filter(y => y !== year) : prev
+                                } else {
+                                  // Si no está seleccionado, agregarlo
+                                  return [...prev, year].sort()
+                                }
+                              })
+                            }}
+                            className={`text-xs transition-all duration-200 ${
+                              comparisonYearsToShow.includes(year) 
+                                ? 'bg-primary text-primary-foreground shadow-md' 
+                                : 'hover:bg-muted/50'
+                            }`}
+                          >
+                            {year}
+                          </Button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Seleccionados: {comparisonYearsToShow.join(', ')}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+
+
+
+          <div className="mt-8"></div>
+
+
+
+
+          {/* Sección de Tablas Detalladas por Punto de Consumo */}
+          <div className="mt-8">
             <div className="mb-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -674,7 +615,7 @@ export default function ConsumptionPage() {
                   <p className="text-muted-foreground mt-1">Vista detallada de todos los medidores del campus</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  {/* Selector de Año para Lecturas */}
+                  {/* Selector de Año para Consumo */}
                   <div className="flex items-center gap-2">
                     <label className="text-sm font-medium">Año:</label>
                     <select
@@ -770,401 +711,29 @@ export default function ConsumptionPage() {
                   title={category.name}
                   data={category.points}
                   weekNumber={selectedWeek}
-                  showComparison={showComparison}
+                  showComparison={showComparison}z
                 />
               )
             ))}
           </div>
 
-          {/* Nueva Sección: Comparativas Semanales con Gráficas y Tablas */}
-          <div className="mt-8">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <BarChart3Icon className="h-6 w-6 text-primary" />
-                Análisis de Comparativas Semanales
-              </h2>
-              <p className="text-muted-foreground mt-1">
-                Comparación detallada entre años con indicadores de color y cantidad
-              </p>
-            </div>
-
-            {/* Selector de punto de medición */}
-            <Card className="mb-6">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <label className="text-sm font-medium">Selecciona punto de medición:</label>
-                  <select
-                    value={selectedPoint}
-                    onChange={(e) => setSelectedPoint(e.target.value)}
-                    className="flex-1 max-w-md px-4 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    <option value="todos">📊 TODOS LOS PUNTOS (SUMA TOTAL)</option>
-                    <optgroup label="Pozos de Servicios">
-                      <option value="medidor_general_pozos">Medidor General de Pozos</option>
-                      <option value="pozo_11">Pozo 11</option>
-                      <option value="pozo_12">Pozo 12</option>
-                      <option value="pozo_14">Pozo 14</option>
-                      <option value="pozo_7">Pozo 7</option>
-                      <option value="pozo_3">Pozo 3</option>
-                    </optgroup>
-                    <optgroup label="Pozos de Riego">
-                      <option value="pozo_4_riego">Pozo 4 Riego</option>
-                      <option value="pozo_8_riego">Pozo 8 Riego</option>
-                      <option value="pozo_15_riego">Pozo 15 Riego</option>
-                      <option value="total_pozos_riego">Total Pozos Riego</option>
-                    </optgroup>
-                    <optgroup label="Residencias">
-                      <option value="residencias_10_15">Residencias 10 y 15</option>
-                      <option value="residencias_1_antiguo">Residencias 1 (Antiguo)</option>
-                      <option value="residencias_2_ote">Residencias 2 Oriente</option>
-                      <option value="residencias_3">Residencias 3</option>
-                      <option value="residencias_4">Residencias 4</option>
-                      <option value="residencias_5">Residencias 5</option>
-                    </optgroup>
-                    <optgroup label="Edificios Principales">
-                      <option value="wellness_edificio">Wellness Edificio</option>
-                      <option value="biblioteca">Biblioteca</option>
-                      <option value="cetec">CETEC</option>
-                      <option value="biotecnologia">Biotecnología</option>
-                      <option value="arena_borrego">Arena Borrego</option>
-                      <option value="centro_congresos">Centro de Congresos</option>
-                      <option value="auditorio_luis_elizondo">Auditorio Luis Elizondo</option>
-                      <option value="nucleo">Núcleo</option>
-                      <option value="expedition">Expedition</option>
-                    </optgroup>
-                    <optgroup label="Torres de Enfriamiento">
-                      <option value="wellness_torre_enfriamiento">Wellness Torre Enfriamiento</option>
-                      <option value="cah3_torre_enfriamiento">CAH3 Torre Enfriamiento</option>
-                      <option value="megacentral_te_2">Megacentral TE 2</option>
-                      <option value="estadio_banorte_te">Estadio Banorte TE</option>
-                    </optgroup>
-                    <optgroup label="Circuitos">
-                      <option value="circuito_8_campus">Circuito 8" Campus</option>
-                      <option value="circuito_6_residencias">Circuito 6" Residencias</option>
-                      <option value="circuito_4_a7_ce">Circuito 4" A7 CE</option>
-                      <option value="circuito_planta_fisica">Circuito Planta Física</option>
-                      <option value="circuito_megacentral">Circuito Megacentral</option>
-                    </optgroup>
-                  </select>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Gráfica de comparación */}
-            <div className="mb-6">
-              <WeeklyComparisonChart
-                title={selectedPoint === 'todos' ? 'Todos los Puntos (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición")}
-                currentYearData={weeklyReadings2025}
-                previousYearData={weeklyReadings2024}
-                currentYear="2025"
-                previousYear="2024"
-                unit="m³"
-              />
-            </div>
+            <div className="mt-8"></div>
 
             {/* Tabla tipo Excel de comparación */}
             <div className="mb-6">
               <WeeklyComparisonTable
-                title="Tabla Comparativa Semanal 2024 vs 2025 - Consumo Semanal"
-                data2024={weeklyReadings2024}
-                data2025={weeklyReadings2025}
+                title={`Tabla Comparativa Semanal ${comparisonYearsToShow.join(' vs ')} - Consumo Semanal`}
+                data2024={multiYearData.length > 1 ? multiYearData[multiYearData.length - 2].data : []}
+                data2025={multiYearData.length > 0 ? multiYearData[multiYearData.length - 1].data : []}
                 pointName={selectedPoint === 'todos' ? 'Todos los Puntos (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición")}
                 unit="m³"
               />
             </div>
           </div>
 
-          {/* Bento Grid: Gráfica a la izquierda, Filtros a la derecha */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 mt-6">
-            {/* Gráfica principal - 2 columnas */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <h3 className="text-lg font-semibold">
-                  {viewMode === 'servicios' ? 'Consumo de Servicios' : 
-                   viewMode === 'riego' ? 'Consumo de Riego' : 
-                   'Consumo Total'} - {periodView === 'monthly' ? 'vs mes anterior' : 'Anual'}
-                </h3>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[500px]">
-                  <ChartComponent 
-                    data={comparisonData} 
-                    type={chartType} 
-                    options={chartOptions}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Filtros como tabla a la derecha - 1 columna */}
-            <Card className="lg:col-span-1">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <FilterIcon className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Filtros</h3>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Tabla de filtros */}
-                  <div className="space-y-3">
-                    {/* Categoría */}
-                    <div className="border-b pb-3">
-                      <label className="text-sm font-semibold text-foreground mb-2 block">Categoría</label>
-                      <select 
-                        value={viewMode} 
-                        onChange={(e) => {
-                          console.log('Categoría cambiada a:', e.target.value);
-                          setViewMode(e.target.value);
-                        }}
-                        className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                      >
-                        <option value="Consumo Total">Consumo Total</option>
-                        <option value="servicios">Solo Servicios</option>
-                        <option value="riego">Solo Riego</option>
-                      </select>
-                    </div>
-
-                    {/* Período */}
-                    <div className="border-b pb-3">
-                      <label className="text-sm font-semibold text-foreground mb-2 block">Período</label>
-                      <select 
-                        value={periodView} 
-                        onChange={(e) => {
-                          console.log('Período cambiado a:', e.target.value);
-                          setPeriodView(e.target.value);
-                        }}
-                        className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                      >
-                        <option value="monthly">vs mes anterior</option>
-                        <option value="yearly">Anual</option>
-                      </select>
-                    </div>
-
-                    {/* Año - solo si es mensual */}
-                    {periodView === 'monthly' && (
-                      <div className="border-b pb-3">
-                        <label className="text-sm font-semibold text-foreground mb-2 block">Año</label>
-                        <select 
-                          value={selectedYear} 
-                          onChange={(e) => {
-                            console.log('Año cambiado a:', e.target.value);
-                            setSelectedYear(e.target.value);
-                          }}
-                          className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                        >
-                          <option value="2022">2022</option>
-                          <option value="2023">2023</option>
-                          <option value="2024">2024</option>
-                          <option value="2025">2025</option>
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Tipo de Gráfico */}
-                    <div className="border-b pb-3">
-                      <label className="text-sm font-semibold text-foreground mb-2 block">Tipo de Gráfico</label>
-                      <select 
-                        value={chartType} 
-                        onChange={(e) => {
-                          console.log('Tipo de gráfico cambiado a:', e.target.value);
-                          setChartType(e.target.value);
-                        }}
-                        className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                      >
-                        <option value="bar">Barras</option>
-                        <option value="line">Líneas</option>
-                        <option value="area">Área</option>
-                      </select>
-                    </div>
-
-                    {/* Selección de años */}
-                    <div className="pt-2">
-                      <label className="text-sm font-semibold text-foreground mb-2 block">Años a mostrar</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {availableYears.map(year => (
-                          <Button
-                            key={year}
-                            variant={selectedYearsComparison.includes(year) ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => {
-                              console.log('Click en año:', year);
-                              handleYearComparisonToggle(year);
-                            }}
-                            className={`text-xs transition-all duration-200 ${
-                              selectedYearsComparison.includes(year) 
-                                ? 'bg-primary text-primary-foreground shadow-md' 
-                                : 'hover:bg-muted/50'
-                            }`}
-                          >
-                            {year}
-                          </Button>
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-3">
-                        Seleccionados: {selectedYearsComparison.length} año{selectedYearsComparison.length !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-
-          {/* Análisis detallado */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Consumo por pozos */}
-           
-            {/* Resumen de Consumo por Categoría */}
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Resumen por categoría vs meta del año</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {categoryData.map((category, index) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium">{category.name}</span>
-                        <span className="text-lg font-bold">{category.value.toLocaleString()} m³</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full" 
-                          style={{ width: `${category.percentage}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">{category.percentage}% meta del año</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Rendimiento por Pozo</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Pozos de Servicios */}
-                  <div>
-                    <h4 className="text-sm font-semibold text-blue-600 mb-2">Pozos de Servicios</h4>
-                    {wellData.filter(w => w.type === 'Servicios').map((well, index) => (
-                      <div key={index} className="border border-blue-200 rounded-lg p-3 mb-2 bg-blue-50/50">
-                      <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-sm">{well.name}</span>
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          well.status === 'alert' ? 'bg-destructive/10 text-destructive' :
-                          well.status === 'warning' ? 'bg-yellow-500/10 text-yellow-600' :
-                          'bg-green-500/10 text-green-600'
-                        }`}>
-                          {well.status === 'alert' ? 'Alerta' : well.status === 'warning' ? 'Advertencia' : 'Normal'}
-                        </span>
-                      </div>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                            <p className="text-muted-foreground text-xs">Consumo Diario</p>
-                          <p className="font-medium">{well.consumption} m³</p>
-                        </div>
-                        <div>
-                            <p className="text-muted-foreground text-xs">Eficiencia</p>
-                          <p className="font-medium">{well.efficiency}%</p>
-                        </div>
-                      </div>
-                      <div className="mt-2">
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div 
-                            className="bg-blue-500 h-2 rounded-full" 
-                            style={{ width: `${well.efficiency}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">{well.efficiency}% meta del año</p>
-                      </div>
-                    </div>
-                  ))}
-                  </div>
-                  
-                  {/* Pozos de Riego */}
-                  <div className="pt-2">
-                    <h4 className="text-sm font-semibold text-green-600 mb-2">Pozos de Riego</h4>
-                    {wellData.filter(w => w.type === 'Riego').map((well, index) => (
-                      <div key={index} className="border border-green-200 rounded-lg p-3 mb-2 bg-green-50/50">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-sm">{well.name}</span>
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            well.status === 'alert' ? 'bg-destructive/10 text-destructive' :
-                            well.status === 'warning' ? 'bg-yellow-500/10 text-yellow-600' :
-                            'bg-green-500/10 text-green-600'
-                          }`}>
-                            {well.status === 'alert' ? 'Alerta' : well.status === 'warning' ? 'Advertencia' : 'Normal'}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <p className="text-muted-foreground text-xs">Consumo Diario</p>
-                            <p className="font-medium">{well.consumption} m³</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Eficiencia</p>
-                            <p className="font-medium">{well.efficiency}%</p>
-                          </div>
-                        </div>
-                        <div className="mt-2">
-                          <div className="w-full bg-muted rounded-full h-2">
-                            <div 
-                              className="bg-green-500 h-2 rounded-full" 
-                              style={{ width: `${well.efficiency}%` }}
-                            ></div>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">{well.efficiency}% meta del año</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-
-            {/* Alertas recientes */}
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Alertas de Consumo</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {dashboardData.alerts.slice(0, 3).map((alert) => (
-                    <div key={alert.id} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <span className="font-medium text-sm">{alert.title}</span>
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          alert.type === 'critical' ? 'bg-destructive/10 text-destructive' :
-                          alert.type === 'warning' ? 'bg-yellow-500/10 text-yellow-600' :
-                          'bg-blue-500/10 text-blue-600'
-                        }`}>
-                          {alert.type === 'critical' ? 'Crítico' : alert.type === 'warning' ? 'Advertencia' : 'Info'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">{alert.message}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">{alert.timestamp}</span>
-                        <Button size="sm" variant="outline">
-                          {alert.action}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-        
-        </main>
-      </div>
-    </div>
+         </main>
+       </div>
+     </div>
     </RedirectIfNotAuth>
   )
 }

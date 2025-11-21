@@ -26,7 +26,17 @@ ChartJS.register(
   Filler
 )
 
-const ChartComponent = ({ chartType, chartData, data, selectedMetrics, availableMetrics, type, options }) => {
+const ChartComponent = ({ 
+  chartType, 
+  chartData, 
+  data, 
+  selectedMetrics, 
+  availableMetrics, 
+  dataKeys,  // Nueva prop: array de nombres de claves a mostrar
+  colors,    // Nueva prop: array de colores correspondientes
+  type, 
+  options 
+}) => {
   // Si se proporciona data en lugar de chartData, usar data (para compatibilidad)
   const actualData = chartData || data;
   const actualType = chartType || type || 'line';
@@ -85,6 +95,117 @@ const ChartComponent = ({ chartType, chartData, data, selectedMetrics, available
 
   // Si es un array de datos y se requieren métricas específicas
   if (Array.isArray(actualData)) {
+    // Modo nuevo: usar dataKeys y colors
+    if (dataKeys && colors) {
+      // Preparar datos para Chart.js
+      const getLabelKey = () => {
+        if (actualData.length > 0) {
+          const firstItem = actualData[0]
+          if (firstItem.quarter) return 'quarter'
+          if (firstItem.period) return 'period'
+          if (firstItem.year) return 'year'
+        }
+        return 'period' // fallback
+      }
+      
+      const labelKey = getLabelKey()
+      const labels = actualData.map(item => item[labelKey])
+      
+      const datasets = dataKeys.map((key, index) => ({
+        label: key,
+        data: actualData.map(item => item[key] || 0),
+        borderColor: colors[index] || '#3b82f6',
+        backgroundColor: actualType === 'area' ? `${colors[index] || '#3b82f6'}40` : colors[index] || '#3b82f6',
+        fill: actualType === 'area',
+        tension: 0.4,
+      }))
+
+      const finalData = {
+        labels,
+        datasets,
+      }
+
+      const finalOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: false,
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+              label: function(context) {
+                const label = context.dataset.label || '';
+                const value = context.parsed.y;
+                if (label.includes('%')) {
+                  return `${label}: ${value.toFixed(2)}%`;
+                }
+                return `${label}: ${value.toLocaleString('es-ES', { maximumFractionDigits: 2 })} m³`;
+              }
+            }
+          },
+        },
+        scales: {
+          x: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Período'
+            }
+          },
+          y: {
+            display: true,
+            title: {
+              display: true,
+              text: dataKeys.some(k => k.includes('%')) ? 'Porcentaje (%)' : 'Volumen (m³)'
+            },
+            ticks: {
+              callback: function(value) {
+                return value.toLocaleString('es-ES')
+              }
+            }
+          },
+        },
+        interaction: {
+          mode: 'nearest',
+          axis: 'x',
+          intersect: false
+        }
+      }
+
+      try {
+        return (
+          <div className="h-96 w-full">
+            {actualType === 'line' || actualType === 'area' ? (
+              <Line data={finalData} options={finalOptions} />
+            ) : actualType === 'bar' ? (
+              <Bar data={finalData} options={finalOptions} />
+            ) : actualType === 'composed' ? (
+              <Line data={finalData} options={finalOptions} />
+            ) : (
+              <Line data={finalData} options={finalOptions} />
+            )}
+          </div>
+        )
+      } catch (error) {
+        console.error('Error en ChartComponent:', error)
+        return (
+          <div className="h-96 w-full flex items-center justify-center border-2 border-red-300 rounded-lg bg-red-50">
+            <div className="text-center">
+              <p className="text-red-600 font-medium">Error al renderizar el gráfico</p>
+              <p className="text-red-500 text-sm mt-1">{error.message}</p>
+            </div>
+          </div>
+        )
+      }
+    }
+
+    // Modo antiguo: usar selectedMetrics y availableMetrics
     if (!selectedMetrics || selectedMetrics.length === 0) {
       return (
         <div className="h-96 w-full flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">

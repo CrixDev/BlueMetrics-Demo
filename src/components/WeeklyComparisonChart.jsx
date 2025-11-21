@@ -20,11 +20,22 @@ export default function WeeklyComparisonChart({
   previousYearData = [],
   currentYear = "2025",
   previousYear = "2024",
-  unit = "m³"
+  unit = "m³",
+  chartType: externalChartType = null,
+  comparisonMode: externalComparisonMode = null,
+  showControls = true,
+  multiYearData = null // Nueva prop: array de { year: '2023', data: [...] }
 }) {
 
-  const [chartType, setChartType] = useState('line') // 'line' o 'bar'
-  const [comparisonMode, setComparisonMode] = useState('both') // 'current', 'previous', 'both'
+  const [internalChartType, setInternalChartType] = useState('line') // 'line' o 'bar'
+  const [internalComparisonMode, setInternalComparisonMode] = useState('both') // 'current', 'previous', 'both'
+  
+  // Usar props externos si se proporcionan, sino usar estados internos
+  const chartType = externalChartType !== null ? externalChartType : internalChartType
+  const comparisonMode = externalComparisonMode !== null ? externalComparisonMode : internalComparisonMode
+  
+  // Determinar si usar modo multi-año
+  const useMultiYear = multiYearData !== null && Array.isArray(multiYearData) && multiYearData.length > 0
 
   // Procesar datos para obtener consumo semanal
   const processWeeklyData = (weeklyData) => {
@@ -57,8 +68,28 @@ export default function WeeklyComparisonChart({
     }).slice(1)
   }
 
-  const processedCurrent = useMemo(() => processWeeklyData(currentYearData), [currentYearData])
-  const processedPrevious = useMemo(() => processWeeklyData(previousYearData), [previousYearData])
+  // Procesar datos para modo multi-año
+  const processedMultiYear = useMemo(() => {
+    if (!useMultiYear) return []
+    return multiYearData.map(yearItem => ({
+      year: yearItem.year,
+      processed: processWeeklyData(yearItem.data)
+    }))
+  }, [multiYearData, useMultiYear])
+
+  const processedCurrent = useMemo(() => {
+    if (useMultiYear && processedMultiYear.length > 0) {
+      return processedMultiYear[processedMultiYear.length - 1].processed
+    }
+    return processWeeklyData(currentYearData)
+  }, [currentYearData, useMultiYear, processedMultiYear])
+
+  const processedPrevious = useMemo(() => {
+    if (useMultiYear && processedMultiYear.length > 1) {
+      return processedMultiYear[processedMultiYear.length - 2].processed
+    }
+    return processWeeklyData(previousYearData)
+  }, [previousYearData, useMultiYear, processedMultiYear])
 
   // Calcular estadísticas comparativas
   const comparisonStats = useMemo(() => {
@@ -108,8 +139,46 @@ export default function WeeklyComparisonChart({
 
   // Configuración de Chart.js
   const chartData = useMemo(() => {
-    const labels = processedCurrent.map(d => `Sem ${d.week}`)
     const datasets = []
+    const colors = [
+      { border: 'rgb(59, 130, 246)', bg: 'rgba(59, 130, 246, 0.6)', bgFill: 'rgba(59, 130, 246, 0.1)' }, // Azul
+      { border: 'rgb(34, 197, 94)', bg: 'rgba(34, 197, 94, 0.6)', bgFill: 'rgba(34, 197, 94, 0.1)' }, // Verde
+      { border: 'rgb(245, 158, 11)', bg: 'rgba(245, 158, 11, 0.6)', bgFill: 'rgba(245, 158, 11, 0.1)' }, // Naranja
+      { border: 'rgb(239, 68, 68)', bg: 'rgba(239, 68, 68, 0.6)', bgFill: 'rgba(239, 68, 68, 0.1)' }, // Rojo
+      { border: 'rgb(139, 92, 246)', bg: 'rgba(139, 92, 246, 0.6)', bgFill: 'rgba(139, 92, 246, 0.1)' } // Púrpura
+    ]
+
+    if (useMultiYear && processedMultiYear.length > 0) {
+      // Modo multi-año: crear dataset para cada año
+      processedMultiYear.forEach((yearItem, index) => {
+        const color = colors[index % colors.length]
+        const isLastYear = index === processedMultiYear.length - 1
+        
+        datasets.push({
+          label: yearItem.year,
+          data: yearItem.processed.map(d => d.consumption),
+          borderColor: color.border,
+          backgroundColor: chartType === 'bar' ? color.bg : color.bgFill,
+          borderWidth: 2,
+          borderDash: isLastYear ? [] : [5, 5],
+          fill: chartType === 'line',
+          tension: 0.4,
+          pointRadius: isLastYear ? 3 : 2,
+          pointHoverRadius: isLastYear ? 6 : 5,
+          pointBackgroundColor: isLastYear ? yearItem.processed.map(d => {
+            if (d.vsLastWeekPercent > 5) return 'rgb(239, 68, 68)'
+            if (d.vsLastWeekPercent < -5) return 'rgb(34, 197, 94)'
+            return color.border
+          }) : color.border
+        })
+      })
+      
+      const labels = processedMultiYear[processedMultiYear.length - 1].processed.map(d => `Sem ${d.week}`)
+      return { labels, datasets }
+    }
+
+    // Modo original de 2 años
+    const labels = processedCurrent.map(d => `Sem ${d.week}`)
 
     if (comparisonMode === 'current' || comparisonMode === 'both') {
       datasets.push({
@@ -123,10 +192,9 @@ export default function WeeklyComparisonChart({
         pointRadius: 3,
         pointHoverRadius: 6,
         pointBackgroundColor: processedCurrent.map(d => {
-          // Color según cambio vs semana anterior
-          if (d.vsLastWeekPercent > 5) return 'rgb(239, 68, 68)' // Rojo - aumentó
-          if (d.vsLastWeekPercent < -5) return 'rgb(34, 197, 94)' // Verde - disminuyó
-          return 'rgb(59, 130, 246)' // Azul - estable
+          if (d.vsLastWeekPercent > 5) return 'rgb(239, 68, 68)'
+          if (d.vsLastWeekPercent < -5) return 'rgb(34, 197, 94)'
+          return 'rgb(59, 130, 246)'
         })
       })
     }
@@ -147,7 +215,7 @@ export default function WeeklyComparisonChart({
     }
 
     return { labels, datasets }
-  }, [processedCurrent, processedPrevious, currentYear, previousYear, chartType, comparisonMode])
+  }, [processedCurrent, processedPrevious, currentYear, previousYear, chartType, comparisonMode, useMultiYear, processedMultiYear])
 
   const chartOptions = {
     responsive: true,
@@ -229,39 +297,41 @@ export default function WeeklyComparisonChart({
             </p>
           </div>
           
-          {/* Controles */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Selector de tipo de gráfico */}
-            <div className="flex gap-1 border rounded-lg p-1">
-              <Button
-                variant={chartType === 'line' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setChartType('line')}
-                className="h-8"
-              >
-                <LineChartIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={chartType === 'bar' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setChartType('bar')}
-                className="h-8"
-              >
-                <BarChart3Icon className="h-4 w-4" />
-              </Button>
-            </div>
+          {/* Controles - solo mostrar si showControls es true */}
+          {showControls && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Selector de tipo de gráfico */}
+              <div className="flex gap-1 border rounded-lg p-1">
+                <Button
+                  variant={chartType === 'line' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setInternalChartType('line')}
+                  className="h-8"
+                >
+                  <LineChartIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={chartType === 'bar' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setInternalChartType('bar')}
+                  className="h-8"
+                >
+                  <BarChart3Icon className="h-4 w-4" />
+                </Button>
+              </div>
 
-            {/* Selector de modo de comparación */}
-            <select
-              value={comparisonMode}
-              onChange={(e) => setComparisonMode(e.target.value)}
-              className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary h-8"
-            >
-              <option value="both">Ambos años</option>
-              <option value="current">Solo {currentYear}</option>
-              <option value="previous">Solo {previousYear}</option>
-            </select>
-          </div>
+              {/* Selector de modo de comparación */}
+              <select
+                value={comparisonMode}
+                onChange={(e) => setInternalComparisonMode(e.target.value)}
+                className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary h-8"
+              >
+                <option value="both">Ambos años</option>
+                <option value="current">Solo {currentYear}</option>
+                <option value="previous">Solo {previousYear}</option>
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Estadísticas de comparación */}

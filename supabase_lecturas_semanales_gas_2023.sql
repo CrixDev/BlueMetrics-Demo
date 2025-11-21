@@ -1,7 +1,7 @@
--- Tabla para lecturas semanales de gas del año 2025
+-- Tabla para lecturas semanales de gas del año 2023
 -- Replica la estructura de lecturas_semana pero para medidores de gas
 
-CREATE TABLE IF NOT EXISTS public.lecturas_semanales_gas_2025 (
+CREATE TABLE IF NOT EXISTS public.lecturas_semanales_gas_2023 (
     id BIGSERIAL PRIMARY KEY,
     numero_semana INTEGER NOT NULL UNIQUE,
     fecha_inicio DATE NOT NULL,
@@ -124,12 +124,12 @@ CREATE TABLE IF NOT EXISTS public.lecturas_semanales_gas_2025 (
 );
 
 -- Crear índices para mejorar el rendimiento
-CREATE INDEX IF NOT EXISTS idx_lecturas_gas_2025_numero_semana ON public.lecturas_semanales_gas_2025(numero_semana);
-CREATE INDEX IF NOT EXISTS idx_lecturas_gas_2025_fecha_inicio ON public.lecturas_semanales_gas_2025(fecha_inicio);
-CREATE INDEX IF NOT EXISTS idx_lecturas_gas_2025_fecha_fin ON public.lecturas_semanales_gas_2025(fecha_fin);
+CREATE INDEX IF NOT EXISTS idx_lecturas_gas_2023_numero_semana ON public.lecturas_semanales_gas_2023(numero_semana);
+CREATE INDEX IF NOT EXISTS idx_lecturas_gas_2023_fecha_inicio ON public.lecturas_semanales_gas_2023(fecha_inicio);
+CREATE INDEX IF NOT EXISTS idx_lecturas_gas_2023_fecha_fin ON public.lecturas_semanales_gas_2023(fecha_fin);
 
 -- Crear trigger para actualizar updated_at automáticamente
-CREATE OR REPLACE FUNCTION update_lecturas_gas_2025_updated_at()
+CREATE OR REPLACE FUNCTION update_lecturas_gas_2023_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = TIMEZONE('utc'::text, NOW());
@@ -137,18 +137,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_update_lecturas_gas_2025_updated_at
-    BEFORE UPDATE ON public.lecturas_semanales_gas_2025
+CREATE TRIGGER trigger_update_lecturas_gas_2023_updated_at
+    BEFORE UPDATE ON public.lecturas_semanales_gas_2023
     FOR EACH ROW
-    EXECUTE FUNCTION update_lecturas_gas_2025_updated_at();
+    EXECUTE FUNCTION update_lecturas_gas_2023_updated_at();
 
 -- Comentarios para documentación
-COMMENT ON TABLE public.lecturas_semanales_gas_2025 IS 'Lecturas semanales de medidores de gas del campus - Año 2025';
-COMMENT ON COLUMN public.lecturas_semanales_gas_2025.numero_semana IS 'Número de semana del año (1-52)';
-COMMENT ON COLUMN public.lecturas_semanales_gas_2025.fecha_inicio IS 'Fecha de inicio de la semana';
-COMMENT ON COLUMN public.lecturas_semanales_gas_2025.fecha_fin IS 'Fecha de fin de la semana';
+COMMENT ON TABLE public.lecturas_semanales_gas_2023 IS 'Lecturas semanales de medidores de gas del campus - Año 2023';
+COMMENT ON COLUMN public.lecturas_semanales_gas_2023.numero_semana IS 'Número de semana del año (1-52)';
+COMMENT ON COLUMN public.lecturas_semanales_gas_2023.fecha_inicio IS 'Fecha de inicio de la semana';
+COMMENT ON COLUMN public.lecturas_semanales_gas_2023.fecha_fin IS 'Fecha de fin de la semana';
 
 -- Insertar algunas semanas de ejemplo (opcional)
--- INSERT INTO public.lecturas_semanales_gas_2025 (numero_semana, fecha_inicio, fecha_fin) VALUES
--- (1, '2025-01-06', '2025-01-12'),
--- (2, '2025-01-13', '2025-01-19');
+-- INSERT INTO public.lecturas_semanales_gas_2023 (numero_semana, fecha_inicio, fecha_fin) VALUES
+-- (1, '2023-01-02', '2023-01-08'),
+-- (2, '2023-01-09', '2023-01-15');

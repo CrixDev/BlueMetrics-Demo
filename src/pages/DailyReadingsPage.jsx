@@ -3,13 +3,16 @@ import { supabase } from '../supabaseClient';
 import { DashboardHeader } from "../components/dashboard-header";
 import { DashboardSidebar } from "../components/dashboard-sidebar";
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth';
+import MetricCard from '../components/MetricCard';
+import AdvancedConsumptionChart from '../components/AdvancedConsumptionChart';
 import { 
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
 import { 
   Droplet, TrendingUp, Calendar, Filter, Download, 
-  RefreshCw, AlertCircle, Loader2, ChevronLeft, ChevronRight 
+  RefreshCw, AlertCircle, Loader2, ChevronLeft, ChevronRight,
+  Activity, BarChart3, ArrowUpDown, Percent
 } from 'lucide-react';
 
 const DailyReadingsPage = () => {
@@ -18,11 +21,32 @@ const DailyReadingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filtroMes, setFiltroMes] = useState('todos');
+  const [filtroPunto, setFiltroPunto] = useState('consumo');
   const [paginaActual, setPaginaActual] = useState(1);
   const registrosPorPagina = 20;
 
   // Colores para gráficos
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7c7c'];
+
+  // Configuración de puntos de medición
+  const puntosDisponibles = [
+    { value: 'consumo', label: 'Consumo Total', field: 'consumo' },
+    { value: 'general_pozos', label: 'General Pozos', field: 'general_pozos' },
+    { value: 'pozo_3', label: 'Pozo 3', field: 'pozo_3' },
+    { value: 'pozo_8', label: 'Pozo 8', field: 'pozo_8' },
+    { value: 'pozo_15', label: 'Pozo 15', field: 'pozo_15' },
+    { value: 'pozo_4', label: 'Pozo 4', field: 'pozo_4' },
+    { value: 'pozo7', label: 'Pozo 7', field: 'pozo7' },
+    { value: 'pozo11', label: 'Pozo 11', field: 'pozo11' },
+    { value: 'pozo_12', label: 'Pozo 12', field: 'pozo_12' },
+    { value: 'pozo_14', label: 'Pozo 14', field: 'pozo_14' },
+    { value: 'campus_8', label: 'Campus 8', field: 'campus_8' },
+    { value: 'a7_cc', label: 'A7-CC', field: 'a7_cc' },
+    { value: 'megacentral', label: 'Megacentral', field: 'megacentral' },
+    { value: 'planta_fisica', label: 'Planta Física', field: 'planta_fisica' },
+    { value: 'residencias', label: 'Residencias', field: 'residencias' },
+    { value: 'a_y_d', label: 'A y D', field: 'a_y_d' }
+  ];
 
   // Obtener datos de Supabase
   useEffect(() => {
@@ -85,6 +109,48 @@ const DailyReadingsPage = () => {
       consumoMin: consumoMin.toFixed(2)
     };
   }, [lecturasFiltradas]);
+
+  // Métricas del punto seleccionado
+  const metricasPunto = useMemo(() => {
+    if (lecturasFiltradas.length === 0) return null;
+
+    const puntoConfig = puntosDisponibles.find(p => p.value === filtroPunto);
+    if (!puntoConfig) return null;
+
+    const field = puntoConfig.field;
+    
+    // Lectura actual (más reciente)
+    const lecturaActual = parseFloat(lecturasFiltradas[0]?.[field]) || 0;
+    
+    // Consumo actual (promedio de últimos 7 días)
+    const ultimos7Dias = lecturasFiltradas.slice(0, 7);
+    const consumoActual = ultimos7Dias.reduce((sum, l) => sum + (parseFloat(l[field]) || 0), 0) / ultimos7Dias.length;
+    
+    // Consumo semana anterior (días 8-14)
+    const semanaAnterior = lecturasFiltradas.slice(7, 14);
+    const consumoSemanaAnterior = semanaAnterior.length > 0 
+      ? semanaAnterior.reduce((sum, l) => sum + (parseFloat(l[field]) || 0), 0) / semanaAnterior.length 
+      : consumoActual;
+    
+    // Comparación vs semana anterior
+    const vsSemanaPorcentaje = consumoSemanaAnterior > 0 
+      ? ((consumoActual - consumoSemanaAnterior) / consumoSemanaAnterior * 100)
+      : 0;
+    
+    // Ahorro/Incremento respecto al promedio total
+    const promedioTotal = lecturasFiltradas.reduce((sum, l) => sum + (parseFloat(l[field]) || 0), 0) / lecturasFiltradas.length;
+    const ahorroPorcentaje = promedioTotal > 0 
+      ? ((consumoActual - promedioTotal) / promedioTotal * 100)
+      : 0;
+
+    return {
+      lecturaActual: lecturaActual.toFixed(1),
+      consumoActual: consumoActual.toFixed(1),
+      vsSemanaPorcentaje: vsSemanaPorcentaje.toFixed(0),
+      ahorroPorcentaje: ahorroPorcentaje.toFixed(0),
+      puntoLabel: puntoConfig.label
+    };
+  }, [lecturasFiltradas, filtroPunto, puntosDisponibles]);
 
   // Datos para gráfico de consumo diario (últimos 30 registros)
   const datosConsumo = useMemo(() => {
@@ -240,8 +306,20 @@ const DailyReadingsPage = () => {
 
         {/* Filtros */}
         <div className="bg-card rounded-lg border border-border p-4 mb-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <Filter className="w-5 h-5 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-foreground">Punto de medición:</label>
+              <select
+                value={filtroPunto}
+                onChange={(e) => setFiltroPunto(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {puntosDisponibles.map(punto => (
+                  <option key={punto.value} value={punto.value}>{punto.label}</option>
+                ))}
+              </select>
+            </div>
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-foreground">Filtrar por mes:</label>
               <select
@@ -264,46 +342,56 @@ const DailyReadingsPage = () => {
           </div>
         </div>
 
-        {/* Estadísticas */}
-        {estadisticas && (
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-            <div className="bg-card rounded-lg border border-border p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <Calendar className="w-6 h-6 text-blue-600" />
-                <span className="text-sm text-muted-foreground">Total Registros</span>
-              </div>
-              <p className="text-3xl font-bold text-foreground">{estadisticas.totalRegistros}</p>
-            </div>
-            <div className="bg-card rounded-lg border border-border p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-                <span className="text-sm text-muted-foreground">Consumo Total</span>
-              </div>
-              <p className="text-3xl font-bold text-foreground">{estadisticas.consumoTotal}</p>
-            </div>
-            <div className="bg-card rounded-lg border border-border p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <Droplet className="w-6 h-6 text-indigo-600" />
-                <span className="text-sm text-muted-foreground">Consumo Promedio</span>
-              </div>
-              <p className="text-3xl font-bold text-foreground">{estadisticas.consumoPromedio}</p>
-            </div>
-            <div className="bg-card rounded-lg border border-border p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <TrendingUp className="w-6 h-6 text-red-600" />
-                <span className="text-sm text-muted-foreground">Consumo Máximo</span>
-              </div>
-              <p className="text-3xl font-bold text-foreground">{estadisticas.consumoMax}</p>
-            </div>
-            <div className="bg-card rounded-lg border border-border p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <TrendingUp className="w-6 h-6 text-yellow-600" />
-                <span className="text-sm text-muted-foreground">Consumo Mínimo</span>
-              </div>
-              <p className="text-3xl font-bold text-foreground">{estadisticas.consumoMin}</p>
+        {/* Métricas del punto seleccionado */}
+        {metricasPunto && (
+          <div className="mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <MetricCard
+                title="Lectura Actual"
+                value={metricasPunto.lecturaActual}
+                unit="m³"
+                icon={Droplet}
+                iconColor="text-blue-600"
+              />
+              <MetricCard
+                title="Consumo Actual"
+                value={metricasPunto.consumoActual}
+                unit="m³"
+                icon={Activity}
+                iconColor="text-indigo-600"
+              />
+              <MetricCard
+                title="Vs Semana Anterior"
+                value={metricasPunto.vsSemanaPorcentaje > 0 ? `+${metricasPunto.vsSemanaPorcentaje}` : metricasPunto.vsSemanaPorcentaje}
+                unit="%"
+                comparison={parseFloat(metricasPunto.vsSemanaPorcentaje)}
+                comparisonLabel="vs semana anterior"
+                trend={parseFloat(metricasPunto.vsSemanaPorcentaje) > 0 ? 'up' : 'down'}
+                icon={ArrowUpDown}
+                iconColor="text-green-600"
+              />
+              <MetricCard
+                title="% de Ahorro"
+                value={metricasPunto.ahorroPorcentaje > 0 ? `+${metricasPunto.ahorroPorcentaje}` : metricasPunto.ahorroPorcentaje}
+                unit="%"
+                comparison={parseFloat(metricasPunto.ahorroPorcentaje)}
+                comparisonLabel="vs promedio total"
+                trend={parseFloat(metricasPunto.ahorroPorcentaje) < 0 ? 'up' : 'down'}
+                icon={Percent}
+                iconColor="text-purple-600"
+              />
             </div>
           </div>
         )}
+
+        {/* Gráfico Avanzado de Consumo Diario */}
+        <div className="mb-6">
+          <AdvancedConsumptionChart 
+            data={lecturasFiltradas}
+            puntoField={puntosDisponibles.find(p => p.value === filtroPunto)?.field || 'consumo'}
+            puntoLabel={puntosDisponibles.find(p => p.value === filtroPunto)?.label || 'Consumo'}
+          />
+        </div>
 
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -354,7 +442,13 @@ const DailyReadingsPage = () => {
             </ResponsiveContainer>
           </div>
 
-          {/* Gráfico de Pozos Promedio */}
+    
+      
+        </div>
+
+
+      <div className=" gap-6 mb-6 mx-20">
+           {/* Gráfico de Pozos Promedio */}
           <div className="bg-card rounded-lg border border-border p-6">
             <h3 className="text-xl font-semibold text-foreground mb-4">
               Promedio por Pozo
@@ -374,32 +468,6 @@ const DailyReadingsPage = () => {
               </BarChart>
             </ResponsiveContainer>
           </div>
-
-          {/* Gráfico de Zonas Promedio */}
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="text-xl font-semibold text-foreground mb-4">
-              Distribución por Zona
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={datosZonas}
-                  dataKey="valor"
-                  nameKey="nombre"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label={(entry) => `${entry.nombre}: ${entry.valor}`}
-                >
-                  {datosZonas.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
         </div>
 
         {/* Tabla de datos */}

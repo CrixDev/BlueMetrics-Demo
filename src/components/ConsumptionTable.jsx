@@ -122,7 +122,7 @@ export default function ConsumptionTable({
 
   // Exportar a CSV
   const exportToCSV = () => {
-    const headers = ['Nombre', 'Tipo', 'Lectura Semana ' + (weekNumber - 1), 'Lectura Semana ' + weekNumber, 'Consumo (m³)', 'Notas']
+    const headers = ['Nombre', 'Tipo', 'Consumo Semana ' + (weekNumber - 1), 'Consumo Semana ' + weekNumber, 'Comparación ' + weekNumber + ' (m³)', 'Notas']
     const rows = filteredAndSortedData.map(item => {
       const currentReading = getReading(item, weekNumber)
       const previousReading = getReading(item, weekNumber - 1)
@@ -250,17 +250,17 @@ export default function ConsumptionTable({
                   </div>
                 </th>
                 <th className="text-right p-3 font-semibold text-sm">
-                  Lectura Semana {weekNumber - 1}
+                  Consumo Semana {weekNumber - 1}
                 </th>
                 <th className="text-right p-3 font-semibold text-sm">
-                  Lectura Semana {weekNumber}
+                  Consumo Semana {weekNumber}
                 </th>
                 <th 
                   className="text-right p-3 cursor-pointer hover:bg-muted/30 transition-colors"
                   onClick={() => handleSort('consumption')}
                 >
                   <div className="flex items-center justify-end font-semibold text-sm">
-                    Consumo (m³)
+                    Comparación semana {weekNumber} (m³)
                     <SortIcon field="consumption" />
                   </div>
                 </th>

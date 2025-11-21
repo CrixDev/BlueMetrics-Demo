@@ -30,7 +30,7 @@ export const getGasTableNameByYear = (year) => {
 /**
  * Lista de años disponibles en el sistema
  */
-export const AVAILABLE_YEARS = ['2024', '2025']
+export const AVAILABLE_YEARS = ['2023', '2024', '2025']
 
 /**
  * Año por defecto (el más reciente)

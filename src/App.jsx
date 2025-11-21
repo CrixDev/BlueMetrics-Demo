@@ -21,6 +21,20 @@ import ConfirmationPage from './pages/ConfirmationPage'
 import CorreosPage from './pages/CorreosPage'
 import ExcelToSqlPage from './pages/ExcelToSqlPage'
 import CsvToSqlDailyPage from './pages/CsvToSqlDailyPage'
+
+// Excel to SQL - Agua (diferentes años)
+import ExcelToSqlAgua2023 from './pages/ExcelToSql/ExcelToSqlAgua2023'
+import ExcelToSqlAgua2024 from './pages/ExcelToSql/ExcelToSqlAgua2024'
+import ExcelToSqlAgua2025 from './pages/ExcelToSql/ExcelToSqlAgua2025'
+
+// Excel to SQL - Gas (diferentes años)
+import ExcelToSqlGas2023 from './pages/ExcelToSql/ExcelToSqlGas2023'
+import ExcelToSqlGas2024 from './pages/ExcelToSql/ExcelToSqlGas2024'
+import ExcelToSqlGas2025 from './pages/ExcelToSql/ExcelToSqlGas2025'
+
+// Excel to SQL - PTAR
+import ExcelToSqlPTAR from './pages/ExcelToSql/ExcelToSqlPTAR'
+
 import DailyReadingsPage from './pages/DailyReadingsPage'
 import AnalysisSectionPage from './pages/AnalysisSectionPage'
 
@@ -49,7 +63,20 @@ function App() {
         <Route path="/predicciones" element={<PredictionsPage />} />
         <Route path="/analisis" element={<AnalysisSectionPage />} />
         <Route path="/contacto" element={<ContactPage />} />
-        <Route path="/excel-to-sql" element={<ExcelToSqlPage />} />
+        {/* Excel to SQL - Agua */}
+        <Route path="/excel-to-sql" element={<ExcelToSqlPage />} /> {/* Mantener compatibilidad - redirige a 2024 */}
+        <Route path="/excel-to-sql/agua/2023" element={<ExcelToSqlAgua2023 />} />
+        <Route path="/excel-to-sql/agua/2024" element={<ExcelToSqlAgua2024 />} />
+        <Route path="/excel-to-sql/agua/2025" element={<ExcelToSqlAgua2025 />} />
+        
+        {/* Excel to SQL - Gas */}
+        <Route path="/excel-to-sql/gas/2023" element={<ExcelToSqlGas2023 />} />
+        <Route path="/excel-to-sql/gas/2024" element={<ExcelToSqlGas2024 />} />
+        <Route path="/excel-to-sql/gas/2025" element={<ExcelToSqlGas2025 />} />
+        
+        {/* Excel to SQL - PTAR */}
+        <Route path="/excel-to-sql/ptar" element={<ExcelToSqlPTAR />} />
+        
         <Route path="/csv-to-sql-daily" element={<CsvToSqlDailyPage />} />
         <Route path="/lecturas-diarias" element={<DailyReadingsPage />} />
 
