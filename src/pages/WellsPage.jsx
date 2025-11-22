@@ -6,6 +6,7 @@ import { Card } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { supabase } from '../supabaseClient'
+import WellsGeneralCharts from '../components/WellsGeneralCharts'
 import { 
   DropletIcon, 
   TrendingUpIcon, 
@@ -289,6 +290,9 @@ export default function WellsPage() {
                 </div>
               </div>
             </Card>
+
+            {/* Gráficos Generales de Consumo */}
+            <WellsGeneralCharts />
 
             {/* Sección de detalles adicionales */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
