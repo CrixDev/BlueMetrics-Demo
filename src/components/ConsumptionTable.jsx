@@ -38,28 +38,43 @@ export default function ConsumptionTable({
     }
   }
 
-  // Función para calcular consumo entre semanas
-  const calculateConsumption = (item, week) => {
-    if (!item.weeklyData || item.noRead) return 0
-    
-    const currentWeekData = item.weeklyData.find(w => w.week === week)
-    const previousWeekData = item.weeklyData.find(w => w.week === week - 1)
-    
-    if (!currentWeekData || !previousWeekData) return 0
-    
-    const currentReading = typeof currentWeekData.reading === 'number' ? currentWeekData.reading : parseFloat(currentWeekData.reading) || 0
-    const previousReading = typeof previousWeekData.reading === 'number' ? previousWeekData.reading : parseFloat(previousWeekData.reading) || 0
-    
-    const consumption = currentReading - previousReading
-    return Math.max(0, consumption) // Asegurar que no sea negativo
-  }
-  
   // Función para obtener lectura de una semana específica
   const getReading = (item, week) => {
     if (!item.weeklyData || item.noRead) return 0
     const weekData = item.weeklyData.find(w => w.week === week)
     if (!weekData) return 0
     return typeof weekData.reading === 'number' ? weekData.reading : parseFloat(weekData.reading) || 0
+  }
+  
+  // Función para obtener consumo directo de la tabla de consumo
+  const getConsumption = (item, week) => {
+    if (!item.weeklyData || item.noRead) return 0
+    const weekData = item.weeklyData.find(w => w.week === week)
+    if (!weekData) return 0
+    // Si existe el campo consumption, usarlo; si no, calcular la diferencia
+    if (weekData.consumption !== undefined && weekData.consumption !== null) {
+      return typeof weekData.consumption === 'number' ? weekData.consumption : parseFloat(weekData.consumption) || 0
+    }
+    // Fallback: calcular consumo como diferencia entre lecturas
+    const currentReading = getReading(item, week)
+    const previousReading = getReading(item, week - 1)
+    return Math.max(0, currentReading - previousReading)
+  }
+  
+  // Función para calcular consumo entre dos semanas (lectura actual - lectura anterior)
+  const calculateConsumption = (item, currentWeek, previousWeek) => {
+    // Usar consumo directo si está disponible
+    return getConsumption(item, currentWeek)
+  }
+  
+  // Función para calcular cambio porcentual entre dos consumos
+  const calculateChangePercent = (item, currentWeek, previousWeek) => {
+    const currentConsumption = calculateConsumption(item, currentWeek, currentWeek - 1)
+    const previousConsumption = calculateConsumption(item, previousWeek, previousWeek - 1)
+    
+    if (previousConsumption === 0) return 0
+    
+    return ((currentConsumption - previousConsumption) / previousConsumption * 100)
   }
 
   // Filtrar y ordenar datos
@@ -82,8 +97,8 @@ export default function ConsumptionTable({
         aValue = a.name
         bValue = b.name
       } else if (sortField === 'consumption') {
-        aValue = calculateConsumption(a, weekNumber)
-        bValue = calculateConsumption(b, weekNumber)
+        aValue = calculateConsumption(a, weekNumber, weekNumber - 1)
+        bValue = calculateConsumption(b, weekNumber, weekNumber - 1)
       } else if (sortField === 'type') {
         aValue = a.type || 'otro'
         bValue = b.type || 'otro'
@@ -105,28 +120,29 @@ export default function ConsumptionTable({
 
   // Calcular totales
   const totals = useMemo(() => {
-    const currentWeek = filteredAndSortedData.reduce((sum, item) => {
-      return sum + calculateConsumption(item, weekNumber)
+    const currentWeekTotal = filteredAndSortedData.reduce((sum, item) => {
+      return sum + calculateConsumption(item, weekNumber, weekNumber - 1)
     }, 0)
 
-    const previousWeek = filteredAndSortedData.reduce((sum, item) => {
-      return sum + calculateConsumption(item, weekNumber - 1)
+    const previousWeekTotal = filteredAndSortedData.reduce((sum, item) => {
+      return sum + calculateConsumption(item, weekNumber - 1, weekNumber - 2)
     }, 0)
 
-    const change = previousWeek > 0 
-      ? ((currentWeek - previousWeek) / previousWeek * 100).toFixed(1)
+    const change = previousWeekTotal > 0 
+      ? ((currentWeekTotal - previousWeekTotal) / previousWeekTotal * 100).toFixed(1)
       : 0
 
-    return { currentWeek, previousWeek, change }
+    return { currentWeek: currentWeekTotal, previousWeek: previousWeekTotal, change }
   }, [filteredAndSortedData, weekNumber])
 
   // Exportar a CSV
   const exportToCSV = () => {
-    const headers = ['Nombre', 'Tipo', 'Consumo Semana ' + (weekNumber - 1), 'Consumo Semana ' + weekNumber, 'Comparación ' + weekNumber + ' (m³)', 'Notas']
+    const headers = ['Nombre', 'Tipo', 'Lectura Semana ' + (weekNumber - 1), 'Lectura Semana ' + weekNumber, 'Consumo (m³)', 'Cambio vs Anterior (%)', 'Notas']
     const rows = filteredAndSortedData.map(item => {
       const currentReading = getReading(item, weekNumber)
       const previousReading = getReading(item, weekNumber - 1)
-      const consumption = calculateConsumption(item, weekNumber)
+      const consumption = calculateConsumption(item, weekNumber, weekNumber - 1)
+      const changePercent = calculateChangePercent(item, weekNumber, weekNumber - 1)
       
       return [
         item.name,
@@ -134,6 +150,7 @@ export default function ConsumptionTable({
         previousReading,
         currentReading,
         consumption,
+        changePercent.toFixed(1),
         item.notes || (item.noRead ? 'NO TOMAR LECTURA' : '')
       ]
     })
@@ -206,20 +223,23 @@ export default function ConsumptionTable({
         {/* Resumen */}
         <div className="grid grid-cols-3 gap-4 mt-4 p-4 bg-muted/30 rounded-lg">
           <div>
-            <p className="text-xs text-muted-foreground">Consumo Semana {weekNumber}</p>
+            <p className="text-xs text-muted-foreground">Consumo Total Semana {weekNumber}</p>
             <p className="text-xl font-bold text-foreground">{totals.currentWeek.toLocaleString()} m³</p>
+            <p className="text-xs text-muted-foreground mt-1">Suma de todos los puntos</p>
           </div>
           {showComparison && weekNumber > 1 && (
             <>
               <div>
-                <p className="text-xs text-muted-foreground">Semana Anterior</p>
+                <p className="text-xs text-muted-foreground">Consumo Semana {weekNumber - 1}</p>
                 <p className="text-xl font-bold text-muted-foreground">{totals.previousWeek.toLocaleString()} m³</p>
+                <p className="text-xs text-muted-foreground mt-1">Semana anterior</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Cambio</p>
+                <p className="text-xs text-muted-foreground">Variación</p>
                 <p className={`text-xl font-bold ${parseFloat(totals.change) > 0 ? 'text-destructive' : 'text-green-500'}`}>
                   {parseFloat(totals.change) > 0 ? '+' : ''}{totals.change}%
                 </p>
+                <p className="text-xs text-muted-foreground mt-1">vs semana anterior</p>
               </div>
             </>
           )}
@@ -250,23 +270,29 @@ export default function ConsumptionTable({
                   </div>
                 </th>
                 <th className="text-right p-3 font-semibold text-sm">
-                  Consumo Semana {weekNumber - 1}
+                  <div>Lectura Semana {weekNumber - 1}</div>
+                  <div className="text-xs font-normal text-muted-foreground">(m³)</div>
                 </th>
                 <th className="text-right p-3 font-semibold text-sm">
-                  Consumo Semana {weekNumber}
+                  <div>Lectura Semana {weekNumber}</div>
+                  <div className="text-xs font-normal text-muted-foreground">(m³)</div>
                 </th>
                 <th 
                   className="text-right p-3 cursor-pointer hover:bg-muted/30 transition-colors"
                   onClick={() => handleSort('consumption')}
                 >
                   <div className="flex items-center justify-end font-semibold text-sm">
-                    Comparación semana {weekNumber} (m³)
+                    <div>
+                      <div>Consumo</div>
+                      <div className="text-xs font-normal text-muted-foreground">(m³)</div>
+                    </div>
                     <SortIcon field="consumption" />
                   </div>
                 </th>
                 {showComparison && weekNumber > 1 && (
                   <th className="text-right p-3 font-semibold text-sm">
-                    Cambio vs Semana Anterior
+                    <div>Cambio</div>
+                    <div className="text-xs font-normal text-muted-foreground">(%)</div>
                   </th>
                 )}
                 <th className="text-center p-3 font-semibold text-sm">
@@ -278,11 +304,8 @@ export default function ConsumptionTable({
               {filteredAndSortedData.map((item, index) => {
                 const currentReading = getReading(item, weekNumber)
                 const previousReading = getReading(item, weekNumber - 1)
-                const consumption = calculateConsumption(item, weekNumber)
-                const previousConsumption = calculateConsumption(item, weekNumber - 1)
-                const change = previousConsumption > 0 
-                  ? ((consumption - previousConsumption) / previousConsumption * 100).toFixed(1)
-                  : 0
+                const consumption = calculateConsumption(item, weekNumber, weekNumber - 1)
+                const changePercent = calculateChangePercent(item, weekNumber, weekNumber - 1)
 
                 const rowClass = item.noRead 
                   ? 'bg-gray-100 dark:bg-gray-800/50'
@@ -333,21 +356,25 @@ export default function ConsumptionTable({
                       {currentReading.toLocaleString()}
                     </td>
                     <td className="p-3 text-right">
-                      <span className={`text-sm font-bold ${consumption === 0 ? 'text-muted-foreground' : 'text-primary'}`}>
+                      <span className={`text-sm font-bold ${
+                        consumption === 0 ? 'text-muted-foreground' : 
+                        consumption > 1000 ? 'text-red-600' :
+                        'text-primary'
+                      }`}>
                         {consumption.toLocaleString()}
                       </span>
                     </td>
                     {showComparison && weekNumber > 1 && (
                       <td className="p-3 text-right">
-                        {consumption === 0 && previousConsumption === 0 ? (
+                        {consumption === 0 ? (
                           <span className="text-sm text-muted-foreground">-</span>
                         ) : (
-                          <span className={`text-sm font-medium ${
-                            parseFloat(change) > 0 ? 'text-destructive' : 
-                            parseFloat(change) < 0 ? 'text-green-500' : 
+                          <span className={`text-sm font-medium px-2 py-1 rounded ${
+                            changePercent > 5 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 
+                            changePercent < -5 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 
                             'text-muted-foreground'
                           }`}>
-                            {parseFloat(change) > 0 ? '+' : ''}{change}%
+                            {changePercent > 0 ? '+' : ''}{changePercent.toFixed(1)}%
                           </span>
                         )}
                       </td>

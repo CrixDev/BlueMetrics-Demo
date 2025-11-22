@@ -11,7 +11,8 @@ import consumptionPointsData from '../lib/consumption-points.json'
 import { dashboardData } from '../lib/dashboard-data'
 import { supabase } from '../supabaseClient'
 import { 
-  TrendingUpIcon, 
+  TrendingUpIcon,
+  TrendingDownIcon,
   AlertTriangleIcon, 
   DropletIcon,
   BarChart3Icon,
@@ -25,7 +26,7 @@ import {
 } from 'lucide-react'
 
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth';
-import { getTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers';
+import { AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers';
 
 export default function ConsumptionPage() {
   const [timeFrame, setTimeFrame] = useState('monthly')
@@ -69,24 +70,54 @@ export default function ConsumptionPage() {
       setLoading(true)
       setError(null)
       
-      const tableName = getTableNameByYear(selectedYearForReadings)
-      // Obtener todos los datos de consumo semanal ordenados por número de semana
-      const { data, error: fetchError } = await supabase
-        .from(tableName)
+      // Cargar AMBAS tablas: lecturas y consumo
+      const readingsTableName = `lecturas_semana_agua_${selectedYearForReadings}`
+      const consumptionTableName = `lecturas_semana_agua_consumo_${selectedYearForReadings}`
+      
+      console.log('🔍 Cargando lecturas desde:', readingsTableName)
+      console.log('🔍 Cargando consumo desde:', consumptionTableName)
+      
+      // Cargar lecturas semanales (valores acumulados)
+      const { data: readingsData, error: readingsError } = await supabase
+        .from(readingsTableName)
         .select('*')
-        .order('numero_semana', { ascending: true })
+        .order('l_numero_semana', { ascending: true })
       
-      if (fetchError) throw fetchError
+      if (readingsError) {
+        console.error('❌ Error cargando lecturas:', readingsError)
+        throw readingsError
+      }
       
-      console.log('✅ Datos de consumo semanal obtenidos:', data)
+      // Cargar consumo semanal
+      const { data: consumptionData, error: consumptionError } = await supabase
+        .from(consumptionTableName)
+        .select('*')
+        .order('l_numero_semana', { ascending: true })
       
-      setWeeklyReadings(data || [])
+      if (consumptionError) {
+        console.error('❌ Error cargando consumo:', consumptionError)
+        throw consumptionError
+      }
+      
+      console.log('✅ Lecturas obtenidas:', readingsData?.length, 'semanas')
+      console.log('✅ Consumo obtenido:', consumptionData?.length, 'semanas')
+      
+      // Combinar lecturas y consumo por semana
+      const mergedData = (readingsData || []).map(reading => {
+        const consumption = (consumptionData || []).find(c => c.l_numero_semana === reading.l_numero_semana)
+        return {
+          ...reading,
+          consumption: consumption || {} // Agregar datos de consumo
+        }
+      })
+      
+      setWeeklyReadings(mergedData)
       
       // Crear lista de semanas disponibles
-      const weeks = (data || []).map(week => ({
-        weekNumber: week.numero_semana,
-        startDate: week.fecha_inicio,
-        endDate: week.fecha_fin
+      const weeks = (readingsData || []).map(week => ({
+        weekNumber: week.l_numero_semana,
+        startDate: week.l_fecha_inicio,
+        endDate: week.l_fecha_fin
       }))
       
       setAvailableWeeks(weeks)
@@ -96,16 +127,15 @@ export default function ConsumptionPage() {
         setSelectedWeek(weeks[weeks.length - 1].weekNumber)
       }
 
-      // Convertir datos de Supabase al formato de puntos de consumo
-      processConsumptionPoints(data)
+      // Convertir datos combinados al formato de puntos de consumo
+      processConsumptionPoints(mergedData, consumptionData)
       
     } catch (err) {
-      console.error('❌ Error al cargar datos de consumo:', err)
+      console.error('❌ Error al cargar datos:', err)
       setError(err.message)
       
       // Fallback a datos del JSON si hay error
       setAvailableWeeks(consumptionPointsData.metadata.weeks)
-      // Mantener los puntos del JSON como fallback
       setConsumptionPoints(consumptionPointsData.categories)
     } finally {
       setLoading(false)
@@ -113,19 +143,63 @@ export default function ConsumptionPage() {
   }
 
   // Procesar datos de Supabase para convertirlos en formato de puntos de consumo
-  const processConsumptionPoints = (weeklyData) => {
+  const processConsumptionPoints = (mergedData, consumptionData) => {
+    // Mapeo de IDs del JSON a columnas de la nueva tabla con prefijo l_ (minúsculas)
+    const columnMapping = {
+      'medidor_general_pozos': 'l_medidor_general_pozos',
+      'pozo_11': 'l_pozo_11',
+      'pozo_12': 'l_pozo_12',
+      'pozo_14': 'l_pozo_14',
+      'pozo_7': 'l_pozo_7',
+      'pozo_3': 'l_pozo_3',
+      'pozo_4_riego': 'l_pozo_4_riego',
+      'pozo_8_riego': 'l_pozo_8_riego',
+      'pozo_15_riego': 'l_pozo_15_riego',
+      'total_pozos_riego': 'l_total_pozos_riego',
+      'residencias_10_15': 'l_residencias_10_15',
+      'residencias_1_antiguo': 'l_residencias_1_antiguo',
+      'residencias_2_ote': 'l_residencias_2_ote',
+      'residencias_3': 'l_residencias_3',
+      'residencias_4': 'l_residencias_4',
+      'residencias_5': 'l_residencias_5',
+      'wellness_edificio': 'l_wellness_edificio',
+      'biblioteca': 'l_biblioteca',
+      'cetec': 'l_cetec',
+      'biotecnologia': 'l_biotecnologia',
+      'arena_borrego': 'l_arena_borrego',
+      'centro_congresos': 'l_centro_congresos',
+      'auditorio_luis_elizondo': 'l_auditorio_luis_elizondo',
+      'nucleo': 'l_nucleo',
+      'expedition': 'l_expedition',
+      'wellness_torre_enfriamiento': 'l_wellness_torre_enfriamiento',
+      'cah3_torre_enfriamiento': 'l_cah3_torre_enfriamiento',
+      'megacentral_te_2': 'l_megacentral_te_2',
+      'estadio_banorte_te': 'l_estadio_banorte_te',
+      'circuito_8_campus': 'l_circuito_8_campus',
+      'circuito_6_residencias': 'l_circuito_6_residencias',
+      'circuito_4_a7_ce': 'l_circuito_4_a7_ce',
+      'circuito_planta_fisica': 'l_circuito_planta_fisica',
+      'circuito_megacentral': 'l_circuito_megacentral'
+    }
+
     // Usar las categorías del JSON como estructura base
     const categories = consumptionPointsData.categories.map(category => ({
       ...category,
       points: category.points.map(point => {
-        // Construir weeklyData desde Supabase
-        const weeklyDataFromDB = weeklyData.map(week => {
-          const consumption = week[point.id]
+        // Obtener el nombre de columna correcto con prefijo l_ (minúsculas)
+        const columnName = columnMapping[point.id] || `l_${point.id}`
+        
+        // Construir weeklyData con LECTURAS y CONSUMO
+        const weeklyDataFromDB = mergedData.map(week => {
+          const reading = week[columnName] // Lectura acumulada
+          const consumption = week.consumption?.[columnName] // Consumo de la semana
+          
           return {
-            week: week.numero_semana,
-            reading: consumption !== null && consumption !== undefined ? parseFloat(consumption) : 0
+            week: week.l_numero_semana,
+            reading: reading !== null && reading !== undefined ? parseFloat(reading) : 0,
+            consumption: consumption !== null && consumption !== undefined ? parseFloat(consumption) : 0
           }
-        }).filter(w => w.reading !== null)
+        }).filter(w => w.reading !== null || w.consumption !== null)
 
         return {
           ...point,
@@ -137,64 +211,163 @@ export default function ConsumptionPage() {
     setConsumptionPoints(categories)
   }
 
-  // Función genérica para cargar datos de un año específico
-  const fetchYearData = async (year, tableName, setStateFunction) => {
+  // Función genérica para cargar datos de un año específico (LECTURAS + CONSUMO)
+  const fetchYearData = async (year, consumptionTableName, setStateFunction) => {
     try {
       const shouldSumAll = selectedPoint === 'todos'
       
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('*')
-        .order('numero_semana', { ascending: true })
+      // Cargar AMBAS tablas: lecturas y consumo (igual que fetchWeeklyReadings)
+      const readingsTableName = `lecturas_semana_agua_${year}`
       
-      if (error) {
-        console.error(`Error cargando ${year}:`, error)
+      console.log(`🔍 Cargando lecturas de ${year} desde: ${readingsTableName}`)
+      console.log(`🔍 Cargando consumo de ${year} desde: ${consumptionTableName}`)
+      
+      // Cargar lecturas semanales (valores acumulados)
+      const { data: readingsData, error: readingsError } = await supabase
+        .from(readingsTableName)
+        .select('*')
+        .order('l_numero_semana', { ascending: true })
+      
+      if (readingsError) {
+        console.error(`❌ Error cargando lecturas de ${year}:`, readingsError)
+        setStateFunction([])
+        return
+      }
+      
+      // Cargar consumo semanal
+      const { data: consumptionData, error: consumptionError } = await supabase
+        .from(consumptionTableName)
+        .select('*')
+        .order('l_numero_semana', { ascending: true })
+      
+      if (consumptionError) {
+        console.error(`❌ Error cargando consumo de ${year}:`, consumptionError)
+        setStateFunction([])
         return
       }
 
+      if (!readingsData || readingsData.length === 0) {
+        console.warn(`⚠️ No hay datos de lecturas en ${readingsTableName}`)
+        setStateFunction([])
+        return
+      }
+
+      console.log(`📊 Lecturas de ${year}:`, readingsData.length, 'semanas')
+      console.log(`📊 Consumo de ${year}:`, consumptionData?.length || 0, 'semanas')
+
       let formattedData
       if (shouldSumAll) {
-        // Sumar todo el consumo de cada semana
-        formattedData = data.map(week => {
-          let totalReading = 0
-          // Sumar todos los campos numéricos (consumo) excepto numero_semana, fecha_inicio, fecha_fin, id
+        // Sumar todo el consumo de cada semana desde la tabla de CONSUMO
+        formattedData = (consumptionData || []).map(week => {
+          let totalConsumption = 0
+          // Sumar todos los campos numéricos (consumo) con prefijo l_ excepto metadatos
           Object.keys(week).forEach(key => {
-            if (key !== 'numero_semana' && key !== 'fecha_inicio' && key !== 'fecha_fin' && key !== 'id' && week[key] !== null) {
+            if (key.startsWith('l_') && 
+                key !== 'l_numero_semana' && 
+                key !== 'l_fecha_inicio' && 
+                key !== 'l_fecha_fin' && 
+                key !== 'l_id' &&
+                key !== 'l_created_at' &&
+                key !== 'l_updated_at' &&
+                week[key] !== null) {
               const value = parseFloat(week[key])
               if (!isNaN(value)) {
-                totalReading += value
+                totalConsumption += value
               }
             }
           })
           return {
-            week: week.numero_semana,
-            reading: totalReading
+            week: week.l_numero_semana,
+            reading: totalConsumption,  // Consumo total
+            consumption: totalConsumption  // Mantener compatibilidad
           }
         })
       } else {
-        // Cargar solo el punto seleccionado
-        formattedData = data
-          .filter(d => d[selectedPoint] !== null)
-          .map(d => ({
-            week: d.numero_semana,
-            reading: parseFloat(d[selectedPoint]) || 0
-          }))
+        // Mapear el punto seleccionado al nombre de columna con prefijo l_ (minúsculas)
+        const columnName = `l_${selectedPoint}`
+        
+        console.log(`🎯 Buscando columna: ${columnName}`)
+        
+        // Combinar lecturas y consumo para el punto específico
+        formattedData = readingsData.map(reading => {
+          const consumption = (consumptionData || []).find(c => c.l_numero_semana === reading.l_numero_semana)
+          return {
+            week: reading.l_numero_semana,
+            reading: parseFloat(reading[columnName]) || 0,  // Lectura acumulada
+            consumption: parseFloat(consumption?.[columnName]) || 0  // Consumo de la semana
+          }
+        })
       }
       
       setStateFunction(formattedData)
-      console.log(`✅ Datos de ${year} cargados:`, formattedData.length, 'semanas')
+      console.log(`✅ Datos de ${year} formateados:`, formattedData.length, 'semanas', formattedData.slice(0, 3))
     } catch (err) {
       console.error(`❌ Error al cargar datos de ${year}:`, err)
+      setStateFunction([])
     }
   }
 
   // Función para cargar datos de todos los años para comparación
   const fetchBothYearsData = async () => {
     await Promise.all([
-      fetchYearData('2023', 'lecturas_semana2023', setWeeklyReadings2023),
-      fetchYearData('2024', 'lecturas_semana2024', setWeeklyReadings2024),
-      fetchYearData('2025', 'lecturas_semana', setWeeklyReadings2025)
+      fetchYearData('2023', 'lecturas_semana_agua_consumo_2023', setWeeklyReadings2023),
+      fetchYearData('2024', 'lecturas_semana_agua_consumo_2024', setWeeklyReadings2024),
+      fetchYearData('2025', 'lecturas_semana_agua_consumo_2025', setWeeklyReadings2025)
     ])
+  }
+
+  // Calcular consumo real de las últimas 4 semanas vs 4 semanas anteriores
+  const calculateLast4WeeksConsumption = () => {
+    if (!weeklyReadings || weeklyReadings.length === 0) {
+      return { pozos: 0, riego: 0, servicios: 0, pozosPrev: 0, riegoPrev: 0, serviciosPrev: 0 }
+    }
+
+    // Obtener las últimas 8 semanas (4 actuales + 4 anteriores)
+    const last8Weeks = weeklyReadings.slice(-8)
+    
+    if (last8Weeks.length < 8) {
+      console.warn('No hay suficientes semanas de datos (mínimo 8)')
+    }
+
+    // Dividir en dos grupos: últimas 4 y anteriores 4
+    const last4Weeks = last8Weeks.slice(-4)
+    const previous4Weeks = last8Weeks.slice(-8, -4)
+
+    // Función para sumar consumo de columnas específicas
+    const sumConsumption = (weeks, columns) => {
+      return weeks.reduce((total, week) => {
+        const weekConsumption = week.consumption || week
+        const sum = columns.reduce((colSum, col) => {
+          const value = parseFloat(weekConsumption[col]) || 0
+          return colSum + value
+        }, 0)
+        return total + sum
+      }, 0)
+    }
+
+    // Columnas de pozos de medición (todos los pozos principales)
+    const pozosCols = ['l_medidor_general_pozos', 'l_pozo_11', 'l_pozo_12', 'l_pozo_14', 'l_pozo_7', 'l_pozo_3']
+    
+    // Columnas de pozos de riego
+    const riegoCols = ['l_pozo_4_riego', 'l_pozo_8_riego', 'l_pozo_15_riego', 'l_total_pozos_riego']
+    
+    // Columnas de pozos de servicio (edificios, residencias, etc)
+    const serviciosCols = [
+      'l_residencias_10_15', 'l_residencias_1_antiguo', 'l_residencias_2_ote',
+      'l_residencias_3', 'l_residencias_4', 'l_residencias_5',
+      'l_wellness_edificio', 'l_biblioteca', 'l_cetec', 'l_biotecnologia',
+      'l_arena_borrego', 'l_centro_congresos', 'l_auditorio_luis_elizondo',
+      'l_nucleo', 'l_expedition'
+    ]
+
+    return {
+      pozos: sumConsumption(last4Weeks, pozosCols),
+      riego: sumConsumption(last4Weeks, riegoCols),
+      servicios: sumConsumption(last4Weeks, serviciosCols),
+      pozosPrev: sumConsumption(previous4Weeks, pozosCols),
+      riegoPrev: sumConsumption(previous4Weeks, riegoCols),
+      serviciosPrev: sumConsumption(previous4Weeks, serviciosCols)
+    }
   }
 
   // Procesar datos de consumo según filtros (función original mantenida para compatibilidad)
@@ -325,22 +498,37 @@ export default function ConsumptionPage() {
   }
 
 
-  // Cálculos de métricas principales
+  // Cálculos de métricas principales con datos REALES
   const consumptionData = getConsumptionData()
   const categoryData = getCategoryData()
   const wellData = getWellEfficiencyData()
   
-  const currentConsumption = consumptionData.length > 0 ? consumptionData[consumptionData.length - 1].value * 1000 : 0
-  const previousConsumption = consumptionData.length > 1 ? consumptionData[consumptionData.length - 2].value * 1000 : 0
-  const consumptionTrend = previousConsumption > 0 ? ((currentConsumption - previousConsumption) / previousConsumption * 100).toFixed(1) : 0
-
-  // Obtener datos del año actual para las nuevas métricas
-  const currentYearData = datosPozo12.especificaciones_anuales.find(year => year.año.includes('2025')) || datosPozo12.especificaciones_anuales[datosPozo12.especificaciones_anuales.length - 1]
+  // Calcular consumo real de últimas 4 semanas vs 4 anteriores
+  const last4WeeksData = calculateLast4WeeksConsumption()
   
-  // Calcular métricas de consumo por categoría
-  const consumoPozos = Math.round(currentConsumption / 1000) // Consumo actual de pozos
-  const serviciosTotal = Math.round(dashboardData.waterUsage.find(item => item.name === 'Servicios')?.volume || 0)
-  const riegoTotal = Math.round(dashboardData.waterUsage.find(item => item.name === 'Riego')?.volume || 0)
+  console.log('📊 Consumo últimas 4 semanas:', last4WeeksData)
+  
+  // Métricas de pozos de medición
+  const consumoPozos = Math.round(last4WeeksData.pozos)
+  const pozosTrend = last4WeeksData.pozosPrev > 0 
+    ? ((last4WeeksData.pozos - last4WeeksData.pozosPrev) / last4WeeksData.pozosPrev * 100).toFixed(1)
+    : 0
+  
+  // Métricas de riego
+  const riegoTotal = Math.round(last4WeeksData.riego)
+  const riegoTrend = last4WeeksData.riegoPrev > 0
+    ? ((last4WeeksData.riego - last4WeeksData.riegoPrev) / last4WeeksData.riegoPrev * 100).toFixed(1)
+    : 0
+  
+  // Métricas de servicios
+  const serviciosTotal = Math.round(last4WeeksData.servicios)
+  const serviciosTrend = last4WeeksData.serviciosPrev > 0
+    ? ((last4WeeksData.servicios - last4WeeksData.serviciosPrev) / last4WeeksData.serviciosPrev * 100).toFixed(1)
+    : 0
+  
+  // Mantener compatibilidad con código existente
+  const currentConsumption = consumoPozos
+  const consumptionTrend = pozosTrend
 
   // Preparar datos para WeeklyComparisonChart basado en años seleccionados
   const getMultiYearChartData = () => {
@@ -360,6 +548,11 @@ export default function ConsumptionPage() {
   }
 
   const multiYearData = getMultiYearChartData()
+  
+  // Debug: Log para verificar datos
+  console.log('MultiYear Data:', multiYearData)
+  console.log('Weekly Readings 2024:', weeklyReadings2024)
+  console.log('Weekly Readings 2025:', weeklyReadings2025)
 
   return (
     <RedirectIfNotAuth>
@@ -385,20 +578,26 @@ export default function ConsumptionPage() {
           </div>
 
 
-          {/* Métricas principales */}
+          {/* Métricas principales - Últimas 4 semanas vs 4 anteriores */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {/* Pozos de Medición */}
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Consumo de Pozos Total</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-sm text-muted-foreground">Pozos de Medición</p>
+                    <p className="text-xs text-muted-foreground/70">Últimas 4 semanas</p>
+                    <p className="text-2xl font-bold text-foreground mt-1">
                       {consumoPozos.toLocaleString()} m³
                     </p>
                     <div className="flex items-center gap-1 mt-1">
-                      <TrendingUpIcon className={`h-4 w-4 ${parseFloat(consumptionTrend) > 0 ? 'text-destructive' : 'text-red-500'}`} />
-                      <span className={`text-sm ${parseFloat(consumptionTrend) > 0 ? 'text-destructive' : 'text-red-500'}`}>
-                        {Math.abs(consumptionTrend)}% vs mes anterior
+                      {parseFloat(pozosTrend) > 0 ? (
+                        <TrendingUpIcon className="h-4 w-4 text-destructive" />
+                      ) : (
+                        <TrendingDownIcon className="h-4 w-4 text-green-500" />
+                      )}
+                      <span className={`text-sm ${parseFloat(pozosTrend) > 0 ? 'text-destructive' : 'text-green-500'}`}>
+                        {parseFloat(pozosTrend) > 0 ? '+' : ''}{pozosTrend}% vs 4 semanas anteriores
                       </span>
                     </div>
                   </div>
@@ -409,35 +608,57 @@ export default function ConsumptionPage() {
               </CardContent>
             </Card>
 
+            {/* Pozos de Riego */}
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Consumo de Pozos de Servicios Total</p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {serviciosTotal.toLocaleString()} m³
+                    <p className="text-sm text-muted-foreground">Pozos de Riego</p>
+                    <p className="text-xs text-muted-foreground/70">Últimas 4 semanas</p>
+                    <p className="text-2xl font-bold text-foreground mt-1">
+                      {riegoTotal.toLocaleString()} m³
                     </p>
-                    <p className="text-sm text-blue-500 mt-1">vs mes anterior</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      {parseFloat(riegoTrend) > 0 ? (
+                        <TrendingUpIcon className="h-4 w-4 text-destructive" />
+                      ) : (
+                        <TrendingDownIcon className="h-4 w-4 text-green-500" />
+                      )}
+                      <span className={`text-sm ${parseFloat(riegoTrend) > 0 ? 'text-destructive' : 'text-green-500'}`}>
+                        {parseFloat(riegoTrend) > 0 ? '+' : ''}{riegoTrend}% vs 4 semanas anteriores
+                      </span>
+                    </div>
                   </div>
-                  <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
-                    <Building2 className="h-6 w-6 text-blue-500" />
+                  <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                    <Waves className="h-6 w-6 text-green-500" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
+            {/* Pozos de Servicios */}
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Consumo de Pozos de Riego Total</p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {riegoTotal.toLocaleString()} m³
+                    <p className="text-sm text-muted-foreground">Puntos de Servicio</p>
+                    <p className="text-xs text-muted-foreground/70">Últimas 4 semanas</p>
+                    <p className="text-2xl font-bold text-foreground mt-1">
+                      {serviciosTotal.toLocaleString()} m³
                     </p>
-                    <p className="text-sm text-green-500 mt-1">vs mes anterior</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      {parseFloat(serviciosTrend) > 0 ? (
+                        <TrendingUpIcon className="h-4 w-4 text-destructive" />
+                      ) : (
+                        <TrendingDownIcon className="h-4 w-4 text-green-500" />
+                      )}
+                      <span className={`text-sm ${parseFloat(serviciosTrend) > 0 ? 'text-destructive' : 'text-green-500'}`}>
+                        {parseFloat(serviciosTrend) > 0 ? '+' : ''}{serviciosTrend}% vs 4 semanas anteriores
+                      </span>
+                    </div>
                   </div>
-                  <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                    <Waves className="h-6 w-6 text-green-500" />
+                  <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                    <Building2 className="h-6 w-6 text-blue-500" />
                   </div>
                 </div>
               </CardContent>
@@ -711,7 +932,7 @@ export default function ConsumptionPage() {
                   title={category.name}
                   data={category.points}
                   weekNumber={selectedWeek}
-                  showComparison={showComparison}z
+                  showComparison={showComparison}
                 />
               )
             ))}

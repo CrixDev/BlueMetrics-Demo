@@ -42,30 +42,29 @@ export default function WeeklyComparisonChart({
     if (!weeklyData || weeklyData.length === 0) return []
     
     return weeklyData.map((week, index) => {
-      if (index === 0) {
-        return {
-          week: week.week,
-          consumption: 0,
-          reading: week.reading,
-          vsLastWeek: 0,
-          vsLastWeekPercent: 0
-        }
-      }
+      // Usar el campo consumption directamente si existe, sino calcular
+      const consumption = week.consumption !== undefined && week.consumption !== null
+        ? week.consumption
+        : (index > 0 ? Math.max(0, week.reading - weeklyData[index - 1].reading) : 0)
       
-      const consumption = week.reading - weeklyData[index - 1].reading
-      const lastWeekConsumption = weeklyData[index - 1].reading - (weeklyData[index - 2]?.reading || 0)
+      const lastWeekConsumption = index > 0 
+        ? (weeklyData[index - 1].consumption !== undefined && weeklyData[index - 1].consumption !== null
+            ? weeklyData[index - 1].consumption
+            : 0)
+        : 0
+      
       const vsLastWeekPercent = lastWeekConsumption > 0 
         ? ((consumption - lastWeekConsumption) / lastWeekConsumption * 100)
         : 0
       
       return {
         week: week.week,
-        consumption: Math.max(0, consumption),
-        reading: week.reading,
+        consumption: consumption,
+        reading: week.reading || consumption,
         vsLastWeek: consumption - lastWeekConsumption,
         vsLastWeekPercent
       }
-    }).slice(1)
+    })
   }
 
   // Procesar datos para modo multi-año

@@ -12,7 +12,8 @@ import {
 
 /**
  * Tabla tipo Excel para comparación semanal entre años
- * Muestra semanas en filas y años en columnas con comparativas de color
+ * Muestra el consumo de cada semana comparado con la misma semana del año anterior
+ * Los datos vienen directamente de las tablas Lecturas_Semana_Agua_consumo
  */
 export default function WeeklyComparisonTable({
   title = "Comparación Semanal",
@@ -24,26 +25,18 @@ export default function WeeklyComparisonTable({
 
   const [showPercentages, setShowPercentages] = useState(true)
 
-  // Procesar datos para obtener consumo semanal
+  // Los datos ya vienen como consumo desde las tablas Lecturas_Semana_Agua_consumo
+  // No necesitamos calcular diferencias, solo extraer el consumo directamente
   const processWeeklyData = (weeklyData) => {
     if (!weeklyData || weeklyData.length === 0) return []
     
-    return weeklyData.map((week, index) => {
-      if (index === 0) {
-        return {
-          week: week.week,
-          consumption: 0,
-          reading: week.reading
-        }
-      }
-      
-      const consumption = week.reading - weeklyData[index - 1].reading
-      return {
-        week: week.week,
-        consumption: Math.max(0, consumption),
-        reading: week.reading
-      }
-    }).slice(1)
+    // Usar el campo consumption si existe, sino usar reading (para compatibilidad)
+    return weeklyData.map(week => ({
+      week: week.week,
+      consumption: week.consumption !== undefined && week.consumption !== null 
+        ? week.consumption 
+        : (week.reading || 0)
+    }))
   }
 
   const processed2024 = useMemo(() => processWeeklyData(data2024), [data2024])
@@ -141,7 +134,7 @@ export default function WeeklyComparisonTable({
             <h3 className="text-lg font-semibold">{title}</h3>
             <p className="text-sm text-muted-foreground">{pointName}</p>
             <p className="text-xs text-muted-foreground mt-1 italic">
-              * Consumo = Lectura semana actual - Lectura semana anterior
+              * Comparación de consumo: Misma semana entre diferentes años
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -209,7 +202,8 @@ export default function WeeklyComparisonTable({
                   <div className="text-xs font-normal text-muted-foreground">({unit})</div>
                 </th>
                 <th className="p-3 text-center font-semibold text-sm bg-amber-50 dark:bg-amber-900/20">
-                  Variación
+                  <div>Variación</div>
+                  <div className="text-xs font-normal text-muted-foreground">(2025 vs 2024)</div>
                 </th>
               </tr>
             </thead>
