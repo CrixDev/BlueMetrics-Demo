@@ -5,6 +5,7 @@ import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
+import { supabase } from '../supabaseClient'
 import { 
   ArrowLeftIcon,
   DropletIcon, 
@@ -17,7 +18,8 @@ import {
   FileTextIcon,
   SettingsIcon,
   BarChart3Icon,
-  FilterIcon
+  FilterIcon,
+  Loader2Icon
 } from "lucide-react"
 import ChartComponent from '../components/ChartComponent'
 import datosPozo12 from '../lib/datos_pozo_12.json'
@@ -26,25 +28,204 @@ export default function WellDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   
+  // Estados para datos de Supabase
+  const [currentReading, setCurrentReading] = useState(0)
+  const [currentConsumption, setCurrentConsumption] = useState(0)
+  const [vsLastWeek, setVsLastWeek] = useState(0)
+  const [vsLastYear, setVsLastYear] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [chartDataFromSupabase, setChartDataFromSupabase] = useState([])
+  
   // Estados para los filtros de gráficas
-  const [selectedMetrics, setSelectedMetrics] = useState(['realConsumption', 'availableForConsumption'])
+  const [selectedMetrics, setSelectedMetrics] = useState(['reading', 'consumption'])
   const [chartType, setChartType] = useState('line')
   const [showComparison, setShowComparison] = useState(true)
-  const [timeFilter, setTimeFilter] = useState('yearly') // 'yearly', 'quarterly', 'monthly', 'weekly'
+  const [timeFilter, setTimeFilter] = useState('weekly') // 'yearly', 'quarterly', 'monthly', 'weekly'
   const [dateRange, setDateRange] = useState('all') // 'all', 'last6months', 'lastyear', 'custom'
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
   const [visualizationType, setVisualizationType] = useState('general') // 'general', 'consumo-pozo'
   
+  // Cargar datos de Supabase al montar el componente
+  useEffect(() => {
+    fetchWellData()
+  }, [id])
+
   // Actualizar métricas seleccionadas cuando cambia el tipo de visualización
   useEffect(() => {
     if (visualizationType === 'consumo-pozo') {
       setSelectedMetrics(['consumoServicios', 'consumoRiego', 'total'])
       setTimeFilter('monthly') // Forzar vista mensual para consumo por pozo
     } else {
-      setSelectedMetrics(['realConsumption', 'availableForConsumption'])
+      setSelectedMetrics(['reading', 'consumption'])
+      setTimeFilter('weekly') // Vista semanal para datos de Supabase
     }
   }, [visualizationType])
+
+  // Función para cargar datos del pozo desde Supabase
+  const fetchWellData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const year = 2025
+      const lastYear = 2024
+      const readingsTable = `lecturas_semana_agua_${year}`
+      const consumptionTable = `lecturas_semana_agua_consumo_${year}`
+      const lastYearConsumptionTable = `lecturas_semana_agua_consumo_${lastYear}`
+
+      // Mapeo de IDs de pozos a columnas
+      const columnMapping = {
+        11: 'l_pozo_11',
+        12: 'l_pozo_12',
+        3: 'l_pozo_3',
+        7: 'l_pozo_7',
+        14: 'l_pozo_14',
+        4: 'l_pozo_4_riego',
+        8: 'l_pozo_8_riego',
+        15: 'l_pozo_15_riego'
+      }
+
+      const columnName = columnMapping[id] || 'l_pozo_12'
+
+      console.log('🔍 Cargando datos del pozo', id, 'columna:', columnName)
+
+      // 1. GET: Lectura actual (última semana del año actual)
+      const { data: readingsData, error: readingsError } = await supabase
+        .from(readingsTable)
+        .select('*')
+        .order('l_numero_semana', { ascending: false })
+        .limit(2)
+
+      if (readingsError) throw readingsError
+
+      // 2. GET: Consumo actual (última semana del año actual)
+      const { data: consumptionData, error: consumptionError } = await supabase
+        .from(consumptionTable)
+        .select('*')
+        .order('l_numero_semana', { ascending: false })
+        .limit(2)
+
+      if (consumptionError) throw consumptionError
+
+      // 3. GET: Consumo del año pasado (misma semana)
+      const currentWeekNumber = readingsData?.[0]?.l_numero_semana || 1
+      const { data: lastYearData, error: lastYearError } = await supabase
+        .from(lastYearConsumptionTable)
+        .select('*')
+        .eq('l_numero_semana', currentWeekNumber)
+        .single()
+
+      if (lastYearError && lastYearError.code !== 'PGRST116') {
+        console.warn('⚠️ No hay datos del año pasado:', lastYearError)
+      }
+
+      console.log('✅ Lecturas:', readingsData)
+      console.log('✅ Consumo:', consumptionData)
+      console.log('✅ Año pasado:', lastYearData)
+
+      // Procesar datos
+      const lastWeekReading = parseFloat(readingsData?.[0]?.[columnName]) || 0
+      const lastWeekConsumption = parseFloat(consumptionData?.[0]?.[columnName]) || 0
+      const previousWeekConsumption = parseFloat(consumptionData?.[1]?.[columnName]) || 0
+      const lastYearConsumption = parseFloat(lastYearData?.[columnName]) || 0
+
+      // Calcular vs semana anterior
+      const vsWeek = lastWeekConsumption - previousWeekConsumption
+
+      // Calcular vs año anterior
+      const vsYear = lastWeekConsumption - lastYearConsumption
+
+      setCurrentReading(lastWeekReading)
+      setCurrentConsumption(lastWeekConsumption)
+      setVsLastWeek(vsWeek)
+      setVsLastYear(vsYear)
+
+      console.log('📊 Métricas calculadas:', {
+        lectura: lastWeekReading,
+        consumo: lastWeekConsumption,
+        vsLastWeek: vsWeek,
+        vsLastYear: vsYear
+      })
+
+      // Cargar datos para el gráfico desde Supabase
+      const chartData = await fetchChartDataFromSupabase()
+      setChartDataFromSupabase(chartData)
+
+    } catch (err) {
+      console.error('❌ Error cargando datos del pozo:', err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Función para cargar datos del gráfico desde Supabase
+  const fetchChartDataFromSupabase = async () => {
+    try {
+      const year = 2025
+      const readingsTable = `lecturas_semana_agua_${year}`
+      const consumptionTable = `lecturas_semana_agua_consumo_${year}`
+
+      // Mapeo de IDs de pozos a columnas
+      const columnMapping = {
+        11: 'l_pozo_11',
+        12: 'l_pozo_12',
+        3: 'l_pozo_3',
+        7: 'l_pozo_7',
+        14: 'l_pozo_14',
+        4: 'l_pozo_4_riego',
+        8: 'l_pozo_8_riego',
+        15: 'l_pozo_15_riego'
+      }
+
+      const columnName = columnMapping[id] || 'l_pozo_12'
+
+      console.log('📊 Cargando datos de gráfico para columna:', columnName)
+
+      // Cargar todas las lecturas del año
+      const { data: readingsData, error: readingsError } = await supabase
+        .from(readingsTable)
+        .select('*')
+        .order('l_numero_semana', { ascending: true })
+
+      if (readingsError) throw readingsError
+
+      // Cargar todos los consumos del año
+      const { data: consumptionData, error: consumptionError } = await supabase
+        .from(consumptionTable)
+        .select('*')
+        .order('l_numero_semana', { ascending: true })
+
+      if (consumptionError) throw consumptionError
+
+      console.log('✅ Datos de gráfico cargados:', readingsData?.length, 'semanas')
+
+      // Formatear datos para el gráfico
+      const chartData = (readingsData || []).map(reading => {
+        const consumption = (consumptionData || []).find(c => c.l_numero_semana === reading.l_numero_semana)
+        
+        return {
+          week: `Sem ${reading.l_numero_semana}`,
+          period: `Semana ${reading.l_numero_semana}`,
+          weekNumber: reading.l_numero_semana,
+          reading: parseFloat(reading[columnName]) || 0,
+          consumption: parseFloat(consumption?.[columnName]) || 0,
+          realConsumption: parseFloat(consumption?.[columnName]) || 0,
+          availableForConsumption: datosPozo12.especificaciones_anuales[0].m3_cedidos_por_anexo,
+          m3CededByAnnex: datosPozo12.especificaciones_anuales[0].m3_cedidos_por_anexo,
+          fechaInicio: reading.l_fecha_inicio,
+          fechaFin: reading.l_fecha_fin
+        }
+      })
+
+      return chartData
+    } catch (err) {
+      console.error('❌ Error cargando datos del gráfico:', err)
+      return []
+    }
+  }
 
   // Tipos de visualización disponibles
   const visualizationTypes = [
@@ -52,15 +233,29 @@ export default function WellDetailPage() {
     { key: 'consumo-pozo', label: 'Consumo por Pozo - Meses' }
   ]
 
-  // Datos específicos del Pozo 12 basados en el JSON reorganizado
+  // Información estática de pozos según la imagen
+  const wellsStaticInfo = {
+    11: { location: "Calle Talía 318", service: "Servicios", title: "06NVL114666/24ELGR06", annex: "2.1", m3CededByAnnex: 50000 },
+    12: { location: "Calle Navio 358", service: "Servicios", title: "06NVL114666/24ELGR06", annex: "2.2", m3CededByAnnex: 20000 },
+    3: { location: "Gimnasio sur", service: "Servicios", title: "06NVL102953/24EMGR06", annex: "2.1", m3CededByAnnex: 0 },
+    4: { location: "CDB2", service: "Riego", title: "06NVL102953/24EMGR06", annex: "2.2", m3CededByAnnex: 60000 },
+    7: { location: "Calle Revolución", service: "Servicios", title: "06NVL102953/24EMGR06", annex: "2.3", m3CededByAnnex: 0 },
+    8: { location: "Calle junico de la Vega esquina arroyo seco", service: "Riego", title: "06NVL102953/24EMGR06", annex: "2.4", m3CededByAnnex: 20000 },
+    14: { location: "Calle Musas 323", service: "Servicios", title: "06NVL102953/24EMGR06", annex: "2.5", m3CededByAnnex: 0 },
+    15: { location: "Posterior a Cedes (enfrente de Núcelo)", service: "Riego", title: "06NVL102953/24EMGR06", annex: "2.6", m3CededByAnnex: 40000 }
+  }
+
+  const staticInfo = wellsStaticInfo[id] || wellsStaticInfo[12]
+
+  // Datos específicos del Pozo basados en el JSON reorganizado
   const wellData = {
-    id: 12,
-    name: datosPozo12.pozo.id,
-    service: "Servicios",
-    location: datosPozo12.pozo.ubicacion,
-    annexCode: datosPozo12.pozo.anexo,
-    titleCode: datosPozo12.pozo.titulo,
-    m3PerAnnex: datosPozo12.pozo.m3_por_anexo,
+    id: parseInt(id) || 12,
+    name: `Pozo ${id}`,
+    service: staticInfo.service,
+    location: staticInfo.location,
+    annexCode: staticInfo.annex,
+    titleCode: staticInfo.title,
+    m3CededByAnnex: staticInfo.m3CededByAnnex,
     status: "active",
     yearlyData: datosPozo12.especificaciones_anuales.map(spec => ({
       year: spec.año,
@@ -99,7 +294,7 @@ export default function WellDetailPage() {
       return monthlyConsumption.flatMap(yearData => {
         return monthNames.map((month, index) => {
           const consumption = yearData[month];
-          if (consumption !== null && consumption !== undefined) {
+          if (consumption !== null) {
             return {
               period: `${monthAbbrev[index]} ${yearData.año}`,
               month: monthNames[index].charAt(0).toUpperCase() + monthNames[index].slice(1),
@@ -127,12 +322,12 @@ export default function WellDetailPage() {
         return {
           period: week.periodo,
           week: `Sem ${index + 1}`,
-          m3CededByAnnex: 0, // No hay datos específicos en el JSON
-          m3CededByTitle: 0, // No hay datos específicos en el JSON
+          m3CededByAnnex: 0,
+          m3CededByTitle: 0,
           realConsumption: week.total_pozos,
           consumoServicios: week.consumo_servicios,
           consumoRiego: week.consumo_riego,
-          availableForConsumption: 70885, // Valor por defecto del JSON
+          availableForConsumption: 70885,
           observations: week.notas || `Semana del ${week.periodo}`,
           lectura: matchingReading?.lectura || 0
         };
@@ -149,12 +344,12 @@ export default function WellDetailPage() {
     }
   }
 
-  // Opciones de métricas disponibles para graficar
+  // Opciones de métricas disponibles para graficar (coinciden con las 4 tarjetas de abajo)
   const availableMetrics = [
-    { key: 'realConsumption', label: 'Consumo Real (m³)', color: '#dc2626' },
-    { key: 'consumoServicios', label: 'Consumo Servicios (m³)', color: '#f59e0b' },
-    { key: 'consumoRiego', label: 'Consumo Riego (m³)', color: '#10b981' },
-    { key: 'availableForConsumption', label: 'm³ Disponibles', color: '#16a34a' }
+    { key: 'reading', label: 'Lectura Acumulada (m³)', color: '#3b82f6' },
+    { key: 'consumption', label: 'Consumo Semanal (m³)', color: '#10b981' },
+    { key: 'vsLastWeek', label: 'vs Semana Anterior (m³)', color: '#f59e0b' },
+    { key: 'vsLastYear', label: 'vs Año Anterior (m³)', color: '#8b5cf6' }
   ]
 
   // Filtrar datos por rango de fechas
@@ -197,7 +392,11 @@ export default function WellDetailPage() {
       });
     }
     
-    return data;
+    // Filtrar por fecha para datos semanales
+    return data.filter(item => {
+      const itemDate = new Date(item.fechaInicio);
+      return itemDate >= startDate;
+    });
   };
 
   // Preparar datos para los gráficos según el filtro de tiempo y tipo de visualización
@@ -212,7 +411,8 @@ export default function WellDetailPage() {
     } else {
       switch (timeFilter) {
         case 'weekly':
-          sourceData = wellData.weeklyData || []
+          // Usar datos de Supabase si están disponibles, sino usar JSON
+          sourceData = chartDataFromSupabase.length > 0 ? chartDataFromSupabase : wellData.weeklyData || []
           labelKey = 'period'
           break
         case 'quarterly':
@@ -263,14 +463,18 @@ export default function WellDetailPage() {
     // Vista general
     return filteredData.map(data => ({
       [labelKey]: timeFilter === 'yearly' 
-        ? data.year.toString().replace(' (hasta mayo)', '')
+        ? data.year?.toString().replace(' (hasta mayo)', '')
         : data[labelKey] || data.period,
-      realConsumption: data.realConsumption,
+      reading: data.reading || 0,
+      consumption: data.consumption || 0,
+      realConsumption: data.realConsumption || 0,
       consumoServicios: data.consumoServicios || 0,
       consumoRiego: data.consumoRiego || 0,
-      availableForConsumption: data.availableForConsumption,
-      m3CededByAnnex: data.m3CededByAnnex,
-      m3CededByTitle: data.m3CededByTitle,
+      availableForConsumption: data.availableForConsumption || 0,
+      m3CededByAnnex: data.m3CededByAnnex || 0,
+      m3CededByTitle: data.m3CededByTitle || 0,
+      vsLastWeek: data.vsLastWeek || 0,
+      vsLastYear: data.vsLastYear || 0,
       efficiency: data.availableForConsumption > 0 
         ? ((data.realConsumption / data.availableForConsumption) * 100).toFixed(1)
         : 0
@@ -361,8 +565,8 @@ export default function WellDetailPage() {
                         <p className="text-sm text-gray-900 font-mono">{wellData.titleCode}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">m³ por Anexo</label>
-                        <p className="text-sm text-gray-900">{wellData.m3PerAnnex.toLocaleString()}</p>
+                        <label className="text-sm font-medium text-gray-500">m³ cedidos por Anexo (2025)</label>
+                        <p className="text-sm text-gray-900">{wellData.m3CededByAnnex.toLocaleString()}</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500">Estado</label>
@@ -410,7 +614,8 @@ export default function WellDetailPage() {
               </Card>
             </div>
 
-            {/* Historial de consumo */}
+            {/* Historial de consumo - DESHABILITADO */}
+            {false && (
             <Card>
               <div className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -499,6 +704,7 @@ export default function WellDetailPage() {
                 </div>
               </div>
             </Card>
+            )}
 
             {/* Análisis Gráfico de Datos Históricos */}
             <Card>
@@ -661,38 +867,87 @@ export default function WellDetailPage() {
                   }
                 />
 
-                {/* Estadísticas del gráfico */}
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card className="p-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Tendencia de Consumo</h4>
-                    <div className="flex items-center gap-2">
-                      <TrendingUpIcon className="h-4 w-4 text-red-500" />
-                      <span className="text-sm text-gray-900">
-                        Incremento del {(((chartData[chartData.length-1]?.realConsumption || 0) / (chartData[0]?.realConsumption || 1) - 1) * 100).toFixed(1)}% desde 2022
-                      </span>
-                    </div>
-                  </Card>
-                  
-                  <Card className="p-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Promedio Anual</h4>
-                    <span className="text-lg font-semibold text-gray-900">
-                      {(chartData.reduce((sum, item) => sum + item.realConsumption, 0) / chartData.length).toLocaleString()} m³
-                    </span>
-                  </Card>
-                  
-                  <Card className="p-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Eficiencia 2025</h4>
-                    <div className="flex items-center gap-2">
-                      <Badge className={
-                        parseFloat(chartData[chartData.length-1]?.efficiency || 0) > 100 
-                          ? "bg-red-100 text-red-800 border-red-200" 
-                          : "bg-green-100 text-green-800 border-green-200"
-                      }>
-                        {chartData[chartData.length-1]?.efficiency || 0}%
-                      </Badge>
-                      <span className="text-xs text-gray-500">del disponible</span>
-                    </div>
-                  </Card>
+                {/* Métricas en tiempo real desde Supabase */}
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {loading ? (
+                    <Card className="p-4 col-span-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2Icon className="h-5 w-5 animate-spin text-gray-400" />
+                        <span className="text-sm text-gray-500">Cargando métricas...</span>
+                      </div>
+                    </Card>
+                  ) : error ? (
+                    <Card className="p-4 col-span-4">
+                      <div className="flex items-center gap-2 text-red-600">
+                        <AlertTriangleIcon className="h-5 w-5" />
+                        <span className="text-sm">Error: {error}</span>
+                      </div>
+                    </Card>
+                  ) : (
+                    <>
+                      {/* Lectura Actual */}
+                      <Card className="p-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Lectura Actual</h4>
+                        <div className="flex items-center gap-2">
+                          <DropletIcon className="h-5 w-5 text-blue-500" />
+                          <span className="text-lg font-semibold text-gray-900">
+                            {currentReading.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Última semana registrada</p>
+                      </Card>
+                      
+                      {/* Consumo Actual */}
+                      <Card className="p-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Consumo Actual</h4>
+                        <div className="flex items-center gap-2">
+                          <DropletIcon className="h-5 w-5 text-green-500" />
+                          <span className="text-lg font-semibold text-gray-900">
+                            {currentConsumption.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Última semana</p>
+                      </Card>
+                      
+                      {/* vs Semana Anterior */}
+                      <Card className="p-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">vs Semana Anterior</h4>
+                        <div className="flex items-center gap-2">
+                          {vsLastWeek > 0 ? (
+                            <TrendingUpIcon className="h-5 w-5 text-red-500" />
+                          ) : vsLastWeek < 0 ? (
+                            <TrendingDownIcon className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <div className="h-5 w-5" />
+                          )}
+                          <span className={`text-lg font-semibold ${vsLastWeek > 0 ? 'text-red-600' : vsLastWeek < 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                            {vsLastWeek > 0 ? '+' : ''}{vsLastWeek.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {vsLastWeek > 0 ? 'Aumento' : vsLastWeek < 0 ? 'Disminución' : 'Sin cambio'}
+                        </p>
+                      </Card>
+                      
+                      {/* vs Año Anterior */}
+                      <Card className="p-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">vs Año Anterior</h4>
+                        <div className="flex items-center gap-2">
+                          {vsLastYear > 0 ? (
+                            <TrendingUpIcon className="h-5 w-5 text-red-500" />
+                          ) : vsLastYear < 0 ? (
+                            <TrendingDownIcon className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <div className="h-5 w-5" />
+                          )}
+                          <span className={`text-lg font-semibold ${vsLastYear > 0 ? 'text-red-600' : vsLastYear < 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                            {vsLastYear > 0 ? '+' : ''}{vsLastYear.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Misma semana 2024</p>
+                      </Card>
+                    </>
+                  )}
                 </div>
               </div>
             </Card>
