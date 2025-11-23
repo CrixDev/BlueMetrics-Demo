@@ -727,7 +727,7 @@ export default function ConsumptionPage() {
                           <option value="pozo_4_riego">Pozo 4 Riego</option>
                           <option value="pozo_8_riego">Pozo 8 Riego</option>
                           <option value="pozo_15_riego">Pozo 15 Riego</option>
-                          <option value="total_pozos_riego">Total Pozos Riego</option>
+           
                         </optgroup>
                         <optgroup label="Residencias">
                           <option value="residencias_10_15">Residencias 10 y 15</option>

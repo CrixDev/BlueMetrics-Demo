@@ -247,9 +247,10 @@ export default function ConsumptionTable({
       </CardHeader>
 
       <CardContent>
-        <div className="overflow-x-auto">
+        {/* Contenedor con scroll interno - altura máxima de 600px */}
+        <div className="overflow-x-auto overflow-y-auto max-h-[600px] border rounded-lg">
           <table className="w-full">
-            <thead>
+            <thead className="sticky top-0 bg-background z-10 shadow-sm">
               <tr className="border-b border-muted">
                 <th 
                   className="text-left p-3 cursor-pointer hover:bg-muted/30 transition-colors"
