@@ -345,28 +345,34 @@ export default function ConsumptionPage() {
       }, 0)
     }
 
-    // Columnas de pozos de medición (todos los pozos principales)
-    const pozosCols = ['l_medidor_general_pozos', 'l_pozo_11', 'l_pozo_12', 'l_pozo_14', 'l_pozo_7', 'l_pozo_3']
+    // Columnas de POZOS DE SERVICIOS (Pozos 11, 12, 3, 7, 14)
+    const pozosServiciosCols = ['l_pozo_11', 'l_pozo_12', 'l_pozo_3', 'l_pozo_7', 'l_pozo_14']
     
-    // Columnas de pozos de riego
-    const riegoCols = ['l_pozo_4_riego', 'l_pozo_8_riego', 'l_pozo_15_riego', 'l_total_pozos_riego']
+    // Columnas de POZOS DE RIEGO (Pozos 4, 8, 15)
+    const pozosRiegoCols = ['l_pozo_4_riego', 'l_pozo_8_riego', 'l_pozo_15_riego']
     
-    // Columnas de pozos de servicio (edificios, residencias, etc)
-    const serviciosCols = [
+    // TOTAL DE TODOS LOS POZOS (Servicios + Riego)
+    const todosPozosCols = [...pozosServiciosCols, ...pozosRiegoCols]
+    
+    // Columnas de PUNTOS DE SERVICIO (edificios, residencias, torres de enfriamiento, etc)
+    const puntosServicioCols = [
       'l_residencias_10_15', 'l_residencias_1_antiguo', 'l_residencias_2_ote',
       'l_residencias_3', 'l_residencias_4', 'l_residencias_5',
       'l_wellness_edificio', 'l_biblioteca', 'l_cetec', 'l_biotecnologia',
       'l_arena_borrego', 'l_centro_congresos', 'l_auditorio_luis_elizondo',
-      'l_nucleo', 'l_expedition'
+      'l_nucleo', 'l_expedition', 'l_wellness_torre_enfriamiento',
+      'l_cah3_torre_enfriamiento', 'l_megacentral_te_2', 'l_estadio_banorte_te',
+      'l_circuito_8_campus', 'l_circuito_6_residencias', 'l_circuito_4_a7_ce',
+      'l_circuito_planta_fisica', 'l_circuito_megacentral'
     ]
 
     return {
-      pozos: sumConsumption(last4Weeks, pozosCols),
-      riego: sumConsumption(last4Weeks, riegoCols),
-      servicios: sumConsumption(last4Weeks, serviciosCols),
-      pozosPrev: sumConsumption(previous4Weeks, pozosCols),
-      riegoPrev: sumConsumption(previous4Weeks, riegoCols),
-      serviciosPrev: sumConsumption(previous4Weeks, serviciosCols)
+      pozos: sumConsumption(last4Weeks, todosPozosCols),
+      riego: sumConsumption(last4Weeks, pozosRiegoCols),
+      servicios: sumConsumption(last4Weeks, pozosServiciosCols),
+      pozosPrev: sumConsumption(previous4Weeks, todosPozosCols),
+      riegoPrev: sumConsumption(previous4Weeks, pozosRiegoCols),
+      serviciosPrev: sumConsumption(previous4Weeks, pozosServiciosCols)
     }
   }
 
@@ -580,13 +586,13 @@ export default function ConsumptionPage() {
 
           {/* Métricas principales - Últimas 4 semanas vs 4 anteriores */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            {/* Pozos de Medición */}
+            {/* Total de Todos los Pozos */}
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Pozos de Medición</p>
-                    <p className="text-xs text-muted-foreground/70">Últimas 4 semanas</p>
+                    <p className="text-sm text-muted-foreground">Total Pozos</p>
+                    <p className="text-xs text-muted-foreground/70">Servicios (11,12,3,7,14) + Riego (4,8,15) - Últimas 4 semanas</p>
                     <p className="text-2xl font-bold text-foreground mt-1">
                       {consumoPozos.toLocaleString()} m³
                     </p>
@@ -614,7 +620,7 @@ export default function ConsumptionPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Pozos de Riego</p>
-                    <p className="text-xs text-muted-foreground/70">Últimas 4 semanas</p>
+                    <p className="text-xs text-muted-foreground/70">Pozos (4, 8, 15) - Últimas 4 semanas</p>
                     <p className="text-2xl font-bold text-foreground mt-1">
                       {riegoTotal.toLocaleString()} m³
                     </p>
@@ -641,8 +647,8 @@ export default function ConsumptionPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Puntos de Servicio</p>
-                    <p className="text-xs text-muted-foreground/70">Últimas 4 semanas</p>
+                    <p className="text-sm text-muted-foreground">Pozos de Servicios</p>
+                    <p className="text-xs text-muted-foreground/70">Pozos (11, 12, 3, 7, 14) - Últimas 4 semanas</p>
                     <p className="text-2xl font-bold text-foreground mt-1">
                       {serviciosTotal.toLocaleString()} m³
                     </p>
@@ -658,7 +664,7 @@ export default function ConsumptionPage() {
                     </div>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
-                    <Building2 className="h-6 w-6 text-blue-500" />
+                    <DropletIcon className="h-6 w-6 text-blue-500" />
                   </div>
                 </div>
               </CardContent>
