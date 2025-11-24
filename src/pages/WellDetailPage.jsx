@@ -32,6 +32,7 @@ export default function WellDetailPage() {
   // Estados para datos de Supabase
   const [currentReading, setCurrentReading] = useState(0)
   const [currentConsumption, setCurrentConsumption] = useState(0)
+  const [totalConsumption2025, setTotalConsumption2025] = useState(0)
   const [vsLastWeek, setVsLastWeek] = useState(0)
   const [vsLastYear, setVsLastYear] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -169,6 +170,20 @@ export default function WellDetailPage() {
       const chartData = await fetchChartDataFromSupabase(2025)
       setChartDataFromSupabase(chartData)
       setWeeklyReadings2025(chartData)
+
+      // Calcular consumo total del año 2025
+      const { data: allConsumptionData, error: allConsumptionError } = await supabase
+        .from(consumptionTable)
+        .select('*')
+        .order('l_numero_semana', { ascending: true })
+
+      if (!allConsumptionError && allConsumptionData) {
+        const total = allConsumptionData.reduce((sum, row) => {
+          return sum + (parseFloat(row[columnName]) || 0)
+        }, 0)
+        setTotalConsumption2025(total)
+        console.log('📊 Consumo total 2025:', total)
+      }
 
     } catch (err) {
       console.error('❌ Error cargando datos del pozo:', err)
@@ -823,9 +838,9 @@ export default function WellDetailPage() {
                         <p className="text-xs text-gray-500 mt-1">
                           {(() => {
                             const disponibles = staticInfo.m3PorAnexo - staticInfo.m3CededByAnnex;
-                            const porcentajeConsumido = disponibles > 0 ? (currentConsumption * 100) / disponibles : 0;
+                            const porcentajeConsumido = disponibles > 0 ? (totalConsumption2025 * 100) / disponibles : 0;
                             const color = porcentajeConsumido > 100 ? 'text-red-600' : porcentajeConsumido > 80 ? 'text-yellow-600' : 'text-green-600';
-                            return <span className={color}>{porcentajeConsumido.toFixed(2)}% consumido</span>;
+                            return <span className={color}>{porcentajeConsumido.toFixed(2)}% consumido 2025</span>;
                           })()}
                         </p>
                       </Card>
