@@ -155,7 +155,6 @@ export default function ConsumptionPage() {
       'pozo_4_riego': 'l_pozo_4_riego',
       'pozo_8_riego': 'l_pozo_8_riego',
       'pozo_15_riego': 'l_pozo_15_riego',
-      'total_pozos_riego': 'l_total_pozos_riego',
       'residencias_10_15': 'l_residencias_10_15',
       'residencias_1_antiguo': 'l_residencias_1_antiguo',
       'residencias_2_ote': 'l_residencias_2_ote',

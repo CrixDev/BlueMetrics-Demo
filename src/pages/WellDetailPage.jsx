@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router"
 import { useState, useEffect } from "react"
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
-import { Card } from "../components/ui/card"
+import { Card, CardHeader, CardContent } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { supabase } from '../supabaseClient'
@@ -22,6 +22,7 @@ import {
   Loader2Icon
 } from "lucide-react"
 import ChartComponent from '../components/ChartComponent'
+import WeeklyComparisonChart from '../components/WeeklyComparisonChart'
 import datosPozo12 from '../lib/datos_pozo_12.json'
 
 export default function WellDetailPage() {
@@ -47,10 +48,25 @@ export default function WellDetailPage() {
   const [customEndDate, setCustomEndDate] = useState('')
   const [visualizationType, setVisualizationType] = useState('general') // 'general', 'consumo-pozo'
   
+  // Estados para comparación multi-año
+  const [selectedYears, setSelectedYears] = useState(['2025']) // Años seleccionados para comparación
+  const [availableYears] = useState(['2023', '2024', '2025']) // Años disponibles
+  const [comparisonChartType, setComparisonChartType] = useState('line') // 'line' o 'bar'
+  
+  // Estados para datos de múltiples años
+  const [weeklyReadings2023, setWeeklyReadings2023] = useState([])
+  const [weeklyReadings2024, setWeeklyReadings2024] = useState([])
+  const [weeklyReadings2025, setWeeklyReadings2025] = useState([])
+  
   // Cargar datos de Supabase al montar el componente
   useEffect(() => {
     fetchWellData()
   }, [id])
+
+  // Cargar datos cuando cambian los años seleccionados
+  useEffect(() => {
+    fetchMultiYearData()
+  }, [id, selectedYears])
 
   // Actualizar métricas seleccionadas cuando cambia el tipo de visualización
   useEffect(() => {
@@ -149,9 +165,10 @@ export default function WellDetailPage() {
         vsLastYear: vsYear
       })
 
-      // Cargar datos para el gráfico desde Supabase
-      const chartData = await fetchChartDataFromSupabase()
+      // Cargar datos para el gráfico desde Supabase (año actual)
+      const chartData = await fetchChartDataFromSupabase(2025)
       setChartDataFromSupabase(chartData)
+      setWeeklyReadings2025(chartData)
 
     } catch (err) {
       console.error('❌ Error cargando datos del pozo:', err)
@@ -161,10 +178,9 @@ export default function WellDetailPage() {
     }
   }
 
-  // Función para cargar datos del gráfico desde Supabase
-  const fetchChartDataFromSupabase = async () => {
+  // Función para cargar datos del gráfico desde Supabase para un año específico
+  const fetchChartDataFromSupabase = async (year) => {
     try {
-      const year = 2025
       const readingsTable = `lecturas_semana_agua_${year}`
       const consumptionTable = `lecturas_semana_agua_consumo_${year}`
 
@@ -182,7 +198,7 @@ export default function WellDetailPage() {
 
       const columnName = columnMapping[id] || 'l_pozo_12'
 
-      console.log('📊 Cargando datos de gráfico para columna:', columnName)
+      console.log(`📊 Cargando datos de gráfico para columna ${columnName} y año ${year}`)
 
       // Cargar todas las lecturas del año
       const { data: readingsData, error: readingsError } = await supabase
@@ -200,14 +216,14 @@ export default function WellDetailPage() {
 
       if (consumptionError) throw consumptionError
 
-      console.log('✅ Datos de gráfico cargados:', readingsData?.length, 'semanas')
+      console.log(`✅ Datos de gráfico ${year} cargados:`, readingsData?.length, 'semanas')
 
       // Formatear datos para el gráfico
       const chartData = (readingsData || []).map(reading => {
         const consumption = (consumptionData || []).find(c => c.l_numero_semana === reading.l_numero_semana)
         
         return {
-          week: `Sem ${reading.l_numero_semana}`,
+          week: reading.l_numero_semana,
           period: `Semana ${reading.l_numero_semana}`,
           weekNumber: reading.l_numero_semana,
           reading: parseFloat(reading[columnName]) || 0,
@@ -222,10 +238,49 @@ export default function WellDetailPage() {
 
       return chartData
     } catch (err) {
-      console.error('❌ Error cargando datos del gráfico:', err)
+      console.error(`❌ Error cargando datos del gráfico para año ${year}:`, err)
       return []
     }
   }
+
+  // Función para cargar datos de múltiples años
+  const fetchMultiYearData = async () => {
+    try {
+      const promises = selectedYears.map(async (year) => {
+        const data = await fetchChartDataFromSupabase(parseInt(year))
+        return { year, data }
+      })
+      
+      const results = await Promise.all(promises)
+      
+      results.forEach(({ year, data }) => {
+        if (year === '2023') setWeeklyReadings2023(data)
+        if (year === '2024') setWeeklyReadings2024(data)
+        if (year === '2025') setWeeklyReadings2025(data)
+      })
+    } catch (err) {
+      console.error('❌ Error cargando datos multi-año:', err)
+    }
+  }
+
+  // Preparar datos para WeeklyComparisonChart basado en años seleccionados
+  const getMultiYearChartData = () => {
+    const yearDataMap = {
+      '2023': weeklyReadings2023,
+      '2024': weeklyReadings2024,
+      '2025': weeklyReadings2025
+    }
+
+    const sortedSelectedYears = [...selectedYears].sort()
+    
+    // Generar datos para todos los años seleccionados
+    return sortedSelectedYears.map(year => ({
+      year,
+      data: yearDataMap[year] || []
+    }))
+  }
+
+  const multiYearData = getMultiYearChartData()
 
   // Tipos de visualización disponibles
   const visualizationTypes = [
@@ -233,16 +288,16 @@ export default function WellDetailPage() {
     { key: 'consumo-pozo', label: 'Consumo por Pozo - Meses' }
   ]
 
-  // Información estática de pozos según la imagen
+  // Información estática de pozos con valores originales y actualizados
   const wellsStaticInfo = {
-    11: { location: "Calle Talía 318", service: "Servicios", title: "06NVL114666/24ELGR06", annex: "2.1", m3CededByAnnex: 50000 },
-    12: { location: "Calle Navio 358", service: "Servicios", title: "06NVL114666/24ELGR06", annex: "2.2", m3CededByAnnex: 20000 },
-    3: { location: "Gimnasio sur", service: "Servicios", title: "06NVL102953/24EMGR06", annex: "2.1", m3CededByAnnex: 0 },
-    4: { location: "CDB2", service: "Riego", title: "06NVL102953/24EMGR06", annex: "2.2", m3CededByAnnex: 60000 },
-    7: { location: "Calle Revolución", service: "Servicios", title: "06NVL102953/24EMGR06", annex: "2.3", m3CededByAnnex: 0 },
-    8: { location: "Calle junico de la Vega esquina arroyo seco", service: "Riego", title: "06NVL102953/24EMGR06", annex: "2.4", m3CededByAnnex: 20000 },
-    14: { location: "Calle Musas 323", service: "Servicios", title: "06NVL102953/24EMGR06", annex: "2.5", m3CededByAnnex: 0 },
-    15: { location: "Posterior a Cedes (enfrente de Núcelo)", service: "Riego", title: "06NVL102953/24EMGR06", annex: "2.6", m3CededByAnnex: 40000 }
+    11: { location: "Calle Talía 318", service: "Servicios", title: "06NVL114666/24ELGR06", annex: "2.1", m3CededByAnnex: 50000, m3PorAnexo: 190229.00 },
+    12: { location: "Calle Navio 358", service: "Servicios", title: "06NVL114666/24ELGR06", annex: "2.2", m3CededByAnnex: 20000, m3PorAnexo: 90885.00 },
+    3: { location: "Gimnasio sur", service: "Servicios", title: "06NVL102953/24EMGR06", annex: "2.1", m3CededByAnnex: 0, m3PorAnexo: 1148.00 },
+    4: { location: "CDB2", service: "Riego", title: "06NVL102953/24EMGR06", annex: "2.2", m3CededByAnnex: 60000, m3PorAnexo: 90720.00 },
+    7: { location: "Calle Revolución", service: "Servicios", title: "06NVL102953/24EMGR06", annex: "2.3", m3CededByAnnex: 0, m3PorAnexo: 40000.00 },
+    8: { location: "Calle junico de la Vega esquina arroyo seco", service: "Riego", title: "06NVL102953/24EMGR06", annex: "2.4", m3CededByAnnex: 20000, m3PorAnexo: 38000.00 },
+    14: { location: "Calle Musas 323", service: "Servicios", title: "06NVL102953/24EMGR06", annex: "2.5", m3CededByAnnex: 0, m3PorAnexo: 64882.00 },
+    15: { location: "Posterior a Cedes (enfrente de Núcelo)", service: "Riego", title: "06NVL102953/24EMGR06", annex: "2.6", m3CededByAnnex: 40000, m3PorAnexo: 78000.00 }
   }
 
   const staticInfo = wellsStaticInfo[id] || wellsStaticInfo[12]
@@ -256,6 +311,7 @@ export default function WellDetailPage() {
     annexCode: staticInfo.annex,
     titleCode: staticInfo.title,
     m3CededByAnnex: staticInfo.m3CededByAnnex,
+    m3PorAnexo: staticInfo.m3PorAnexo,
     status: "active",
     yearlyData: datosPozo12.especificaciones_anuales.map(spec => ({
       year: spec.año,
@@ -569,6 +625,10 @@ export default function WellDetailPage() {
                         <p className="text-sm text-gray-900">{wellData.m3CededByAnnex.toLocaleString()}</p>
                       </div>
                       <div>
+                        <label className="text-sm font-medium text-gray-500">m³ por Anexo (Actualizado)</label>
+                        <p className="text-sm text-gray-900 font-semibold">{wellData.m3PorAnexo.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      </div>
+                      <div>
                         <label className="text-sm font-medium text-gray-500">Estado</label>
                         <Badge className="bg-green-100 text-green-800 border-green-200">Activo</Badge>
                       </div>
@@ -706,178 +766,17 @@ export default function WellDetailPage() {
             </Card>
             )}
 
-            {/* Análisis Gráfico de Datos Históricos */}
-            <Card>
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                    <BarChart3Icon className="h-5 w-5" />
-                    Análisis Gráfico de Datos Históricos
-                  </h2>
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <BarChart3Icon className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-500">Tipo de Visualización:</span>
-                      <select 
-                        value={visualizationType} 
-                        onChange={(e) => setVisualizationType(e.target.value)}
-                        className="text-sm border border-gray-300 rounded px-2 py-1"
-                      >
-                        {visualizationTypes.map(type => (
-                          <option key={type.key} value={type.key}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <FilterIcon className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-500">Período:</span>
-                      <select 
-                        value={timeFilter} 
-                        onChange={(e) => setTimeFilter(e.target.value)}
-                        className="text-sm border border-gray-300 rounded px-2 py-1"
-                      >
-                        <option value="yearly">Anual</option>
-                        <option value="quarterly">Trimestral</option>
-                        <option value="monthly">Mensual</option>
-                        <option value="weekly">Semanal</option>
-                      </select>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">Rango:</span>
-                      <select 
-                        value={dateRange} 
-                        onChange={(e) => setDateRange(e.target.value)}
-                        className="text-sm border border-gray-300 rounded px-2 py-1"
-                      >
-                        <option value="all">Todos los datos</option>
-                        <option value="lastyear">Último año</option>
-                        <option value="last6months">Últimos 6 meses</option>
-                        <option value="custom">Personalizado</option>
-                      </select>
-                    </div>
-                    {dateRange === 'custom' && (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="date"
-                          value={customStartDate}
-                          onChange={(e) => setCustomStartDate(e.target.value)}
-                          className="text-sm border border-gray-300 rounded px-2 py-1"
-                          placeholder="Fecha inicio"
-                        />
-                        <span className="text-sm text-gray-500">a</span>
-                        <input
-                          type="date"
-                          value={customEndDate}
-                          onChange={(e) => setCustomEndDate(e.target.value)}
-                          className="text-sm border border-gray-300 rounded px-2 py-1"
-                          placeholder="Fecha fin"
-                        />
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">Tipo de Gráfico:</span>
-                      <select 
-                        value={chartType} 
-                        onChange={(e) => setChartType(e.target.value)}
-                        className="text-sm border border-gray-300 rounded px-2 py-1"
-                      >
-                        <option value="line">Líneas</option>
-                        <option value="bar">Barras</option>
-                        <option value="area">Área</option>
-                        <option value="composed">Combinado</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Filtros de métricas */}
-                <div className="mb-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Selecciona las métricas a visualizar:</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {visualizationType === 'consumo-pozo' ? (
-                      // Métricas específicas para vista de consumo por pozo
-                      [
-                        { key: 'consumoServicios', label: 'Consumo Servicios (m³)', color: '#f59e0b' },
-                        { key: 'consumoRiego', label: 'Consumo Riego (m³)', color: '#10b981' },
-                        { key: 'total', label: 'Consumo Total (m³)', color: '#dc2626' }
-                      ].map((metric) => (
-                        <Button
-                          key={metric.key}
-                          size="sm"
-                          variant={selectedMetrics.includes(metric.key) ? "default" : "outline"}
-                          onClick={() => toggleMetric(metric.key)}
-                          className={selectedMetrics.includes(metric.key) ? 
-                            "border-2" : 
-                            "border border-gray-300 hover:border-gray-400"
-                          }
-                          style={selectedMetrics.includes(metric.key) ? 
-                            { backgroundColor: metric.color, borderColor: metric.color } : 
-                            {}
-                          }
-                        >
-                          <div 
-                            className="w-3 h-3 rounded-full mr-2" 
-                            style={{ backgroundColor: metric.color }}
-                          ></div>
-                          {metric.label}
-                        </Button>
-                      ))
-                    ) : (
-                      // Métricas para vista general
-                      availableMetrics.map((metric) => (
-                        <Button
-                          key={metric.key}
-                          size="sm"
-                          variant={selectedMetrics.includes(metric.key) ? "default" : "outline"}
-                          onClick={() => toggleMetric(metric.key)}
-                          className={selectedMetrics.includes(metric.key) ? 
-                            "border-2" : 
-                            "border border-gray-300 hover:border-gray-400"
-                          }
-                          style={selectedMetrics.includes(metric.key) ? 
-                            { backgroundColor: metric.color, borderColor: metric.color } : 
-                            {}
-                          }
-                        >
-                          <div 
-                            className="w-3 h-3 rounded-full mr-2" 
-                            style={{ backgroundColor: metric.color }}
-                          ></div>
-                          {metric.label}
-                        </Button>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                {/* Gráfico principal con Chart.js */}
-                <ChartComponent 
-                  chartType={chartType}
-                  chartData={chartData}
-                  selectedMetrics={selectedMetrics}
-                  availableMetrics={visualizationType === 'consumo-pozo' ? 
-                    [
-                      { key: 'consumoServicios', label: 'Consumo Servicios (m³)', color: '#f59e0b' },
-                      { key: 'consumoRiego', label: 'Consumo Riego (m³)', color: '#10b981' },
-                      { key: 'total', label: 'Consumo Total (m³)', color: '#dc2626' }
-                    ] : 
-                    availableMetrics
-                  }
-                />
-
-                {/* Métricas en tiempo real desde Supabase */}
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+    {/* Métricas en tiempo real desde Supabase */}
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-5 gap-4">
                   {loading ? (
-                    <Card className="p-4 col-span-4">
+                    <Card className="p-4 col-span-5">
                       <div className="flex items-center justify-center gap-2">
                         <Loader2Icon className="h-5 w-5 animate-spin text-gray-400" />
                         <span className="text-sm text-gray-500">Cargando métricas...</span>
                       </div>
                     </Card>
                   ) : error ? (
-                    <Card className="p-4 col-span-4">
+                    <Card className="p-4 col-span-5">
                       <div className="flex items-center gap-2 text-red-600">
                         <AlertTriangleIcon className="h-5 w-5" />
                         <span className="text-sm">Error: {error}</span>
@@ -907,6 +806,28 @@ export default function WellDetailPage() {
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">Última semana</p>
+                      </Card>
+                      
+                      {/* m³ Disponibles */}
+                      <Card className="p-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">m³ Disponibles</h4>
+                        <div className="flex items-center gap-2">
+                          <DropletIcon className="h-5 w-5 text-purple-500" />
+                          <span className="text-lg font-semibold text-gray-900">
+                            {(() => {
+                              const disponibles = staticInfo.m3PorAnexo - staticInfo.m3CededByAnnex;
+                              return disponibles.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            })()} m³
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {(() => {
+                            const disponibles = staticInfo.m3PorAnexo - staticInfo.m3CededByAnnex;
+                            const porcentajeConsumido = disponibles > 0 ? (currentConsumption * 100) / disponibles : 0;
+                            const color = porcentajeConsumido > 100 ? 'text-red-600' : porcentajeConsumido > 80 ? 'text-yellow-600' : 'text-green-600';
+                            return <span className={color}>{porcentajeConsumido.toFixed(2)}% consumido</span>;
+                          })()}
+                        </p>
                       </Card>
                       
                       {/* vs Semana Anterior */}
@@ -949,8 +870,98 @@ export default function WellDetailPage() {
                     </>
                   )}
                 </div>
+
+              {/* Sección de Comparativas Semanales entre Años */}
+            <div className="mt-8">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                  <BarChart3Icon className="h-6 w-6 text-primary" />
+                  Análisis de Comparativas Semanales - Pozo {id}
+                </h2>
+                <p className="text-muted-foreground mt-1">
+                  Comparación detallada del consumo entre diferentes años
+                </p>
               </div>
-            </Card>
+
+              {/* Bento Grid: Gráfica a la izquierda, Filtros a la derecha */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                {/* Gráfica de comparación - 2 columnas */}
+                <div className="lg:col-span-2">
+                  
+                  <WeeklyComparisonChart
+                    title={`Pozo ${id} - ${staticInfo.service}`}
+                    unit="m³"
+                    chartType={comparisonChartType}
+                    showControls={false}
+                    multiYearData={multiYearData}
+                  />
+                </div>
+
+                {/* Filtros a la derecha - 1 columna */}
+                <Card className="lg:col-span-1">
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <TrendingUpIcon className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Filtros</h3>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Tipo de Gráfico */}
+                      <div className="border-b pb-3">
+                        <label className="text-sm font-semibold text-foreground mb-2 block">Tipo de Gráfico</label>
+                        <select 
+                          value={comparisonChartType} 
+                          onChange={(e) => setComparisonChartType(e.target.value)}
+                          className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                        >
+                          <option value="line">Líneas</option>
+                          <option value="bar">Barras</option>
+                        </select>
+                      </div>
+
+                      {/* Selección de años para comparación */}
+                      <div className="pt-2">
+                        <label className="text-sm font-semibold text-foreground mb-2 block">Años a mostrar</label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {availableYears.map(year => (
+                            <Button
+                              key={year}
+                              variant={selectedYears.includes(year) ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => {
+                                setSelectedYears(prev => {
+                                  if (prev.includes(year)) {
+                                    // Si ya está seleccionado, quitarlo (mínimo 1 año)
+                                    return prev.length > 1 ? prev.filter(y => y !== year) : prev
+                                  } else {
+                                    // Si no está seleccionado, agregarlo
+                                    return [...prev, year].sort()
+                                  }
+                                })
+                              }}
+                              className={`text-xs transition-all duration-200 ${
+                                selectedYears.includes(year) 
+                                  ? 'bg-primary text-primary-foreground shadow-md' 
+                                  : 'hover:bg-muted/50'
+                              }`}
+                            >
+                              {year}
+                            </Button>
+                          ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Seleccionados: {selectedYears.join(', ')}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            
+         
 
             {/* Alertas y recomendaciones específicas */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -171,22 +171,6 @@
               "reading": 47350
             }
           ]
-        },
-        {
-          "id": "total_pozos_riego",
-          "name": "Total pozos riego",
-          "type": "medidor_total",
-          "unit": "m³",
-          "weeklyData": [
-            {
-              "week": 1,
-              "reading": 153650
-            },
-            {
-              "week": 2,
-              "reading": 162800
-            }
-          ]
         }
       ]
     },
