@@ -1,19 +1,11 @@
-import { Navigate } from 'react-router';
+import { Navigate, useNavigate } from 'react-router';
 import { useAuth } from '../contexts/AuthContextNew';
 import { usePermissions } from '../hooks/usePermissions';
 
 const PermissionRoute = ({ children, permission }) => {
   const { user, loading } = useAuth();
   const { can } = usePermissions();
-  
-  // Función para obtener la ruta de fallback según el rol
-  const getFallbackPath = () => {
-    if (can('dashboard')) return '/dashboard';
-    if (can('water')) return '/consumo';
-    if (can('gas')) return '/consumo-gas';
-    if (can('ptar')) return '/ptar';
-    return '/';
-  };
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -28,12 +20,6 @@ const PermissionRoute = ({ children, permission }) => {
   }
 
   if (!can(permission)) {
-    const fallbackPath = getFallbackPath();
-    const fallbackText = fallbackPath === '/dashboard' ? 'Dashboard' : 
-                        fallbackPath === '/consumo' ? 'Consumo de Agua' :
-                        fallbackPath === '/consumo-gas' ? 'Consumo de Gas' :
-                        fallbackPath === '/ptar' ? 'PTAR' : 'Inicio';
-    
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
@@ -49,12 +35,12 @@ const PermissionRoute = ({ children, permission }) => {
           <p className="text-sm text-gray-500 mb-6">
             Tu rol actual: <strong className="text-gray-900">{user.role}</strong>
           </p>
-          <a
-            href={fallbackPath}
-            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Volver a {fallbackText}
-          </a>
+            Volver
+          </button>
         </div>
       </div>
     );

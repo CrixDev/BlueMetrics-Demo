@@ -1,8 +1,9 @@
-import { Navigate } from 'react-router';
+import { Navigate, useNavigate } from 'react-router';
 import { useAuth } from '../contexts/AuthContextNew';
 
 const AdminRoute = ({ children }) => {
   const { user, loading, isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -29,12 +30,12 @@ const AdminRoute = ({ children }) => {
           <p className="text-gray-600 mb-6">
             Esta página es solo para administradores.
           </p>
-          <a
-            href="/dashboard"
-            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Volver al Dashboard
-          </a>
+            Volver
+          </button>
         </div>
       </div>
     );
