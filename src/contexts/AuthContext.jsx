@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 
 const AuthContext = createContext();
@@ -15,9 +15,19 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const initializingRef = useRef(false); // Prevenir inicializaciones duplicadas
+  const initialCheckDone = useRef(false); // Marcar cuando initAuth termina
 
   useEffect(() => {
     const initAuth = async () => {
+      // Prevenir ejecuciones duplicadas
+      if (initializingRef.current) {
+        console.log('⏭️ [AuthContext] Ya se está inicializando, saltando...');
+        return;
+      }
+      
+      initializingRef.current = true;
+      
       try {
         console.log('🔍 [AuthContext] Iniciando verificación de sesión...');
         
@@ -31,7 +41,7 @@ export const AuthProvider = ({ children }) => {
         
         if (session?.user) {
           console.log('✅ [AuthContext] Sesión encontrada');
-          console.log('   📧 Email:', session.user.id);
+          console.log('   📧 Email:', session.user.email);
           console.log('   🆔 ID:', session.user.id);
           
           // IMPORTANTE: Consultar la tabla PROFILES (no auth.users)
@@ -40,21 +50,22 @@ export const AuthProvider = ({ children }) => {
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle(); // Usar maybeSingle en lugar de single para evitar errores si no existe
 
           if (profileError) {
             console.error('❌ [AuthContext] Error al obtener perfil de tabla profiles:');
             console.error('   Código:', profileError.code);
             console.error('   Mensaje:', profileError.message);
             console.error('   Detalles:', profileError.details);
-            console.log('⚠️ [AuthContext] El perfil no existe o RLS está bloqueando');
-            console.log('   💡 Solución: Verificar que el trigger creó el perfil o crearlo manualmente');
-          } else {
+            console.log('⚠️ [AuthContext] Usando datos básicos de auth.users');
+          } else if (profile) {
             console.log('✅ [AuthContext] Perfil obtenido de tabla profiles:');
             console.log('   👤 Username:', profile.username);
             console.log('   📛 Nombre:', profile.full_name);
             console.log('   🏢 Empresa:', profile.company);
             console.log('   🎭 ROL:', profile.role, '<-- ESTE ES EL DATO IMPORTANTE');
+          } else {
+            console.log('⚠️ [AuthContext] No se encontró perfil, creando uno básico...');
           }
 
           const userData = {
@@ -82,33 +93,39 @@ export const AuthProvider = ({ children }) => {
       } finally {
         console.log('✅ [AuthContext] Verificación completada, isLoading = false');
         setIsLoading(false);
+        initialCheckDone.current = true; // Marcar que initAuth terminó
       }
     };
 
     initAuth();
 
-    // Escuchar cambios en el estado de autenticación
+    // Escuchar SOLO cambios de autenticación (no INITIAL_SESSION)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔄 [AuthContext] Evento de autenticación:', event);
       
-      if (event === 'SIGNED_IN' && session?.user) {
-        console.log('✅ [AuthContext] Usuario inició sesión');
+      // Ignorar INITIAL_SESSION siempre
+      if (event === 'INITIAL_SESSION') {
+        console.log('⏭️ [AuthContext] Ignorando INITIAL_SESSION (ya manejado por initAuth)');
+        return;
+      }
+      
+      // Ignorar SIGNED_IN solo si initAuth aún no termina (para evitar duplicados)
+      if (event === 'SIGNED_IN' && !initialCheckDone.current) {
+        console.log('⏭️ [AuthContext] Ignorando SIGNED_IN inicial (initAuth en progreso)');
+        return;
+      }
+      
+      // Procesar SIGNED_IN después de que initAuth terminó (login manual)
+      if (event === 'SIGNED_IN' && session?.user && initialCheckDone.current) {
+        console.log('✅ [AuthContext] Procesando login manual');
         console.log('   📧 Email:', session.user.email);
         
         // Consultar perfil desde la tabla PROFILES
-        console.log('🔍 [AuthContext] Obteniendo perfil de tabla profiles...');
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
-          .single();
-
-        if (profileError) {
-          console.error('❌ [AuthContext] Error al obtener perfil:', profileError);
-        } else {
-          console.log('✅ [AuthContext] Perfil obtenido:');
-          console.log('   🎭 ROL:', profile.role);
-        }
+          .maybeSingle();
 
         const userData = {
           id: session.user.id,
@@ -121,14 +138,19 @@ export const AuthProvider = ({ children }) => {
           loginTime: new Date().toISOString()
         };
         
-        console.log('👤 [AuthContext] Rol del usuario:', userData.role);
-        
         setUser(userData);
         setIsAuthenticated(true);
-      } else if (event === 'SIGNED_OUT') {
+        return;
+      }
+      
+      // Solo procesar SIGNED_OUT y TOKEN_REFRESHED
+      if (event === 'SIGNED_OUT') {
         console.log('🚪 [AuthContext] Usuario cerró sesión');
         setUser(null);
         setIsAuthenticated(false);
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log('🔄 [AuthContext] Token actualizado (manteniendo usuario actual)');
+        // No hacer nada, el usuario ya está configurado
       }
     });
 
@@ -158,7 +180,7 @@ export const AuthProvider = ({ children }) => {
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError) {
           console.error('❌ [Login] Error al obtener perfil:', profileError);

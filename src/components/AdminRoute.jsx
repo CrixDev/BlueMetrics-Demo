@@ -30,15 +30,18 @@ const AdminRoute = ({ children }) => {
           .from('profiles')
           .select('role')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('❌ [AdminRoute] Error al consultar profiles:', error);
           setUserRole('user'); // Si hay error, asignar rol 'user' por defecto
-        } else {
+        } else if (profile) {
           console.log('✅ [AdminRoute] Perfil obtenido de tabla profiles:');
           console.log('   🎭 ROL:', profile.role);
-          setUserRole(profile.role);
+          setUserRole(profile.role || 'user');
+        } else {
+          console.log('⚠️ [AdminRoute] No se encontró perfil, asignando rol user');
+          setUserRole('user');
         }
       } catch (error) {
         console.error('❌ [AdminRoute] Error inesperado:', error);

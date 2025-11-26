@@ -1,9 +1,10 @@
 import { Routes, Route } from 'react-router'
-// import { AuthProvider } from './contexts/AuthContext'
-// import ProtectedRoute from './components/ProtectedRoute'
-// import AdminRoute from './components/AdminRoute'
+import { AuthProvider } from './contexts/AuthContextNew'
+import ProtectedRoute from './components/ProtectedRouteNew'
+import AdminRoute from './components/AdminRouteNew'
+import PermissionRoute from './components/PermissionRoute'
 import LandingPage from './pages/LandingPage'
-import LoginPage from './pages/LoginPage'
+import LoginPage from './pages/LoginPageNew'
 import DashboardPage from './pages/DashboardPage'
 import ConsumptionPage from './pages/ConsumptionPage'
 import WaterBalancePage from './pages/WaterBalancePage'
@@ -41,49 +42,53 @@ import AnalysisSectionPage from './pages/AnalysisSectionPage'
 
 function App() {
   return (
-    // <AuthProvider>
+    <AuthProvider>
       <Routes>
-        {/* Rutas públicas - accesibles sin autenticación */}
+        {/* Rutas públicas */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/confirmacion" element={<ConfirmationPage />} />
 
-        {/* Rutas protegidas - TEMPORALMENTE DESACTIVADAS - Todos pueden acceder */}
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/consumo" element={<ConsumptionPage />} />
-        <Route path="/balance" element={<WaterBalancePage />} />
-        <Route path="/pozos" element={<WellsPage />} />
-        <Route path="/pozos/:id" element={<WellDetailPage />} />
-        <Route path="/ptar" element={<PTARPage />} />
-        <Route path="/agregar-datos" element={<AddDataPage />} />
-        <Route path="/agregar-lecturas" element={<AddWeeklyReadingsPage />} />
-        <Route path="/consumo-gas" element={<GasConsumptionPage />} />
-        <Route path="/agregar-lecturas-gas" element={<AddWeeklyGasReadingsPage />} />
-        <Route path="/alertas" element={<AlertsPage />} />
-        <Route path="/predicciones" element={<PredictionsPage />} />
-        <Route path="/analisis" element={<AnalysisSectionPage />} />
-        <Route path="/contacto" element={<ContactPage />} />
-        {/* Excel to SQL - Agua */}
-        <Route path="/excel-to-sql" element={<ExcelToSqlPage />} /> {/* Mantener compatibilidad - redirige a 2024 */}
-        <Route path="/excel-to-sql/agua/2023" element={<ExcelToSqlAgua2023 />} />
-        <Route path="/excel-to-sql/agua/2024" element={<ExcelToSqlAgua2024 />} />
-        <Route path="/excel-to-sql/agua/2025" element={<ExcelToSqlAgua2025 />} />
+        {/* Dashboard - requiere permiso dashboard */}
+        <Route path="/dashboard" element={<PermissionRoute permission="dashboard"><DashboardPage /></PermissionRoute>} />
         
-        {/* Excel to SQL - Gas */}
-        <Route path="/excel-to-sql/gas/2023" element={<ExcelToSqlGas2023 />} />
-        <Route path="/excel-to-sql/gas/2024" element={<ExcelToSqlGas2024 />} />
-        <Route path="/excel-to-sql/gas/2025" element={<ExcelToSqlGas2025 />} />
+        {/* Rutas de AGUA - requieren permiso 'water' */}
+        <Route path="/consumo" element={<PermissionRoute permission="water"><ConsumptionPage /></PermissionRoute>} />
+        <Route path="/pozos" element={<PermissionRoute permission="water"><WellsPage /></PermissionRoute>} />
+        <Route path="/pozos/:id" element={<PermissionRoute permission="water"><WellDetailPage /></PermissionRoute>} />
+        <Route path="/lecturas-diarias" element={<PermissionRoute permission="water"><DailyReadingsPage /></PermissionRoute>} />
         
-        {/* Excel to SQL - PTAR */}
-        <Route path="/excel-to-sql/ptar" element={<ExcelToSqlPTAR />} />
+        {/* Balance hídrico - requiere permiso especial (no para water) */}
+        <Route path="/balance" element={<PermissionRoute permission="dashboard"><WaterBalancePage /></PermissionRoute>} />
         
-        <Route path="/csv-to-sql-daily" element={<CsvToSqlDailyPage />} />
-        <Route path="/lecturas-diarias" element={<DailyReadingsPage />} />
+        {/* Rutas de GAS - requieren permiso 'gas' */}
+        <Route path="/consumo-gas" element={<PermissionRoute permission="gas"><GasConsumptionPage /></PermissionRoute>} />
+        
+        {/* Rutas de PTAR - requieren permiso 'ptar' */}
+        <Route path="/ptar" element={<PermissionRoute permission="ptar"><PTARPage /></PermissionRoute>} />
+        
+        {/* Rutas generales - todos los autenticados */}
+        <Route path="/alertas" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
+        <Route path="/predicciones" element={<ProtectedRoute><PredictionsPage /></ProtectedRoute>} />
+        <Route path="/analisis" element={<ProtectedRoute><AnalysisSectionPage /></ProtectedRoute>} />
+        <Route path="/contacto" element={<ProtectedRoute><ContactPage /></ProtectedRoute>} />
 
-        {/* Ruta de administradores - TEMPORALMENTE DESACTIVADA - Todos pueden acceder */}
-        <Route path="/correos" element={<CorreosPage />} />
+        {/* Rutas de admin - requieren rol admin */}
+        <Route path="/agregar-datos" element={<AdminRoute><AddDataPage /></AdminRoute>} />
+        <Route path="/agregar-lecturas" element={<AdminRoute><AddWeeklyReadingsPage /></AdminRoute>} />
+        <Route path="/agregar-lecturas-gas" element={<AdminRoute><AddWeeklyGasReadingsPage /></AdminRoute>} />
+        <Route path="/correos" element={<AdminRoute><CorreosPage /></AdminRoute>} />
+        <Route path="/excel-to-sql" element={<AdminRoute><ExcelToSqlPage /></AdminRoute>} />
+        <Route path="/excel-to-sql/agua/2023" element={<AdminRoute><ExcelToSqlAgua2023 /></AdminRoute>} />
+        <Route path="/excel-to-sql/agua/2024" element={<AdminRoute><ExcelToSqlAgua2024 /></AdminRoute>} />
+        <Route path="/excel-to-sql/agua/2025" element={<AdminRoute><ExcelToSqlAgua2025 /></AdminRoute>} />
+        <Route path="/excel-to-sql/gas/2023" element={<AdminRoute><ExcelToSqlGas2023 /></AdminRoute>} />
+        <Route path="/excel-to-sql/gas/2024" element={<AdminRoute><ExcelToSqlGas2024 /></AdminRoute>} />
+        <Route path="/excel-to-sql/gas/2025" element={<AdminRoute><ExcelToSqlGas2025 /></AdminRoute>} />
+        <Route path="/excel-to-sql/ptar" element={<AdminRoute><ExcelToSqlPTAR /></AdminRoute>} />
+        <Route path="/csv-to-sql-daily" element={<AdminRoute><CsvToSqlDailyPage /></AdminRoute>} />
       </Routes>
-    // </AuthProvider>
+    </AuthProvider>
   );
 }
 

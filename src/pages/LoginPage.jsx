@@ -6,15 +6,18 @@ import AquaNetLogo from '../components/svg/AquaNetLogo';
 import AquaNetText from '../components/svg/AquaNetText';
 import { supabase } from '../supabaseClient';
 import { ArrowRight } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage = () => {
+  const { isAuthenticated, isLoading: authLoading, login: authLogin } = useAuth();
+  const navigate = useNavigate();
+  
   const [credentials, setCredentials] = useState({
     email: '',
     password: ''
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [session, setSession] = useState(null);
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [registerData, setRegisterData] = useState({
     email: '',
@@ -27,55 +30,40 @@ const LoginPage = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
-  
-  const navigate = useNavigate();
 
+  // Redirigir si ya está autenticado
   useEffect(() => {
-    // Obtener la sesión activa al cargar el componente
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) navigate('/dashboard');
-    });
-
-    // Escuchar cambios en el estado de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) navigate('/dashboard');
-    });
-
-    // Limpiar la suscripción al desmontar
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    if (!authLoading && isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, authLoading, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
+
     try {
-      setIsLoading(true);
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: credentials.email,
-        password: credentials.password
-      });
-
-      if (error) throw error;
-
-      if (data?.user) {
+      // Usar la función login del AuthContext
+      const result = await authLogin(credentials.email, credentials.password);
+      
+      if (result.success) {
         navigate('/dashboard');
+      } else {
+        // Manejo de errores
+        if (result.message.includes('Invalid login credentials') || result.message.includes('invalid_credentials')) {
+          setError('Correo electrónico o contraseña incorrectos. Por favor, verifica tus datos.');
+        } else if (result.message.includes('Email not confirmed')) {
+          setError('Por favor, confirma tu correo electrónico antes de iniciar sesión.');
+        } else if (result.message.includes('User not found')) {
+          setError('No existe una cuenta con este correo electrónico. Por favor, regístrate primero.');
+        } else {
+          setError(result.message || 'Error al iniciar sesión. Por favor, intenta de nuevo.');
+        }
       }
     } catch (error) {
       console.error('Error de inicio de sesión:', error);
-      
-      // Manejo específico de errores de login
-      if (error.message.includes('Invalid login credentials') || error.message.includes('invalid_credentials')) {
-        setError('Correo electrónico o contraseña incorrectos. Por favor, verifica tus datos.');
-      } else if (error.message.includes('Email not confirmed')) {
-        setError('Por favor, confirma tu correo electrónico antes de iniciar sesión.');
-      } else if (error.message.includes('User not found')) {
-        setError('No existe una cuenta con este correo electrónico. Por favor, regístrate primero.');
-      } else {
-        setError(error.message || 'Error al iniciar sesión. Por favor, intenta de nuevo.');
-      }
+      setError('Error inesperado al iniciar sesión. Por favor, intenta de nuevo.');
     } finally {
       setIsLoading(false);
     }
