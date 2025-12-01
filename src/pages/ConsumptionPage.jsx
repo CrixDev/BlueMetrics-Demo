@@ -45,7 +45,7 @@ export default function ConsumptionPage() {
   const [error, setError] = useState(null)
 
   // Estados para comparativas semanales
-  const [selectedPoint, setSelectedPoint] = useState('todos')
+  const [selectedPoint, setSelectedPoint] = useState('medidor_general_pozos')
   const [weeklyReadings2023, setWeeklyReadings2023] = useState([])
   const [weeklyReadings2024, setWeeklyReadings2024] = useState([])
   const [weeklyReadings2025, setWeeklyReadings2025] = useState([])
@@ -719,7 +719,6 @@ export default function ConsumptionPage() {
                         onChange={(e) => setSelectedPoint(e.target.value)}
                         className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                       >
-                        <option value="todos">📊 TODOS LOS PUNTOS</option>
                         <optgroup label="Pozos de Servicios">
                           <option value="medidor_general_pozos">Medidor General de Pozos</option>
                           <option value="pozo_11">Pozo 11</option>
@@ -938,6 +937,7 @@ export default function ConsumptionPage() {
                   data={category.points}
                   weekNumber={selectedWeek}
                   showComparison={showComparison}
+                  selectedYear={selectedYearForReadings}
                 />
               )
             ))}

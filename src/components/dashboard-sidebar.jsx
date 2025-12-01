@@ -79,11 +79,11 @@ export function DashboardSidebar() {
       id: 'water',
       label: 'Gestión Hídrica',
       items: [
+        { id: "wells", label: "Pozos", path: "/pozos", icon: Drill },
         { id: "consumption", label: "Consumo Agua", path: "/consumo", icon: Droplets },
         { id: "daily-readings", label: "Lecturas Diarias", path: "/lecturas-diarias", icon: Calendar },
-        { id: "balance", label: "Balance Hídrico", path: "/balance", icon: Scale },
-        { id: "wells", label: "Pozos", path: "/pozos", icon: Drill },
-        { id: "ptar", label: "PTAR", path: "/ptar", icon: Recycle }
+        { id: "ptar", label: "PTAR", path: "/ptar", icon: Recycle },
+        { id: "balance", label: "Balance Hídrico", path: "/balance", icon: Scale }
       ]
     },
     {

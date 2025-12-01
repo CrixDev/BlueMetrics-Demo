@@ -6,9 +6,9 @@ import { Card, CardHeader, CardContent } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { supabase } from '../supabaseClient'
-import { 
+import {
   ArrowLeftIcon,
-  DropletIcon, 
+  DropletIcon,
   MapPinIcon,
   CalendarIcon,
   TrendingUpIcon,
@@ -19,10 +19,15 @@ import {
   SettingsIcon,
   BarChart3Icon,
   FilterIcon,
-  Loader2Icon
+  Loader2Icon,
+  GaugeIcon,
+  ClockIcon,
+  ActivityIcon
 } from "lucide-react"
 import ChartComponent from '../components/ChartComponent'
 import WeeklyComparisonChart from '../components/WeeklyComparisonChart'
+import WellComments from '../components/WellComments'
+import WellEventsHistory from '../components/WellEventsHistory'
 import datosPozo12 from '../lib/datos_pozo_12.json'
 
 export default function WellDetailPage() {
@@ -33,6 +38,8 @@ export default function WellDetailPage() {
   const [currentReading, setCurrentReading] = useState(0)
   const [currentConsumption, setCurrentConsumption] = useState(0)
   const [totalConsumption2025, setTotalConsumption2025] = useState(0)
+  const [totalConsumption2024, setTotalConsumption2024] = useState(0)
+  const [totalConsumption2023, setTotalConsumption2023] = useState(0)
   const [vsLastWeek, setVsLastWeek] = useState(0)
   const [vsLastYear, setVsLastYear] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -64,9 +71,9 @@ export default function WellDetailPage() {
     fetchWellData()
   }, [id])
 
-  // Cargar datos cuando cambian los años seleccionados
+  // Cargar datos cuando cambian los años seleccionados                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
   useEffect(() => {
-    fetchMultiYearData()
+    fetchMultiYearData()                                                    
   }, [id, selectedYears])
 
   // Actualizar métricas seleccionadas cuando cambia el tipo de visualización
@@ -185,6 +192,34 @@ export default function WellDetailPage() {
         console.log('📊 Consumo total 2025:', total)
       }
 
+      // Calcular consumo total del año 2024
+      const { data: allConsumptionData2024, error: allConsumptionError2024 } = await supabase
+        .from('consumos_2024')
+        .select('*')
+        .order('l_numero_semana', { ascending: true })
+
+      if (!allConsumptionError2024 && allConsumptionData2024) {
+        const total2024 = allConsumptionData2024.reduce((sum, row) => {
+          return sum + (parseFloat(row[columnName]) || 0)
+        }, 0)
+        setTotalConsumption2024(total2024)
+        console.log('📊 Consumo total 2024:', total2024)
+      }
+
+      // Calcular consumo total del año 2023
+      const { data: allConsumptionData2023, error: allConsumptionError2023 } = await supabase
+        .from('consumos_2023')
+        .select('*')
+        .order('l_numero_semana', { ascending: true })
+
+      if (!allConsumptionError2023 && allConsumptionData2023) {
+        const total2023 = allConsumptionData2023.reduce((sum, row) => {
+          return sum + (parseFloat(row[columnName]) || 0)
+        }, 0)
+        setTotalConsumption2023(total2023)
+        console.log('📊 Consumo total 2023:', total2023)
+      }
+
     } catch (err) {
       console.error('❌ Error cargando datos del pozo:', err)
       setError(err.message)
@@ -233,21 +268,35 @@ export default function WellDetailPage() {
 
       console.log(`✅ Datos de gráfico ${year} cargados:`, readingsData?.length, 'semanas')
 
-      // Formatear datos para el gráfico
-      const chartData = (readingsData || []).map(reading => {
+      // Crear un mapa de datos existentes por número de semana
+      const dataMap = new Map()
+      
+      ;(readingsData || []).forEach(reading => {
         const consumption = (consumptionData || []).find(c => c.l_numero_semana === reading.l_numero_semana)
-        
-        return {
-          week: reading.l_numero_semana,
-          period: `Semana ${reading.l_numero_semana}`,
-          weekNumber: reading.l_numero_semana,
+        dataMap.set(reading.l_numero_semana, {
           reading: parseFloat(reading[columnName]) || 0,
           consumption: parseFloat(consumption?.[columnName]) || 0,
-          realConsumption: parseFloat(consumption?.[columnName]) || 0,
-          availableForConsumption: datosPozo12.especificaciones_anuales[0].m3_cedidos_por_anexo,
-          m3CededByAnnex: datosPozo12.especificaciones_anuales[0].m3_cedidos_por_anexo,
           fechaInicio: reading.l_fecha_inicio,
           fechaFin: reading.l_fecha_fin
+        })
+      })
+
+      // Generar array de 52 semanas completas
+      const chartData = Array.from({ length: 52 }, (_, index) => {
+        const weekNumber = index + 1
+        const weekData = dataMap.get(weekNumber)
+        
+        return {
+          week: weekNumber,
+          period: `Semana ${weekNumber}`,
+          weekNumber: weekNumber,
+          reading: weekData?.reading || 0,
+          consumption: weekData?.consumption || 0,
+          realConsumption: weekData?.consumption || 0,
+          availableForConsumption: datosPozo12.especificaciones_anuales[0].m3_cedidos_por_anexo,
+          m3CededByAnnex: datosPozo12.especificaciones_anuales[0].m3_cedidos_por_anexo,
+          fechaInicio: weekData?.fechaInicio || null,
+          fechaFin: weekData?.fechaFin || null
         }
       })
 
@@ -305,14 +354,145 @@ export default function WellDetailPage() {
 
   // Información estática de pozos con valores originales y actualizados
   const wellsStaticInfo = {
-    11: { location: "Calle Talía 318", service: "Servicios", title: "06NVL114666/24ELGR06", annex: "2.1", m3CededByAnnex: 50000, m3PorAnexo: 190229.00 },
-    12: { location: "Calle Navio 358", service: "Servicios", title: "06NVL114666/24ELGR06", annex: "2.2", m3CededByAnnex: 20000, m3PorAnexo: 90885.00 },
-    3: { location: "Gimnasio sur", service: "Servicios", title: "06NVL102953/24EMGR06", annex: "2.1", m3CededByAnnex: 0, m3PorAnexo: 1148.00 },
-    4: { location: "CDB2", service: "Riego", title: "06NVL102953/24EMGR06", annex: "2.2", m3CededByAnnex: 60000, m3PorAnexo: 90720.00 },
-    7: { location: "Calle Revolución", service: "Servicios", title: "06NVL102953/24EMGR06", annex: "2.3", m3CededByAnnex: 0, m3PorAnexo: 40000.00 },
-    8: { location: "Calle junico de la Vega esquina arroyo seco", service: "Riego", title: "06NVL102953/24EMGR06", annex: "2.4", m3CededByAnnex: 20000, m3PorAnexo: 38000.00 },
-    14: { location: "Calle Musas 323", service: "Servicios", title: "06NVL102953/24EMGR06", annex: "2.5", m3CededByAnnex: 0, m3PorAnexo: 64882.00 },
-    15: { location: "Posterior a Cedes (enfrente de Núcelo)", service: "Riego", title: "06NVL102953/24EMGR06", annex: "2.6", m3CededByAnnex: 40000, m3PorAnexo: 78000.00 }
+    11: {
+      location: "Calle Talía 318",
+      service: "Servicios",
+      title: "06NVL114666/24ELGR06",
+      annex: "2.1",
+      m3CededByAnnex: 50000,
+      m3PorAnexo: 190229.00,
+      medidor: {
+        fechaInstalacion: "2020-01-15",
+        vidaUtilMeses: 60,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    },
+    12: {
+      location: "Calle Navio 358",
+      service: "Servicios",
+      title: "06NVL114666/24ELGR06",
+      annex: "2.2",
+      m3CededByAnnex: 20000,
+      m3PorAnexo: 90885.00,
+      medidor: {
+        fechaInstalacion: "2019-08-20",
+        vidaUtilMeses: 72,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: [
+        { fechaInicio: "2023-02-10", fechaFin: "2023-02-25", motivo: "Mantenimiento preventivo de bomba", estado: "parado" },
+        { fechaInicio: "2024-07-05", fechaFin: "2024-07-08", motivo: "Reparación de tubería", estado: "mantenimiento" }
+      ]
+    },
+    3: {
+      location: "Gimnasio sur",
+      service: "Servicios",
+      title: "06NVL102953/24EMGR06",
+      annex: "2.1",
+      m3CededByAnnex: 0,
+      m3PorAnexo: 1148.00,
+      medidor: {
+        fechaInstalacion: "2021-03-10",
+        vidaUtilMeses: 48,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    },
+    4: {
+      location: "CDB2",
+      service: "Riego",
+      title: "06NVL102953/24EMGR06",
+      annex: "2.2",
+      m3CededByAnnex: 60000,
+      m3PorAnexo: 90720.00,
+      medidor: {
+        fechaInstalacion: "2021-01-10",
+        vidaUtilMeses: 60,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    },
+    7: {
+      location: "Calle Revolución",
+      service: "Servicios",
+      title: "06NVL102953/24EMGR06",
+      annex: "2.3",
+      m3CededByAnnex: 0,
+      m3PorAnexo: 40000.00,
+      medidor: {
+        fechaInstalacion: "2020-06-15",
+        vidaUtilMeses: 60,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    },
+    8: {
+      location: "Calle junico de la Vega esquina arroyo seco",
+      service: "Riego",
+      title: "06NVL102953/24EMGR06",
+      annex: "2.4",
+      m3CededByAnnex: 20000,
+      m3PorAnexo: 38000.00,
+      medidor: {
+        fechaInstalacion: "2020-09-05",
+        vidaUtilMeses: 60,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    },
+    14: {
+      location: "Calle Musas 323",
+      service: "Servicios",
+      title: "06NVL102953/24EMGR06",
+      annex: "2.5",
+      m3CededByAnnex: 0,
+      m3PorAnexo: 64882.00,
+      medidor: {
+        fechaInstalacion: "2019-11-20",
+        vidaUtilMeses: 72,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    },
+    15: {
+      location: "Posterior a Cedes (enfrente de Núcelo)",
+      service: "Riego",
+      title: "06NVL102953/24EMGR06",
+      annex: "2.6",
+      m3CededByAnnex: 40000,
+      m3PorAnexo: 78000.00,
+      medidor: {
+        fechaInstalacion: "2020-04-12",
+        vidaUtilMeses: 60,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    }
   }
 
   const staticInfo = wellsStaticInfo[id] || wellsStaticInfo[12]
@@ -652,41 +832,138 @@ export default function WellDetailPage() {
                 </div>
               </Card>
 
-              {/* Especificaciones técnicas */}
+              {/* Especificaciones Técnicas e Información del Medidor */}
               <Card>
                 <div className="p-6">
                   <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <SettingsIcon className="h-5 w-5" />
                     Especificaciones Técnicas
                   </h2>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">Profundidad:</span>
-                      <span className="text-sm font-medium text-gray-900">{wellData.technicalSpecs.depth}</span>
+
+                  {staticInfo.medidor ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-sm font-medium text-gray-500 flex items-center gap-1">
+                            <CalendarIcon className="h-4 w-4" />
+                            Fecha de Instalación
+                          </label>
+                          <p className="text-sm text-gray-900 font-medium mt-1">
+                            {new Date(staticInfo.medidor.fechaInstalacion).toLocaleDateString('es-MX', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-medium text-gray-500 flex items-center gap-1">
+                            <ClockIcon className="h-4 w-4" />
+                            Vida Útil
+                          </label>
+                          <p className="text-sm text-gray-900 font-medium mt-1">
+                            {staticInfo.medidor.vidaUtilMeses} meses ({(staticInfo.medidor.vidaUtilMeses / 12).toFixed(1)} años)
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="border-t pt-3">
+                        <label className="text-sm font-medium text-gray-500">Tope de Lectura</label>
+                        <p className="text-base text-gray-900 font-semibold">
+                          {staticInfo.medidor.topeLectura.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
+                        </p>
+                      </div>
+
+                      <div className="border-t pt-3">
+                        <label className="text-sm font-medium text-gray-500">Lectura Actual</label>
+                        <p className="text-base text-blue-600 font-semibold">
+                          {currentReading.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
+                        </p>
+                        <div className="mt-2">
+                          <div className="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>Capacidad utilizada</span>
+                            <span>{((currentReading / staticInfo.medidor.topeLectura) * 100).toFixed(2)}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full ${
+                                (currentReading / staticInfo.medidor.topeLectura) * 100 > 90
+                                  ? 'bg-red-600'
+                                  : (currentReading / staticInfo.medidor.topeLectura) * 100 > 70
+                                  ? 'bg-yellow-500'
+                                  : 'bg-blue-600'
+                              }`}
+                              style={{ width: `${Math.min((currentReading / staticInfo.medidor.topeLectura) * 100, 100)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t pt-3">
+                        <label className="text-sm font-medium text-gray-500">Estado del Medidor</label>
+                        <div className="mt-2">
+                          <Badge className={
+                            staticInfo.medidor.estado === 'activo'
+                              ? 'bg-green-100 text-green-800 border-green-200'
+                              : staticInfo.medidor.estado === 'falla'
+                              ? 'bg-red-100 text-red-800 border-red-200'
+                              : staticInfo.medidor.estado === 'mantenimiento'
+                              ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                              : 'bg-orange-100 text-orange-800 border-orange-200'
+                          }>
+                            <ActivityIcon className="h-3 w-3 inline mr-1" />
+                            {staticInfo.medidor.estado === 'activo' ? 'Activo' :
+                             staticInfo.medidor.estado === 'falla' ? 'Falla Detectada' :
+                             staticInfo.medidor.estado === 'mantenimiento' ? 'En Mantenimiento' :
+                             'Requiere Reemplazo'}
+                          </Badge>
+                        </div>
+
+                        {staticInfo.medidor.estado === 'falla' && staticInfo.medidor.tipoFalla && (
+                          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-800">
+                              <strong>Tipo de falla:</strong> {staticInfo.medidor.tipoFalla}
+                            </p>
+                            {staticInfo.medidor.fechaFalla && (
+                              <p className="text-xs text-red-600 mt-1">
+                                Detectada el {new Date(staticInfo.medidor.fechaFalla).toLocaleDateString('es-MX')}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {((currentReading / staticInfo.medidor.topeLectura) * 100) > 90 && (
+                        <div className="p-2 bg-red-50 border-l-4 border-red-400 rounded">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangleIcon className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs font-medium text-red-800">
+                                Alerta: Medidor cerca del tope
+                              </p>
+                              <p className="text-xs text-red-700 mt-1">
+                                Programar reemplazo pronto
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">Nivel de agua:</span>
-                      <span className="text-sm font-medium text-gray-900">{wellData.technicalSpecs.waterLevel}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">Caudal:</span>
-                      <span className="text-sm font-medium text-gray-900">{wellData.technicalSpecs.flow}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">Presión:</span>
-                      <span className="text-sm font-medium text-gray-900">{wellData.technicalSpecs.pressure}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">Temperatura:</span>
-                      <span className="text-sm font-medium text-gray-900">{wellData.technicalSpecs.temperature}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">pH:</span>
-                      <span className="text-sm font-medium text-gray-900">{wellData.technicalSpecs.ph}</span>
-                    </div>
-                  </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No hay información disponible</p>
+                  )}
                 </div>
               </Card>
+            </div>
+
+            {/* Sección de Comentarios e Historial de Eventos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Componente de Comentarios */}
+              <WellComments wellId={parseInt(id)} />
+
+              {/* Componente de Historial de Eventos */}
+              <WellEventsHistory wellId={parseInt(id)} />
             </div>
 
             {/* Historial de consumo - DESHABILITADO */}
@@ -782,7 +1059,7 @@ export default function WellDetailPage() {
             )}
 
     {/* Métricas en tiempo real desde Supabase */}
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                   {loading ? (
                     <Card className="p-4 col-span-5">
                       <div className="flex items-center justify-center gap-2">
@@ -909,6 +1186,7 @@ export default function WellDetailPage() {
                     chartType={comparisonChartType}
                     showControls={false}
                     multiYearData={multiYearData}
+                    total2023={totalConsumption2023}
                   />
                 </div>
 
@@ -1045,6 +1323,7 @@ export default function WellDetailPage() {
                 </div>
               </Card>
             </div>
+
           </div>
         </main>
       </div>

@@ -7,10 +7,10 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { supabase } from '../supabaseClient'
 import WellsGeneralCharts from '../components/WellsGeneralCharts'
-import { 
-  DropletIcon, 
-  TrendingUpIcon, 
-  TrendingDownIcon, 
+import {
+  DropletIcon,
+  TrendingUpIcon,
+  TrendingDownIcon,
   AlertTriangleIcon,
   CheckCircleIcon,
   XCircleIcon,
@@ -18,7 +18,12 @@ import {
   EyeIcon,
   Plus,
   PlusIcon,
-  Loader2Icon
+  Loader2Icon,
+  X,
+  GaugeIcon,
+  CalendarIcon,
+  ClockIcon,
+  FileTextIcon
 } from "lucide-react"
 
 export default function WellsPage() {
@@ -26,18 +31,164 @@ export default function WellsPage() {
   const [wellsData, setWellsData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [configModalOpen, setConfigModalOpen] = useState(false)
+  const [selectedWell, setSelectedWell] = useState(null)
+  
+  // Información estática de pozos (igual que en WellDetailPage)
+  const [wellsStaticInfo, setWellsStaticInfo] = useState({
+    11: {
+      location: "Calle Talía 318",
+      service: "Servicios",
+      title: "06NVL114666/24ELGR06",
+      annex: "2.1",
+      m3CededByAnnex: 50000,
+      m3PorAnexo: 190229.00,
+      medidor: {
+        fechaInstalacion: "2020-01-15",
+        vidaUtilMeses: 60,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    },
+    12: {
+      location: "Calle Navio 358",
+      service: "Servicios",
+      title: "06NVL114666/24ELGR06",
+      annex: "2.2",
+      m3CededByAnnex: 20000,
+      m3PorAnexo: 90885.00,
+      medidor: {
+        fechaInstalacion: "2019-08-20",
+        vidaUtilMeses: 72,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: [
+        { fechaInicio: "2023-02-10", fechaFin: "2023-02-25", motivo: "Mantenimiento preventivo de bomba", estado: "parado" },
+        { fechaInicio: "2024-07-05", fechaFin: "2024-07-08", motivo: "Reparación de tubería", estado: "mantenimiento" }
+      ]
+    },
+    3: {
+      location: "Gimnasio sur",
+      service: "Servicios",
+      title: "06NVL102953/24EMGR06",
+      annex: "2.1",
+      m3CededByAnnex: 0,
+      m3PorAnexo: 1148.00,
+      medidor: {
+        fechaInstalacion: "2021-03-10",
+        vidaUtilMeses: 48,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    },
+    7: {
+      location: "Zona Servicios",
+      service: "Servicios",
+      title: "06NVL102953/24EMGR06",
+      annex: "2.3",
+      m3CededByAnnex: 0,
+      m3PorAnexo: 50000.00,
+      medidor: {
+        fechaInstalacion: "2020-06-15",
+        vidaUtilMeses: 60,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    },
+    14: {
+      location: "Zona Servicios",
+      service: "Servicios",
+      title: "06NVL102953/24EMGR06",
+      annex: "2.4",
+      m3CededByAnnex: 0,
+      m3PorAnexo: 50000.00,
+      medidor: {
+        fechaInstalacion: "2019-11-20",
+        vidaUtilMeses: 72,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    },
+    4: {
+      location: "Zona Riego",
+      service: "Riego",
+      title: "06NVL102953/24EMGR06",
+      annex: "2.4",
+      m3CededByAnnex: 0,
+      m3PorAnexo: 50000.00,
+      medidor: {
+        fechaInstalacion: "2021-01-10",
+        vidaUtilMeses: 60,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    },
+    8: {
+      location: "Zona Riego",
+      service: "Riego",
+      title: "06NVL102953/24EMGR06",
+      annex: "2.5",
+      m3CededByAnnex: 0,
+      m3PorAnexo: 50000.00,
+      medidor: {
+        fechaInstalacion: "2020-09-05",
+        vidaUtilMeses: 60,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    },
+    15: {
+      location: "Posterior a Cedes (enfrente de Núcleo)",
+      service: "Riego",
+      title: "06NVL102953/24EMGR06",
+      annex: "2.6",
+      m3CededByAnnex: 40000,
+      m3PorAnexo: 78000.00,
+      medidor: {
+        fechaInstalacion: "2020-04-12",
+        vidaUtilMeses: 60,
+        topeLectura: 999999.99,
+        estado: "activo",
+        tipoFalla: null,
+        fechaFalla: null
+      },
+      historialEstado: []
+    }
+  })
+  
   // Definición de pozos con sus columnas en Supabase
   const wellsConfig = [
     // POZOS DE SERVICIOS
-    { id: 11, name: "Pozo 11", type: "Servicios", column: "l_pozo_11", location: "Zona Servicios" },
-    { id: 12, name: "Pozo 12", type: "Servicios", column: "l_pozo_12", location: "Calle Navio 358" },
-    { id: 3, name: "Pozo 3", type: "Servicios", column: "l_pozo_3", location: "Zona Servicios" },
-    { id: 7, name: "Pozo 7", type: "Servicios", column: "l_pozo_7", location: "Zona Servicios" },
-    { id: 14, name: "Pozo 14", type: "Servicios", column: "l_pozo_14", location: "Zona Servicios" },
+    { id: 11, name: "Pozo 11", column: "l_pozo_11" },
+    { id: 12, name: "Pozo 12", column: "l_pozo_12" },
+    { id: 3, name: "Pozo 3", column: "l_pozo_3" },
+    { id: 7, name: "Pozo 7", column: "l_pozo_7" },
+    { id: 14, name: "Pozo 14", column: "l_pozo_14" },
     // POZOS DE RIEGO
-    { id: 4, name: "Pozo 4", type: "Riego", column: "l_pozo_4_riego", location: "Zona Riego" },
-    { id: 8, name: "Pozo 8", type: "Riego", column: "l_pozo_8_riego", location: "Zona Riego" },
-    { id: 15, name: "Pozo 15", type: "Riego", column: "l_pozo_15_riego", location: "Zona Riego" }
+    { id: 4, name: "Pozo 4", column: "l_pozo_4_riego" },
+    { id: 8, name: "Pozo 8", column: "l_pozo_8_riego" },
+    { id: 15, name: "Pozo 15", column: "l_pozo_15_riego" }
   ]
 
   // Cargar datos de Supabase
@@ -79,25 +230,36 @@ export default function WellsPage() {
 
       // Procesar datos para cada pozo
       const processedWells = wellsConfig.map(well => {
+        const staticInfo = wellsStaticInfo[well.id] || {}
         const lastWeekReading = readingsData?.[0]?.[well.column] || 0
         const previousWeekReading = readingsData?.[1]?.[well.column] || 0
         const lastWeekConsumption = consumptionData?.[0]?.[well.column] || 0
         const previousWeekConsumption = consumptionData?.[1]?.[well.column] || 0
 
+        // Calcular m³ disponibles
+        const m3Disponibles = (staticInfo.m3PorAnexo || 0) - (staticInfo.m3CededByAnnex || 0)
+        
+        // Calcular consumo total del año 2025
+        const totalConsumption2025 = consumptionData?.reduce((sum, row) => {
+          return sum + (parseFloat(row[well.column]) || 0)
+        }, 0) || 0
+        
+        // Calcular % de consumo
+        const consumptionPercent = m3Disponibles > 0 ? (totalConsumption2025 / m3Disponibles) * 100 : 0
+        
         // Calcular vs semana anterior
         const vsLastWeek = lastWeekConsumption - previousWeekConsumption
-        
-        // Calcular % de ahorro (negativo = ahorro, positivo = aumento)
-        const savingsPercent = previousWeekConsumption > 0
-          ? ((vsLastWeek / previousWeekConsumption) * 100)
-          : 0
 
         return {
           ...well,
+          location: staticInfo.location || 'N/A',
+          service: staticInfo.service || 'N/A',
           lastWeekReading: parseFloat(lastWeekReading) || 0,
           lastWeekConsumption: parseFloat(lastWeekConsumption) || 0,
+          m3Disponibles: m3Disponibles,
+          totalConsumption2025: totalConsumption2025,
+          consumptionPercent: parseFloat(consumptionPercent.toFixed(2)) || 0,
           vsLastWeek: parseFloat(vsLastWeek) || 0,
-          savingsPercent: parseFloat(savingsPercent.toFixed(1)) || 0,
           weekNumber: readingsData?.[0]?.l_numero_semana || 0
         }
       })
@@ -172,25 +334,25 @@ export default function WellsPage() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Pozo
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
+                          Nombre
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Tipo
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
+                          Semana Evaluada
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Lectura Última Semana (m³)
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 tracking-wider">
+                          m³ Disponibles
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 tracking-wider">
+                          m³ Consumidos (Semana)
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 tracking-wider">
                           Consumo Última Semana (m³)
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          vs Semana Anterior (m³)
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 tracking-wider">
+                          vs Semana Anterior
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          % Cambio
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
                           Acciones
                         </th>
                       </tr>
@@ -217,73 +379,74 @@ export default function WellsPage() {
                           </td>
                         </tr>
                       ) : (
-                        wellsData.map((well) => (
-                          <tr key={well.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <CheckCircleIcon className="h-5 w-5 text-green-600" />
-                                <div className="ml-3">
-                                  <div className="text-sm font-medium text-gray-900">
-                                    {well.name}
-                                  </div>
-                                  <div className="text-sm text-gray-500">
-                                    {well.location}
+                        wellsData.map((well) => {
+                          return (
+                            <tr key={well.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                                  <div className="ml-3">
+                                    <div className="text-sm font-medium text-gray-900">
+                                      {well.name}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      {well.location}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge variant={well.type === 'Servicios' ? 'default' : 'secondary'}>
-                                {well.type}
-                              </Badge>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
-                              {well.lastWeekReading.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
-                              {well.lastWeekConsumption.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                              <div className="flex items-center justify-end gap-1">
-                                {well.vsLastWeek > 0 ? (
-                                  <TrendingUpIcon className="h-4 w-4 text-red-500" />
-                                ) : well.vsLastWeek < 0 ? (
-                                  <TrendingDownIcon className="h-4 w-4 text-green-500" />
-                                ) : null}
-                                <span className={well.vsLastWeek > 0 ? 'text-red-600 font-medium' : well.vsLastWeek < 0 ? 'text-green-600 font-medium' : 'text-gray-600'}>
-                                  {well.vsLastWeek > 0 ? '+' : ''}{well.vsLastWeek.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                              <div className="flex items-center justify-end gap-1">
-                                {well.savingsPercent > 0 ? (
-                                  <TrendingUpIcon className="h-4 w-4 text-red-500" />
-                                ) : well.savingsPercent < 0 ? (
-                                  <TrendingDownIcon className="h-4 w-4 text-green-500" />
-                                ) : null}
-                                <span className={well.savingsPercent > 0 ? 'text-red-600 font-medium' : well.savingsPercent < 0 ? 'text-green-600 font-medium' : 'text-gray-600'}>
-                                  {well.savingsPercent > 0 ? '+' : ''}{well.savingsPercent}%
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex space-x-2">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => navigate(`/pozos/${well.id}`)}
-                                  title="Ver detalles"
-                                >
-                                  <EyeIcon className="h-4 w-4" />
-                                </Button>
-                                <Button size="sm" variant="outline" title="Configuración">
-                                  <SettingsIcon className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-center">
+                                <Badge variant="outline" className="font-mono">
+                                  Semana {well.weekNumber}
+                                </Badge>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
+                                {well.m3Disponibles.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
+                                {well.totalConsumption2025.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
+                                {well.lastWeekConsumption.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                  {well.vsLastWeek > 0 ? (
+                                    <TrendingUpIcon className="h-4 w-4 text-red-500" />
+                                  ) : well.vsLastWeek < 0 ? (
+                                    <TrendingDownIcon className="h-4 w-4 text-green-500" />
+                                  ) : null}
+                                  <span className={well.vsLastWeek > 0 ? 'text-red-600 font-medium' : well.vsLastWeek < 0 ? 'text-green-600 font-medium' : 'text-gray-600'}>
+                                    {well.vsLastWeek > 0 ? '+' : ''}{well.vsLastWeek.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div className="flex space-x-2">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => navigate(`/pozos/${well.id}`)}
+                                    title="Ver detalles"
+                                  >
+                                    <EyeIcon className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    title="Configuración"
+                                    onClick={() => {
+                                      setSelectedWell(well)
+                                      setConfigModalOpen(true)
+                                    }}
+                                  >
+                                    <SettingsIcon className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })
                       )}
                     </tbody>
                   </table>
@@ -381,6 +544,399 @@ export default function WellsPage() {
       >
         <PlusIcon className="h-6 w-6" />
       </Button>
+
+      {/* Modal de Configuración */}
+      {configModalOpen && selectedWell && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Configuración - {selectedWell.name}</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setConfigModalOpen(false)}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Sección: Información General */}
+                <div className="border-b pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <SettingsIcon className="h-5 w-5 text-blue-600" />
+                    Información General
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Ubicación</label>
+                      <input
+                        type="text"
+                        defaultValue={wellsStaticInfo[selectedWell.id]?.location || ''}
+                        onChange={(e) => {
+                          setWellsStaticInfo(prev => ({
+                            ...prev,
+                            [selectedWell.id]: {
+                              ...prev[selectedWell.id],
+                              location: e.target.value
+                            }
+                          }))
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Servicio</label>
+                      <select
+                        defaultValue={wellsStaticInfo[selectedWell.id]?.service || 'Servicios'}
+                        onChange={(e) => {
+                          setWellsStaticInfo(prev => ({
+                            ...prev,
+                            [selectedWell.id]: {
+                              ...prev[selectedWell.id],
+                              service: e.target.value
+                            }
+                          }))
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="Servicios">Servicios</option>
+                        <option value="Riego">Riego</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Título</label>
+                      <input
+                        type="text"
+                        defaultValue={wellsStaticInfo[selectedWell.id]?.title || ''}
+                        onChange={(e) => {
+                          setWellsStaticInfo(prev => ({
+                            ...prev,
+                            [selectedWell.id]: {
+                              ...prev[selectedWell.id],
+                              title: e.target.value
+                            }
+                          }))
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Anexo</label>
+                      <input
+                        type="text"
+                        defaultValue={wellsStaticInfo[selectedWell.id]?.annex || ''}
+                        onChange={(e) => {
+                          setWellsStaticInfo(prev => ({
+                            ...prev,
+                            [selectedWell.id]: {
+                              ...prev[selectedWell.id],
+                              annex: e.target.value
+                            }
+                          }))
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">m³ por Anexo</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        defaultValue={wellsStaticInfo[selectedWell.id]?.m3PorAnexo || 0}
+                        onChange={(e) => {
+                          setWellsStaticInfo(prev => ({
+                            ...prev,
+                            [selectedWell.id]: {
+                              ...prev[selectedWell.id],
+                              m3PorAnexo: parseFloat(e.target.value) || 0
+                            }
+                          }))
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">m³ Cedidos por Anexo</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        defaultValue={wellsStaticInfo[selectedWell.id]?.m3CededByAnnex || 0}
+                        onChange={(e) => {
+                          setWellsStaticInfo(prev => ({
+                            ...prev,
+                            [selectedWell.id]: {
+                              ...prev[selectedWell.id],
+                              m3CededByAnnex: parseFloat(e.target.value) || 0
+                            }
+                          }))
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                    <h4 className="text-sm font-semibold text-blue-900 mb-2">m³ Disponibles Calculados</h4>
+                    <p className="text-2xl font-bold text-blue-700">
+                      {((wellsStaticInfo[selectedWell.id]?.m3PorAnexo || 0) - (wellsStaticInfo[selectedWell.id]?.m3CededByAnnex || 0)).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                    </p>
+                  </div>
+                </div>
+
+                {/* Sección: Información del Medidor */}
+                <div className="border-b pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <GaugeIcon className="h-5 w-5 text-purple-600" />
+                    Información del Medidor
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <CalendarIcon className="h-4 w-4 inline mr-1" />
+                        Fecha de Instalación
+                      </label>
+                      <input
+                        type="date"
+                        defaultValue={wellsStaticInfo[selectedWell.id]?.medidor?.fechaInstalacion || ''}
+                        onChange={(e) => {
+                          setWellsStaticInfo(prev => ({
+                            ...prev,
+                            [selectedWell.id]: {
+                              ...prev[selectedWell.id],
+                              medidor: {
+                                ...prev[selectedWell.id]?.medidor,
+                                fechaInstalacion: e.target.value
+                              }
+                            }
+                          }))
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <ClockIcon className="h-4 w-4 inline mr-1" />
+                        Vida Útil (meses)
+                      </label>
+                      <input
+                        type="number"
+                        defaultValue={wellsStaticInfo[selectedWell.id]?.medidor?.vidaUtilMeses || 60}
+                        onChange={(e) => {
+                          setWellsStaticInfo(prev => ({
+                            ...prev,
+                            [selectedWell.id]: {
+                              ...prev[selectedWell.id],
+                              medidor: {
+                                ...prev[selectedWell.id]?.medidor,
+                                vidaUtilMeses: parseInt(e.target.value) || 60
+                              }
+                            }
+                          }))
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Tope de Lectura (m³)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        defaultValue={wellsStaticInfo[selectedWell.id]?.medidor?.topeLectura || 999999.99}
+                        onChange={(e) => {
+                          setWellsStaticInfo(prev => ({
+                            ...prev,
+                            [selectedWell.id]: {
+                              ...prev[selectedWell.id],
+                              medidor: {
+                                ...prev[selectedWell.id]?.medidor,
+                                topeLectura: parseFloat(e.target.value) || 999999.99
+                              }
+                            }
+                          }))
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Estado del Medidor</label>
+                      <select
+                        defaultValue={wellsStaticInfo[selectedWell.id]?.medidor?.estado || 'activo'}
+                        onChange={(e) => {
+                          setWellsStaticInfo(prev => ({
+                            ...prev,
+                            [selectedWell.id]: {
+                              ...prev[selectedWell.id],
+                              medidor: {
+                                ...prev[selectedWell.id]?.medidor,
+                                estado: e.target.value
+                              }
+                            }
+                          }))
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="activo">Activo</option>
+                        <option value="falla">Falla</option>
+                        <option value="mantenimiento">Mantenimiento</option>
+                        <option value="reemplazo">Requiere Reemplazo</option>
+                      </select>
+                    </div>
+
+                    {wellsStaticInfo[selectedWell.id]?.medidor?.estado === 'falla' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Falla</label>
+                          <input
+                            type="text"
+                            defaultValue={wellsStaticInfo[selectedWell.id]?.medidor?.tipoFalla || ''}
+                            placeholder="Ej: Lectura incorrecta, obstrucción, etc."
+                            onChange={(e) => {
+                              setWellsStaticInfo(prev => ({
+                                ...prev,
+                                [selectedWell.id]: {
+                                  ...prev[selectedWell.id],
+                                  medidor: {
+                                    ...prev[selectedWell.id]?.medidor,
+                                    tipoFalla: e.target.value
+                                  }
+                                }
+                              }))
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de Falla</label>
+                          <input
+                            type="date"
+                            defaultValue={wellsStaticInfo[selectedWell.id]?.medidor?.fechaFalla || ''}
+                            onChange={(e) => {
+                              setWellsStaticInfo(prev => ({
+                                ...prev,
+                                [selectedWell.id]: {
+                                  ...prev[selectedWell.id],
+                                  medidor: {
+                                    ...prev[selectedWell.id]?.medidor,
+                                    fechaFalla: e.target.value
+                                  }
+                                }
+                              }))
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Sección: Historial de Estado del Pozo */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <FileTextIcon className="h-5 w-5 text-orange-600" />
+                    Historial de Estado del Pozo
+                  </h3>
+                  <div className="space-y-3">
+                    {wellsStaticInfo[selectedWell.id]?.historialEstado?.length > 0 ? (
+                      wellsStaticInfo[selectedWell.id].historialEstado.map((evento, index) => (
+                        <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <Badge className={
+                              evento.estado === 'parado' ? 'bg-red-100 text-red-800' :
+                              evento.estado === 'mantenimiento' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-green-100 text-green-800'
+                            }>
+                              {evento.estado === 'parado' ? '🔴 Parado' :
+                               evento.estado === 'mantenimiento' ? '🟡 Mantenimiento' :
+                               '🟢 Activo'}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setWellsStaticInfo(prev => ({
+                                  ...prev,
+                                  [selectedWell.id]: {
+                                    ...prev[selectedWell.id],
+                                    historialEstado: prev[selectedWell.id].historialEstado.filter((_, i) => i !== index)
+                                  }
+                                }))
+                              }}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <p className="text-sm text-gray-700">
+                            <strong>Periodo:</strong> {new Date(evento.fechaInicio).toLocaleDateString('es-MX')} - {evento.fechaFin ? new Date(evento.fechaFin).toLocaleDateString('es-MX') : 'Presente'}
+                          </p>
+                          <p className="text-sm text-gray-700 mt-1">
+                            <strong>Motivo:</strong> {evento.motivo}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">No hay eventos registrados</p>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newEvento = {
+                          fechaInicio: new Date().toISOString().split('T')[0],
+                          fechaFin: null,
+                          motivo: '',
+                          estado: 'parado'
+                        }
+                        setWellsStaticInfo(prev => ({
+                          ...prev,
+                          [selectedWell.id]: {
+                            ...prev[selectedWell.id],
+                            historialEstado: [...(prev[selectedWell.id]?.historialEstado || []), newEvento]
+                          }
+                        }))
+                      }}
+                      className="w-full"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Agregar Evento
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setConfigModalOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={() => {
+                    fetchWellsData()
+                    setConfigModalOpen(false)
+                  }}
+                >
+                  Guardar Cambios
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

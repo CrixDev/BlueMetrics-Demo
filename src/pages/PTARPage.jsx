@@ -183,30 +183,62 @@ export default function PTARPage() {
       const weeklyData = []
       const filteredData = applyDateFilter(lecturasDiarias)
       const sortedData = [...filteredData].sort((a, b) => 
-        new Date(b.fecha) - new Date(a.fecha)
+        new Date(a.fecha) - new Date(b.fecha)
       )
       
-      for (let i = 0; i < sortedData.length; i += 7) {
-        const weekData = sortedData.slice(i, i + 7)
-        const weekNum = Math.floor(i / 7) + 1
-        
-        const totalAr = weekData.reduce((sum, d) => sum + (Number(d.ar) || 0), 0)
-        const totalAt = weekData.reduce((sum, d) => sum + (Number(d.at) || 0), 0)
-        const totalRecirculacion = weekData.reduce((sum, d) => sum + (Number(d.recirculacion) || 0), 0)
-        const totalDia = weekData.reduce((sum, d) => sum + (Number(d.total_dia) || 0), 0)
-        
-        weeklyData.push({
-          period: `Semana ${weekNum}`,
-          ar: totalAr,
-          at: totalAt,
-          recirculacion: totalRecirculacion,
-          total_dia: totalDia,
-          eficiencia: totalAr > 0 ? ((totalAt / totalAr) * 100).toFixed(1) : 0,
-          registros: weekData.length
-        })
+      // Función para obtener el número de semana ISO del año
+      const getWeekNumber = (date) => {
+        const d = new Date(date)
+        d.setHours(0, 0, 0, 0)
+        d.setDate(d.getDate() + 4 - (d.getDay() || 7))
+        const yearStart = new Date(d.getFullYear(), 0, 1)
+        const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
+        return weekNo
       }
       
-      return weeklyData.reverse()
+      // Agrupar por año y semana
+      const weeksByYearAndWeek = {}
+      
+      sortedData.forEach(item => {
+        const date = new Date(item.fecha)
+        const year = date.getFullYear()
+        const weekNum = getWeekNumber(date)
+        const key = `${year}-W${weekNum}`
+        
+        if (!weeksByYearAndWeek[key]) {
+          weeksByYearAndWeek[key] = {
+            year,
+            weekNum,
+            data: []
+          }
+        }
+        weeksByYearAndWeek[key].data.push(item)
+      })
+      
+      // Convertir a array y procesar
+      Object.keys(weeksByYearAndWeek)
+        .sort()
+        .forEach(key => {
+          const { year, weekNum, data } = weeksByYearAndWeek[key]
+          
+          const totalAr = data.reduce((sum, d) => sum + (Number(d.ar) || 0), 0)
+          const totalAt = data.reduce((sum, d) => sum + (Number(d.at) || 0), 0)
+          const totalRecirculacion = data.reduce((sum, d) => sum + (Number(d.recirculacion) || 0), 0)
+          const totalDia = data.reduce((sum, d) => sum + (Number(d.total_dia) || 0), 0)
+          
+          weeklyData.push({
+            period: `Semana ${weekNum} ${year}`,
+            ar: totalAr,
+            at: totalAt,
+            recirculacion: totalRecirculacion,
+            total_dia: totalDia,
+            eficiencia: totalAr > 0 ? ((totalAt / totalAr) * 100).toFixed(1) : 0,
+            registros: data.length,
+            sortKey: year * 100 + weekNum
+          })
+        })
+      
+      return weeklyData
     } else if (timeFilter === 'daily') {
       // Datos diarios desde lecturas_ptar
       const filteredData = applyDateFilter(lecturasDiarias)

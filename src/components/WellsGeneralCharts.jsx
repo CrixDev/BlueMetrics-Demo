@@ -44,6 +44,9 @@ export default function WellsGeneralCharts() {
     servicios: [],
     total: []
   })
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [dateFilterActive, setDateFilterActive] = useState(false)
 
   // Configuración de pozos
   const wellsConfig = {
@@ -57,7 +60,7 @@ export default function WellsGeneralCharts() {
 
   useEffect(() => {
     processDataByView()
-  }, [viewType, rawData])
+  }, [viewType, rawData, dateFilterActive, startDate, endDate])
 
   const fetchYearlyData = async () => {
     try {
@@ -147,7 +150,15 @@ export default function WellsGeneralCharts() {
     const types = ['riego', 'servicios', 'total']
 
     types.forEach(type => {
-      const data = rawData[type]
+      let data = rawData[type]
+
+      // Aplicar filtro de fechas si está activo
+      if (dateFilterActive && startDate && endDate) {
+        data = data.filter(item => {
+          const itemDate = item.fecha_inicio || `${item.year}-01-01`
+          return itemDate >= startDate && itemDate <= endDate
+        })
+      }
 
       if (viewType === 'anual') {
         // Agrupar por año
@@ -548,6 +559,75 @@ export default function WellsGeneralCharts() {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Filtros de Fecha */}
+        <div className="flex flex-wrap gap-4 mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-900">Filtro por Fechas:</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-700">Desde:</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-700">Hasta:</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={dateFilterActive ? 'default' : 'outline'}
+              onClick={() => {
+                if (startDate && endDate) {
+                  setDateFilterActive(!dateFilterActive)
+                } else {
+                  alert('Por favor selecciona ambas fechas')
+                }
+              }}
+              disabled={!startDate || !endDate}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {dateFilterActive ? 'Filtro Activo' : 'Aplicar Filtro'}
+            </Button>
+            
+            {dateFilterActive && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setDateFilterActive(false)
+                  setStartDate('')
+                  setEndDate('')
+                }}
+                className="border-red-300 text-red-600 hover:bg-red-50"
+              >
+                Limpiar
+              </Button>
+            )}
+          </div>
+
+          {dateFilterActive && (
+            <div className="w-full mt-2 p-2 bg-blue-100 rounded border border-blue-300">
+              <p className="text-xs text-blue-800">
+                <strong>Filtro activo:</strong> Mostrando datos desde {new Date(startDate).toLocaleDateString('es-MX')} hasta {new Date(endDate).toLocaleDateString('es-MX')}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Estadísticas */}

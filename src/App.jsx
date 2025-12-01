@@ -38,6 +38,7 @@ import ExcelToSqlPTAR from './pages/ExcelToSql/ExcelToSqlPTAR'
 
 import DailyReadingsPage from './pages/DailyReadingsPage'
 import AnalysisSectionPage from './pages/AnalysisSectionPage'
+import ErrorPage from './pages/ErrorPage'
 
 
 function App() {
@@ -87,6 +88,9 @@ function App() {
         <Route path="/excel-to-sql/gas/2025" element={<AdminRoute><ExcelToSqlGas2025 /></AdminRoute>} />
         <Route path="/excel-to-sql/ptar" element={<AdminRoute><ExcelToSqlPTAR /></AdminRoute>} />
         <Route path="/csv-to-sql-daily" element={<AdminRoute><CsvToSqlDailyPage /></AdminRoute>} />
+        
+        {/* Ruta 404 - debe estar al final */}
+        <Route path="*" element={<ErrorPage />} />
       </Routes>
     </AuthProvider>
   );

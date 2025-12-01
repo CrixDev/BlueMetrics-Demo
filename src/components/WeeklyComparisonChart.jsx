@@ -24,7 +24,8 @@ export default function WeeklyComparisonChart({
   chartType: externalChartType = null,
   comparisonMode: externalComparisonMode = null,
   showControls = true,
-  multiYearData = null // Nueva prop: array de { year: '2023', data: [...] }
+  multiYearData = null, // Nueva prop: array de { year: '2023', data: [...] }
+  total2023 = 0 // Total del año 2023
 }) {
 
   const [internalChartType, setInternalChartType] = useState('line') // 'line' o 'bar'
@@ -100,7 +101,8 @@ export default function WeeklyComparisonChart({
         avgWeeklyCurrent: 0,
         avgWeeklyPrevious: 0,
         currentWeekVsLast: 0,
-        sameWeekLastYear: 0
+        sameWeekLastYear: 0,
+        total2023: 0
       }
     }
 
@@ -124,6 +126,15 @@ export default function WeeklyComparisonChart({
       ? ((lastWeek.consumption - sameWeekLastYearData.consumption) / sameWeekLastYearData.consumption * 100)
       : 0
 
+    // Calcular total de 2023 desde multiYearData si está disponible
+    let calculated2023Total = total2023
+    if (useMultiYear && processedMultiYear.length > 0) {
+      const year2023Data = processedMultiYear.find(y => y.year === '2023')
+      if (year2023Data) {
+        calculated2023Total = year2023Data.processed.reduce((sum, w) => sum + w.consumption, 0)
+      }
+    }
+
     return {
       currentTotal,
       previousTotal,
@@ -132,9 +143,10 @@ export default function WeeklyComparisonChart({
       avgWeeklyPrevious,
       currentWeekVsLast,
       sameWeekLastYear,
-      lastWeekNumber: currentWeekNum
+      lastWeekNumber: currentWeekNum,
+      total2023: calculated2023Total
     }
-  }, [processedCurrent, processedPrevious])
+  }, [processedCurrent, processedPrevious, total2023, useMultiYear, processedMultiYear])
 
   // Configuración de Chart.js
   const chartData = useMemo(() => {
@@ -334,7 +346,7 @@ export default function WeeklyComparisonChart({
         </div>
 
         {/* Estadísticas de comparación */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-4">
           {/* Total año actual */}
           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
             <p className="text-xs text-muted-foreground">Total {currentYear}</p>
@@ -348,6 +360,14 @@ export default function WeeklyComparisonChart({
             <p className="text-xs text-muted-foreground">Total {previousYear}</p>
             <p className="text-lg font-bold text-muted-foreground">
               {comparisonStats.previousTotal.toLocaleString()} {unit}
+            </p>
+          </div>
+
+          {/* Total 2023 */}
+          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200">
+            <p className="text-xs text-muted-foreground">Total 2023</p>
+            <p className="text-lg font-bold text-muted-foreground">
+              {comparisonStats.total2023?.toLocaleString() || '0'} {unit}
             </p>
           </div>
 
