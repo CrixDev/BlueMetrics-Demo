@@ -380,6 +380,14 @@ export default function WellsPage() {
                         </tr>
                       ) : (
                         wellsData.map((well) => {
+                          // Determinar color según % de consumo
+                          const getConsumptionColor = (percent) => {
+                            if (percent >= 100) return 'text-red-600 font-bold'
+                            if (percent >= 80) return 'text-yellow-600 font-semibold'
+                            if (percent >= 60) return 'text-blue-600 font-medium'
+                            return 'text-green-600 font-medium'
+                          }
+                          
                           return (
                             <tr key={well.id} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap">

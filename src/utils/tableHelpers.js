@@ -1,18 +1,13 @@
 /**
  * Utilidad para obtener el nombre de la tabla de lecturas semanales según el año
  * @param {string|number} year - Año (ej: '2024', '2025', 2024, 2025)
- * @returns {string} - Nombre de la tabla (ej: 'lecturas_semana2024', 'lecturas_semana')
+ * @returns {string} - Nombre de la tabla (ej: 'lecturas_semana_agua_2024', 'lecturas_semana_agua_2025')
  */
 export const getTableNameByYear = (year) => {
   const yearStr = year.toString()
   
-  // Por defecto, 2025 usa 'lecturas_semana' (sin sufijo)
-  if (yearStr === '2025') {
-    return 'lecturas_semana'
-  }
-  
-  // Otros años usan 'lecturas_semana' + año
-  return `lecturas_semana${yearStr}`
+  // Todas las tablas usan el formato 'lecturas_semana_agua_' + año (todo en minúsculas)
+  return `lecturas_semana_agua_${yearStr}`
 }
 
 /**

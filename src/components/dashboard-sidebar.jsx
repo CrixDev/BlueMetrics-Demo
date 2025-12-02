@@ -99,7 +99,9 @@ export function DashboardSidebar() {
       label: 'Administración de Datos',
       items: [
         { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", icon: Database },
-        { id: "add-readings", label: "Lecturas Agua", path: "/agregar-lecturas", icon: FileInput }
+        { id: "add-readings", label: "Lecturas Semanales Agua", path: "/agregar-lecturas", icon: FileInput },
+        { id: "add-daily-readings", label: "Lecturas Diarias Agua", path: "/agregar-lecturas-diarias", icon: Calendar },
+        { id: "add-ptar-readings", label: "Lecturas PTAR", path: "/agregar-lecturas-ptar", icon: Recycle }
       ]
     },
     {

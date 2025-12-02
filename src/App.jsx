@@ -13,6 +13,8 @@ import WellDetailPage from './pages/WellDetailPage'
 import PTARPage from './pages/PTARPage'
 import AddDataPage from './pages/AddDataPage'
 import AddWeeklyReadingsPage from './pages/AddWeeklyReadingsPage'
+import AddDailyReadingsPage from './pages/AddDailyReadingsPage'
+import AddPTARReadingsPage from './pages/AddPTARReadingsPage'
 import GasConsumptionPage from './pages/GasConsumptionPage'
 import AddWeeklyGasReadingsPage from './pages/AddWeeklyGasReadingsPage'
 import AlertsPage from './pages/AlertsPage'
@@ -77,7 +79,9 @@ function App() {
         {/* Rutas de admin - requieren rol admin */}
         <Route path="/agregar-datos" element={<AdminRoute><AddDataPage /></AdminRoute>} />
         <Route path="/agregar-lecturas" element={<AdminRoute><AddWeeklyReadingsPage /></AdminRoute>} />
+        <Route path="/agregar-lecturas-diarias" element={<AdminRoute><AddDailyReadingsPage /></AdminRoute>} />
         <Route path="/agregar-lecturas-gas" element={<AdminRoute><AddWeeklyGasReadingsPage /></AdminRoute>} />
+        <Route path="/agregar-lecturas-ptar" element={<AdminRoute><AddPTARReadingsPage /></AdminRoute>} />
         <Route path="/correos" element={<AdminRoute><CorreosPage /></AdminRoute>} />
         <Route path="/excel-to-sql" element={<AdminRoute><ExcelToSqlPage /></AdminRoute>} />
         <Route path="/excel-to-sql/agua/2023" element={<AdminRoute><ExcelToSqlAgua2023 /></AdminRoute>} />

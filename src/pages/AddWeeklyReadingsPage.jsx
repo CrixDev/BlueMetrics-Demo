@@ -49,25 +49,28 @@ export default function AddWeeklyReadingsPage() {
       setError(null)
 
       const tableName = getTableNameByYear(selectedYear)
+      console.log('🔍 Cargando desde tabla:', tableName)
+      
       const { data, error: fetchError } = await supabase
         .from(tableName)
-        .select('numero_semana, fecha_inicio, fecha_fin')
-        .order('numero_semana', { ascending: true })
+        .select('l_numero_semana, l_fecha_inicio, l_fecha_fin')
+        .order('l_numero_semana', { ascending: true })
 
       if (fetchError) throw fetchError
 
       console.log('✅ Semanas obtenidas desde Supabase:', data)
 
       const weeks = (data || []).map(week => ({
-        weekNumber: week.numero_semana,
-        startDate: week.fecha_inicio,
-        endDate: week.fecha_fin
+        weekNumber: week.l_numero_semana,
+        startDate: week.l_fecha_inicio,
+        endDate: week.l_fecha_fin
       }))
 
       setExistingWeeks(weeks)
 
     } catch (err) {
       console.error('❌ Error al cargar semanas:', err)
+      console.error('❌ Error completo:', JSON.stringify(err, null, 2))
       setError(err.message)
       
       // Fallback a datos del JSON
@@ -90,7 +93,7 @@ export default function AddWeeklyReadingsPage() {
       const { data, error: fetchError } = await supabase
         .from(tableName)
         .select('*')
-        .eq('numero_semana', weekNumber)
+        .eq('l_numero_semana', weekNumber)
         .single()
 
       if (fetchError) {
@@ -107,9 +110,13 @@ export default function AddWeeklyReadingsPage() {
       
       consumptionPointsData.categories.forEach(category => {
         category.points.forEach(point => {
-          if (!point.noRead && data[point.id] !== null) {
-            const key = `${point.id}_${weekNumber}`
-            loadedReadings[key] = data[point.id].toString()
+          if (!point.noRead) {
+            // Los campos en Supabase tienen prefijo l_
+            const dbFieldName = `l_${point.id}`
+            if (data[dbFieldName] !== null && data[dbFieldName] !== undefined) {
+              const key = `${point.id}_${weekNumber}`
+              loadedReadings[key] = data[dbFieldName].toString()
+            }
           }
         })
       })
@@ -164,7 +171,7 @@ export default function AddWeeklyReadingsPage() {
     try {
       // Preparar objeto con todas las lecturas
       const weekData = {
-        numero_semana: selectedWeek
+        l_numero_semana: selectedWeek
       }
 
       // Agregar todas las lecturas al objeto
@@ -176,7 +183,8 @@ export default function AddWeeklyReadingsPage() {
             
             // Solo agregar si hay un valor
             if (value && value.trim() !== '') {
-              weekData[point.id] = parseFloat(value)
+              // Los campos en Supabase tienen prefijo l_
+              weekData[`l_${point.id}`] = parseFloat(value)
             }
           }
         })
@@ -189,8 +197,8 @@ export default function AddWeeklyReadingsPage() {
       // Verificar si la semana ya existe
       const { data: existingData } = await supabase
         .from(tableName)
-        .select('id')
-        .eq('numero_semana', selectedWeek)
+        .select('l_id')
+        .eq('l_numero_semana', selectedWeek)
         .single()
 
       if (existingData) {
@@ -198,7 +206,7 @@ export default function AddWeeklyReadingsPage() {
         const { error: updateError } = await supabase
           .from(tableName)
           .update(weekData)
-          .eq('numero_semana', selectedWeek)
+          .eq('l_numero_semana', selectedWeek)
 
         if (updateError) throw updateError
         
@@ -207,8 +215,8 @@ export default function AddWeeklyReadingsPage() {
         // INSERT - Crear nueva semana
         const weekInfo = existingWeeks.find(w => w.weekNumber === selectedWeek)
         if (weekInfo) {
-          weekData.fecha_inicio = weekInfo.startDate
-          weekData.fecha_fin = weekInfo.endDate
+          weekData.l_fecha_inicio = weekInfo.startDate
+          weekData.l_fecha_fin = weekInfo.endDate
         }
 
         const { error: insertError } = await supabase
@@ -245,7 +253,7 @@ export default function AddWeeklyReadingsPage() {
       const { data, error: fetchError } = await supabase
         .from(tableName)
         .select('*')
-        .eq('numero_semana', previousWeek)
+        .eq('l_numero_semana', previousWeek)
         .single()
 
       if (fetchError) throw fetchError
@@ -260,9 +268,13 @@ export default function AddWeeklyReadingsPage() {
       // Copiar todas las lecturas de la semana anterior
       consumptionPointsData.categories.forEach(category => {
         category.points.forEach(point => {
-          if (!point.noRead && data[point.id] !== null) {
-            const key = `${point.id}_${selectedWeek}`
-            newReadings[key] = data[point.id].toString()
+          if (!point.noRead) {
+            // Los campos en Supabase tienen prefijo l_
+            const dbFieldName = `l_${point.id}`
+            if (data[dbFieldName] !== null && data[dbFieldName] !== undefined) {
+              const key = `${point.id}_${selectedWeek}`
+              newReadings[key] = data[dbFieldName].toString()
+            }
           }
         })
       })
@@ -315,9 +327,9 @@ export default function AddWeeklyReadingsPage() {
       const { error: insertError } = await supabase
         .from(tableName)
         .insert([{
-          numero_semana: newWeekNumber,
-          fecha_inicio: newWeekData.startDate,
-          fecha_fin: newWeekData.endDate
+          l_numero_semana: newWeekNumber,
+          l_fecha_inicio: newWeekData.startDate,
+          l_fecha_fin: newWeekData.endDate
         }])
 
       if (insertError) throw insertError
