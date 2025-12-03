@@ -272,7 +272,7 @@ export default function WellEventsHistory({ wellId }) {
             <p className="text-xs text-gray-400 mt-1">El pozo ha estado operando normalmente</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
             {events.map((event) => {
               const typeColor = getEventTypeColor(event.event_type)
               const statusInfo = eventStatuses.find(s => s.value === event.event_status)

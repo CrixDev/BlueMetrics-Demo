@@ -5,12 +5,13 @@ import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog"
 import { supabase } from '../supabaseClient'
 import WellsGeneralCharts from '../components/WellsGeneralCharts'
+import WellEventsHistory from '../components/WellEventsHistory'
+import WeeklyComparisonChart from '../components/WeeklyComparisonChart'
 import {
   DropletIcon,
-  TrendingUpIcon,
-  TrendingDownIcon,
   AlertTriangleIcon,
   CheckCircleIcon,
   XCircleIcon,
@@ -23,7 +24,13 @@ import {
   GaugeIcon,
   CalendarIcon,
   ClockIcon,
-  FileTextIcon
+  FileTextIcon,
+  BellIcon,
+  TrendingUpIcon,
+  TrendingDownIcon,
+  MinusIcon,
+  BarChart3Icon,
+  LineChartIcon
 } from "lucide-react"
 
 export default function WellsPage() {
@@ -32,7 +39,26 @@ export default function WellsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [configModalOpen, setConfigModalOpen] = useState(false)
+  const [eventsModalOpen, setEventsModalOpen] = useState(false)
   const [selectedWell, setSelectedWell] = useState(null)
+  const [wellEvents, setWellEvents] = useState([])
+  const [chartMode, setChartMode] = useState('analysis') // 'timeline' o 'analysis'
+  const [kpiData, setKpiData] = useState({
+    totalGeneral: 0,
+    promedioAnual: 0,
+    total2025: 0,
+    total2024: 0,
+    total2023: 0,
+    cambioAnual: 0,
+    vsSemanaAnterior: 0,
+    maxYear: { year: '2025', total: 0 },
+    minYear: { year: '2023', total: 0 }
+  })
+  const [weeklyData, setWeeklyData] = useState({
+    multiYearData: [],
+    currentYearData: [],
+    previousYearData: []
+  })
   
   // Información estática de pozos (igual que en WellDetailPage)
   const [wellsStaticInfo, setWellsStaticInfo] = useState({
@@ -228,6 +254,18 @@ export default function WellsPage() {
       console.log('✅ Lecturas:', readingsData)
       console.log('✅ Consumo:', consumptionData)
 
+      // Cargar eventos activos para todos los pozos
+      const { data: eventsData } = await supabase
+        .from('well_events')
+        .select('well_id, event_status')
+        .eq('event_status', 'activo')
+
+      // Contar alertas por pozo
+      const alertsByWell = {}
+      eventsData?.forEach(event => {
+        alertsByWell[event.well_id] = (alertsByWell[event.well_id] || 0) + 1
+      })
+
       // Procesar datos para cada pozo
       const processedWells = wellsConfig.map(well => {
         const staticInfo = wellsStaticInfo[well.id] || {}
@@ -236,41 +274,150 @@ export default function WellsPage() {
         const lastWeekConsumption = consumptionData?.[0]?.[well.column] || 0
         const previousWeekConsumption = consumptionData?.[1]?.[well.column] || 0
 
-        // Calcular m³ disponibles
-        const m3Disponibles = (staticInfo.m3PorAnexo || 0) - (staticInfo.m3CededByAnnex || 0)
-        
+        // Calcular m³ disponibles (ahora se llama "m3 para consumir")
+        const m3ParaConsumir = (staticInfo.m3PorAnexo || 0) - (staticInfo.m3CededByAnnex || 0)
+
         // Calcular consumo total del año 2025
         const totalConsumption2025 = consumptionData?.reduce((sum, row) => {
           return sum + (parseFloat(row[well.column]) || 0)
         }, 0) || 0
-        
+
         // Calcular % de consumo
-        const consumptionPercent = m3Disponibles > 0 ? (totalConsumption2025 / m3Disponibles) * 100 : 0
-        
+        const consumptionPercent = m3ParaConsumir > 0 ? (totalConsumption2025 / m3ParaConsumir) * 100 : 0
+
+        // Calcular agua disponible última semana
+        const aguaDisponibleUltimaSemana = m3ParaConsumir - totalConsumption2025
+
         // Calcular vs semana anterior
         const vsLastWeek = lastWeekConsumption - previousWeekConsumption
 
+        // Número de alertas activas
+        const alertCount = alertsByWell[well.id] || 0
+
         return {
           ...well,
+          tipo: staticInfo.service || 'N/A',
           location: staticInfo.location || 'N/A',
           service: staticInfo.service || 'N/A',
           lastWeekReading: parseFloat(lastWeekReading) || 0,
           lastWeekConsumption: parseFloat(lastWeekConsumption) || 0,
-          m3Disponibles: m3Disponibles,
+          m3ParaConsumir: m3ParaConsumir,
           totalConsumption2025: totalConsumption2025,
           consumptionPercent: parseFloat(consumptionPercent.toFixed(2)) || 0,
+          aguaDisponibleUltimaSemana: aguaDisponibleUltimaSemana,
           vsLastWeek: parseFloat(vsLastWeek) || 0,
-          weekNumber: readingsData?.[0]?.l_numero_semana || 0
+          weekNumber: readingsData?.[0]?.l_numero_semana || 0,
+          alertCount: alertCount
         }
       })
 
       setWellsData(processedWells)
       console.log('✅ Datos procesados:', processedWells)
+
+      // Cargar datos para KPIs y gráficas de comparación
+      await fetchKPIsAndChartData()
     } catch (err) {
       console.error('❌ Error cargando datos de pozos:', err)
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchKPIsAndChartData = async () => {
+    try {
+      const years = [2023, 2024, 2025]
+      const allPozos = ['l_pozo_11', 'l_pozo_12', 'l_pozo_3', 'l_pozo_7', 'l_pozo_14', 'l_pozo_4_riego', 'l_pozo_8_riego', 'l_pozo_15_riego']
+      const yearTotals = {}
+      const allWeeklyData = []
+
+      for (const year of years) {
+        const tableName = `lecturas_semana_agua_consumo_${year}`
+
+        const { data, error: fetchError } = await supabase
+          .from(tableName)
+          .select('*')
+          .order('l_numero_semana', { ascending: true })
+
+        if (fetchError) {
+          console.warn(`⚠️ No se pudieron cargar datos de ${year}:`, fetchError)
+          continue
+        }
+
+        if (data && data.length > 0) {
+          let yearTotal = 0
+          const yearWeeks = []
+
+          data.forEach((row) => {
+            const consumoTotalSemana = allPozos.reduce((acc, col) => {
+              return acc + (parseFloat(row[col]) || 0)
+            }, 0)
+
+            yearTotal += consumoTotalSemana
+
+            yearWeeks.push({
+              week: row.l_numero_semana,
+              consumption: parseFloat(consumoTotalSemana.toFixed(2)),
+              reading: yearTotal,
+              fecha_inicio: row.l_fecha_inicio,
+              fecha_fin: row.l_fecha_fin
+            })
+          })
+
+          yearTotals[year] = yearTotal
+          allWeeklyData.push({
+            year: year.toString(),
+            data: yearWeeks
+          })
+        }
+      }
+
+      // Calcular KPIs
+      const years2023 = yearTotals[2023] || 0
+      const years2024 = yearTotals[2024] || 0
+      const years2025 = yearTotals[2025] || 0
+      const totalGeneral = years2023 + years2024 + years2025
+      const promedioAnual = totalGeneral / 3
+
+      const yearEntries = Object.entries(yearTotals).map(([year, total]) => ({ year, total }))
+      const maxYear = yearEntries.reduce((max, item) => item.total > max.total ? item : max, { year: '2025', total: 0 })
+      const minYear = yearEntries.reduce((min, item) => item.total < min.total ? item : min, { year: '2023', total: 0 })
+
+      const cambioAnual = years2024 > 0 ? ((years2025 - years2024) / years2024 * 100) : 0
+
+      let vsSemanaAnterior = 0
+      if (allWeeklyData.length > 0) {
+        const data2025 = allWeeklyData.find(y => y.year === '2025')
+        if (data2025 && data2025.data.length >= 2) {
+          const lastWeek = data2025.data[data2025.data.length - 1]
+          const prevWeek = data2025.data[data2025.data.length - 2]
+          vsSemanaAnterior = prevWeek.consumption > 0
+            ? ((lastWeek.consumption - prevWeek.consumption) / prevWeek.consumption * 100)
+            : 0
+        }
+      }
+
+      setKpiData({
+        totalGeneral,
+        promedioAnual,
+        total2025: years2025,
+        total2024: years2024,
+        total2023: years2023,
+        cambioAnual,
+        vsSemanaAnterior,
+        maxYear,
+        minYear
+      })
+
+      setWeeklyData({
+        multiYearData: allWeeklyData,
+        currentYearData: allWeeklyData.find(y => y.year === '2025')?.data || [],
+        previousYearData: allWeeklyData.find(y => y.year === '2024')?.data || []
+      })
+
+      console.log('✅ KPIs y datos de gráficas cargados:', { yearTotals, allWeeklyData })
+    } catch (err) {
+      console.error('❌ Error cargando KPIs:', err)
     }
   }
 
@@ -320,13 +467,12 @@ export default function WellsPage() {
                 <h1 className="text-3xl font-bold text-gray-900">Gestión de Pozos</h1>
                 <p className="text-gray-600 mt-1">Monitoreo y control de pozos de agua</p>
               </div>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo Pozo
-              </Button>
+              <Badge variant="outline" className="text-lg px-4 py-2">
+                8 Pozos Activos
+              </Badge>
             </div>
 
-            {/* Lista de pozos */}
+{/* Lista de pozos */}
             <Card>
               <div className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Lista de Pozos</h2>
@@ -335,24 +481,24 @@ export default function WellsPage() {
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
-                          Nombre
+                          Pozo
                         </th>
                         <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
-                          Semana Evaluada
+                          m³ para consumir por pozo
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 tracking-wider">
-                          m³ Disponibles
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
+                          Consumo real total hasta la semana
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 tracking-wider">
-                          m³ Consumidos (Semana)
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
+                          % consumido
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 tracking-wider">
-                          Consumo Última Semana (m³)
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
+                          Agua disponible última semana
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 tracking-wider">
-                          vs Semana Anterior
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
+                          Alertas
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
                           Acciones
                         </th>
                       </tr>
@@ -380,14 +526,6 @@ export default function WellsPage() {
                         </tr>
                       ) : (
                         wellsData.map((well) => {
-                          // Determinar color según % de consumo
-                          const getConsumptionColor = (percent) => {
-                            if (percent >= 100) return 'text-red-600 font-bold'
-                            if (percent >= 80) return 'text-yellow-600 font-semibold'
-                            if (percent >= 60) return 'text-blue-600 font-medium'
-                            return 'text-green-600 font-medium'
-                          }
-                          
                           return (
                             <tr key={well.id} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap">
@@ -398,50 +536,71 @@ export default function WellsPage() {
                                       {well.name}
                                     </div>
                                     <div className="text-sm text-gray-500">
-                                      {well.location}
+                                      {well.tipo}
                                     </div>
                                   </div>
                                 </div>
                               </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900 font-medium">
+                                {well.m3ParaConsumir.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                              </td>
                               <td className="px-6 py-4 whitespace-nowrap text-center">
-                                <Badge variant="outline" className="font-mono">
-                                  Semana {well.weekNumber}
-                                </Badge>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
-                                {well.m3Disponibles.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
-                                {well.totalConsumption2025.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
-                                {well.lastWeekConsumption.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                                <div className="flex items-center justify-end gap-1">
-                                  {well.vsLastWeek > 0 ? (
-                                    <TrendingUpIcon className="h-4 w-4 text-red-500" />
-                                  ) : well.vsLastWeek < 0 ? (
-                                    <TrendingDownIcon className="h-4 w-4 text-green-500" />
-                                  ) : null}
-                                  <span className={well.vsLastWeek > 0 ? 'text-red-600 font-medium' : well.vsLastWeek < 0 ? 'text-green-600 font-medium' : 'text-gray-600'}>
-                                    {well.vsLastWeek > 0 ? '+' : ''}{well.vsLastWeek.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
-                                  </span>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {well.totalConsumption2025.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  (sem {well.weekNumber})
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div className="flex space-x-2">
-                                  <Button 
-                                    size="sm" 
+                              <td className="px-6 py-4 whitespace-nowrap text-center">
+                                <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                  well.consumptionPercent >= 100 ? 'bg-red-100 text-red-800 border-red-200' :
+                                  well.consumptionPercent >= 80 ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                  well.consumptionPercent >= 60 ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                  'bg-green-100 text-green-800 border-green-200'
+                                }`}>
+                                  {well.consumptionPercent.toFixed(1)}%
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-center">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {well.aguaDisponibleUltimaSemana.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  (sem {well.weekNumber})
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-center">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className={
+                                    well.alertCount > 0
+                                      ? 'bg-red-50 border-red-300 text-red-700 hover:bg-red-100'
+                                      : 'bg-green-50 border-green-300 text-green-700 hover:bg-green-100'
+                                  }
+                                  onClick={() => {
+                                    setSelectedWell(well)
+                                    setEventsModalOpen(true)
+                                  }}
+                                >
+                                  <BellIcon className="h-4 w-4 mr-1" />
+                                  Alertas {well.alertCount}
+                                </Button>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-center">
+                                <div className="flex justify-center space-x-2">
+                                  <Button
+                                    size="sm"
                                     variant="outline"
                                     onClick={() => navigate(`/pozos/${well.id}`)}
                                     title="Ver detalles"
                                   >
                                     <EyeIcon className="h-4 w-4" />
                                   </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline" 
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
                                     title="Configuración"
                                     onClick={() => {
                                       setSelectedWell(well)
@@ -462,9 +621,55 @@ export default function WellsPage() {
               </div>
             </Card>
 
-            {/* Gráficos Generales de Consumo */}
-            <WellsGeneralCharts />
 
+            {/* Selector de Tipo de Gráfica */}
+            <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">Visualización de Datos</h3>
+                  <p className="text-sm text-gray-600">Selecciona el tipo de gráfica que deseas visualizar</p>
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    variant={chartMode === 'timeline' ? 'default' : 'outline'}
+                    onClick={() => setChartMode('timeline')}
+                    className="flex items-center gap-2"
+                    size="lg"
+                  >
+                    <LineChartIcon className="h-5 w-5" />
+                    Comparación de Años
+                  </Button>
+                  <Button
+                    variant={chartMode === 'analysis' ? 'default' : 'outline'}
+                    onClick={() => setChartMode('analysis')}
+                    className="flex items-center gap-2"
+                    size="lg"
+                  >
+                    <BarChart3Icon className="h-5 w-5" />
+                    Análisis por Categoría
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Gráficas Condicionales */}
+            {chartMode === 'timeline' ? (
+              <WeeklyComparisonChart
+                title="Comparación de Consumo por Años (Todos los Pozos)"
+                multiYearData={weeklyData.multiYearData}
+                currentYearData={weeklyData.currentYearData}
+                previousYearData={weeklyData.previousYearData}
+                currentYear="2025"
+                previousYear="2024"
+                unit="m³"
+                total2023={kpiData.total2023}
+                showControls={true}
+              />
+            ) : (
+              <WellsGeneralCharts />
+            )}
+
+            
             {/* Sección de detalles adicionales */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Alertas de pozos */}
@@ -552,6 +757,21 @@ export default function WellsPage() {
       >
         <PlusIcon className="h-6 w-6" />
       </Button>
+
+      {/* Modal de Eventos/Alertas */}
+      <Dialog open={eventsModalOpen} onOpenChange={setEventsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BellIcon className="h-5 w-5 text-orange-600" />
+              Eventos y Alertas - {selectedWell?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            {selectedWell && <WellEventsHistory wellId={selectedWell.id} />}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal de Configuración */}
       {configModalOpen && selectedWell && (

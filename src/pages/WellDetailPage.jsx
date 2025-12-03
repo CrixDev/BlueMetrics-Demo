@@ -443,7 +443,7 @@ export default function WellDetailPage() {
       historialEstado: []
     },
     8: {
-      location: "Calle junico de la Vega esquina arroyo seco",
+      location: "Calle Junco de la Vega Esquina Arrollo Seco",
       service: "Riego",
       title: "06NVL102953/24EMGR06",
       annex: "2.4",
@@ -477,7 +477,7 @@ export default function WellDetailPage() {
       historialEstado: []
     },
     15: {
-      location: "Posterior a Cedes (enfrente de Núcelo)",
+      location: "Posterior a Cedes (Enfrente del Edificio Núcleo)",
       service: "Riego",
       title: "06NVL102953/24EMGR06",
       annex: "2.6",
@@ -957,14 +957,7 @@ export default function WellDetailPage() {
               </Card>
             </div>
 
-            {/* Sección de Comentarios e Historial de Eventos */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Componente de Comentarios */}
-              <WellComments wellId={parseInt(id)} />
-
-              {/* Componente de Historial de Eventos */}
-              <WellEventsHistory wellId={parseInt(id)} />
-            </div>
+          
 
             {/* Historial de consumo - DESHABILITADO */}
             {false && (
@@ -1076,9 +1069,9 @@ export default function WellDetailPage() {
                     </Card>
                   ) : (
                     <>
-                      {/* Lectura Actual */}
+                      {/* Lectura Actual del Medidor */}
                       <Card className="p-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Lectura Actual</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Lectura Actual del Medidor</h4>
                         <div className="flex items-center gap-2">
                           <DropletIcon className="h-5 w-5 text-blue-500" />
                           <span className="text-lg font-semibold text-gray-900">
@@ -1087,10 +1080,10 @@ export default function WellDetailPage() {
                         </div>
                         <p className="text-xs text-gray-500 mt-1">Última semana registrada</p>
                       </Card>
-                      
-                      {/* Consumo Actual */}
+
+                      {/* Consumo de la Última Semana */}
                       <Card className="p-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Consumo Actual</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Consumo de la Última Semana</h4>
                         <div className="flex items-center gap-2">
                           <DropletIcon className="h-5 w-5 text-green-500" />
                           <span className="text-lg font-semibold text-gray-900">
@@ -1099,32 +1092,10 @@ export default function WellDetailPage() {
                         </div>
                         <p className="text-xs text-gray-500 mt-1">Última semana</p>
                       </Card>
-                      
-                      {/* m³ Disponibles */}
+
+                      {/* Consumo vs Semana Anterior */}
                       <Card className="p-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">m³ Disponibles</h4>
-                        <div className="flex items-center gap-2">
-                          <DropletIcon className="h-5 w-5 text-purple-500" />
-                          <span className="text-lg font-semibold text-gray-900">
-                            {(() => {
-                              const disponibles = staticInfo.m3PorAnexo - staticInfo.m3CededByAnnex;
-                              return disponibles.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                            })()} m³
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {(() => {
-                            const disponibles = staticInfo.m3PorAnexo - staticInfo.m3CededByAnnex;
-                            const porcentajeConsumido = disponibles > 0 ? (totalConsumption2025 * 100) / disponibles : 0;
-                            const color = porcentajeConsumido > 100 ? 'text-red-600' : porcentajeConsumido > 80 ? 'text-yellow-600' : 'text-green-600';
-                            return <span className={color}>{porcentajeConsumido.toFixed(2)}% consumido 2025</span>;
-                          })()}
-                        </p>
-                      </Card>
-                      
-                      {/* vs Semana Anterior */}
-                      <Card className="p-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">vs Semana Anterior</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Consumo vs Semana Anterior</h4>
                         <div className="flex items-center gap-2">
                           {vsLastWeek > 0 ? (
                             <TrendingUpIcon className="h-5 w-5 text-red-500" />
@@ -1141,10 +1112,10 @@ export default function WellDetailPage() {
                           {vsLastWeek > 0 ? 'Aumento' : vsLastWeek < 0 ? 'Disminución' : 'Sin cambio'}
                         </p>
                       </Card>
-                      
-                      {/* vs Año Anterior */}
+
+                      {/* Consumo vs Año Anterior */}
                       <Card className="p-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">vs Año Anterior</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Consumo vs Año Anterior</h4>
                         <div className="flex items-center gap-2">
                           {vsLastYear > 0 ? (
                             <TrendingUpIcon className="h-5 w-5 text-red-500" />
@@ -1175,85 +1146,75 @@ export default function WellDetailPage() {
                 </p>
               </div>
 
-              {/* Bento Grid: Gráfica a la izquierda, Filtros a la derecha */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                {/* Gráfica de comparación - 2 columnas */}
-                <div className="lg:col-span-2">
-                  
-                  <WeeklyComparisonChart
-                    title={`Pozo ${id} - ${staticInfo.service}`}
-                    unit="m³"
-                    chartType={comparisonChartType}
-                    showControls={false}
-                    multiYearData={multiYearData}
-                    total2023={totalConsumption2023}
-                  />
+              {/* Filtros arriba del gráfico */}
+              <div className="flex flex-wrap items-center gap-4 mb-6 p-4 bg-muted/30 rounded-lg border border-muted">
+                {/* Tipo de Gráfico */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-semibold text-foreground">Tipo de Gráfico:</label>
+                  <select 
+                    value={comparisonChartType} 
+                    onChange={(e) => setComparisonChartType(e.target.value)}
+                    className="border border-muted rounded-lg px-3 py-2 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                  >
+                    <option value="line">Líneas</option>
+                    <option value="bar">Barras</option>
+                  </select>
                 </div>
 
-                {/* Filtros a la derecha - 1 columna */}
-                <Card className="lg:col-span-1">
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <TrendingUpIcon className="h-5 w-5 text-primary" />
-                      <h3 className="text-lg font-semibold">Filtros</h3>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {/* Tipo de Gráfico */}
-                      <div className="border-b pb-3">
-                        <label className="text-sm font-semibold text-foreground mb-2 block">Tipo de Gráfico</label>
-                        <select 
-                          value={comparisonChartType} 
-                          onChange={(e) => setComparisonChartType(e.target.value)}
-                          className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                        >
-                          <option value="line">Líneas</option>
-                          <option value="bar">Barras</option>
-                        </select>
-                      </div>
+                {/* Selección de años para comparación */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-semibold text-foreground">Años a mostrar:</label>
+                  <div className="flex gap-2">
+                    {availableYears.map(year => (
+                      <Button
+                        key={year}
+                        variant={selectedYears.includes(year) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          setSelectedYears(prev => {
+                            if (prev.includes(year)) {
+                              // Si ya está seleccionado, quitarlo (mínimo 1 año)
+                              return prev.length > 1 ? prev.filter(y => y !== year) : prev
+                            } else {
+                              // Si no está seleccionado, agregarlo
+                              return [...prev, year].sort()
+                            }
+                          })
+                        }}
+                        className={`text-xs transition-all duration-200 ${
+                          selectedYears.includes(year) 
+                            ? 'bg-primary text-primary-foreground shadow-md' 
+                            : 'hover:bg-muted/50'
+                        }`}
+                      >
+                        {year}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-                      {/* Selección de años para comparación */}
-                      <div className="pt-2">
-                        <label className="text-sm font-semibold text-foreground mb-2 block">Años a mostrar</label>
-                        <div className="grid grid-cols-3 gap-2">
-                          {availableYears.map(year => (
-                            <Button
-                              key={year}
-                              variant={selectedYears.includes(year) ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => {
-                                setSelectedYears(prev => {
-                                  if (prev.includes(year)) {
-                                    // Si ya está seleccionado, quitarlo (mínimo 1 año)
-                                    return prev.length > 1 ? prev.filter(y => y !== year) : prev
-                                  } else {
-                                    // Si no está seleccionado, agregarlo
-                                    return [...prev, year].sort()
-                                  }
-                                })
-                              }}
-                              className={`text-xs transition-all duration-200 ${
-                                selectedYears.includes(year) 
-                                  ? 'bg-primary text-primary-foreground shadow-md' 
-                                  : 'hover:bg-muted/50'
-                              }`}
-                            >
-                              {year}
-                            </Button>
-                          ))}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Seleccionados: {selectedYears.join(', ')}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Gráfica de comparación */}
+              <div className="mb-6">
+                <WeeklyComparisonChart
+                  title={`Pozo ${id} - ${staticInfo.service}`}
+                  unit="m³"
+                  chartType={comparisonChartType}
+                  showControls={false}
+                  multiYearData={multiYearData}
+                  total2023={totalConsumption2023}
+                />
               </div>
             </div>
 
-            
+              {/* Sección de Comentarios e Historial de Eventos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Componente de Comentarios */}
+              <WellComments wellId={parseInt(id)} />
+
+              {/* Componente de Historial de Eventos */}
+              <WellEventsHistory wellId={parseInt(id)} />
+            </div>
          
 
             {/* Alertas y recomendaciones específicas */}

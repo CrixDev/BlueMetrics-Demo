@@ -300,50 +300,48 @@ export default function WeeklyComparisonChart({
   return (
     <Card className="w-full">
       <CardHeader>
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h3 className="text-lg font-semibold">{title}</h3>
-            <p className="text-sm text-muted-foreground">
-              Análisis comparativo de consumo semanal
-            </p>
-          </div>
-          
-          {/* Controles - solo mostrar si showControls es true */}
-          {showControls && (
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Selector de tipo de gráfico */}
-              <div className="flex gap-1 border rounded-lg p-1">
-                <Button
-                  variant={chartType === 'line' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setInternalChartType('line')}
-                  className="h-8"
-                >
-                  <LineChartIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={chartType === 'bar' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setInternalChartType('bar')}
-                  className="h-8"
-                >
-                  <BarChart3Icon className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* Selector de modo de comparación */}
-              <select
-                value={comparisonMode}
-                onChange={(e) => setInternalComparisonMode(e.target.value)}
-                className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary h-8"
-              >
-                <option value="both">Ambos años</option>
-                <option value="current">Solo {currentYear}</option>
-                <option value="previous">Solo {previousYear}</option>
-              </select>
-            </div>
-          )}
+        <div>
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <p className="text-sm text-muted-foreground">
+            Análisis comparativo de consumo semanal
+          </p>
         </div>
+
+        {/* Controles - solo mostrar si showControls es true */}
+        {showControls && (
+          <div className="flex items-center gap-2 flex-wrap mt-4">
+            {/* Selector de tipo de gráfico */}
+            <div className="flex gap-1 border rounded-lg p-1">
+              <Button
+                variant={chartType === 'line' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setInternalChartType('line')}
+                className="h-8"
+              >
+                <LineChartIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={chartType === 'bar' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setInternalChartType('bar')}
+                className="h-8"
+              >
+                <BarChart3Icon className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Selector de modo de comparación */}
+            <select
+              value={comparisonMode}
+              onChange={(e) => setInternalComparisonMode(e.target.value)}
+              className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary h-8"
+            >
+              <option value="both">Ambos años</option>
+              <option value="current">Solo {currentYear}</option>
+              <option value="previous">Solo {previousYear}</option>
+            </select>
+          </div>
+        )}
 
         {/* Estadísticas de comparación */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-4">
@@ -474,7 +472,7 @@ export default function WeeklyComparisonChart({
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span>Disminución &gt;5%</span>
+                <span>Disminución &lt;0% (verde)</span>
               </div>
             </div>
           </div>
