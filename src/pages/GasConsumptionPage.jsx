@@ -1117,8 +1117,8 @@ export default function GasConsumptionPage() {
             <div className="mb-6">
               <WeeklyComparisonTable
                 title={`Tabla Comparativa Semanal ${comparisonYearsToShow.join(' vs ')} - Consumo de Gas`}
-                data2024={multiYearData.length > 1 ? multiYearData[multiYearData.length - 2].data : []}
-                data2025={multiYearData.length > 0 ? multiYearData[multiYearData.length - 1].data : []}
+                data2024={multiYearData.find(d => d.year === '2024')?.data || []}
+                data2025={multiYearData.find(d => d.year === '2025')?.data || []}
                 pointName={selectedPoint === 'todos' ? 'Todos los Medidores (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Medidor de Gas")}
                 unit="m³"
               />
