@@ -17,6 +17,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import ChartComponent from '../components/ChartComponent'
+import PTARComparisonChart from '../components/PTARComparisonChart'
 
 export default function PTARPage() {
   // Estados para datos de Supabase
@@ -32,7 +33,10 @@ export default function PTARPage() {
   const [chartType, setChartType] = useState('line')
   const [selectedYears, setSelectedYears] = useState([])
   const [dateRange, setDateRange] = useState({ start: null, end: null })
-  const [activeChart, setActiveChart] = useState('flujos') // 'flujos', 'eficiencia', 'balance'
+  const [activeChart, setActiveChart] = useState('flujos') // 'flujos', 'eficiencia', 'balance', 'residual', 'tratada'
+  const [lastWeekNumber, setLastWeekNumber] = useState(null)
+  const [lastWeekData, setLastWeekData] = useState(null)
+  const [previousWeekData, setPreviousWeekData] = useState(null)
 
   // Cargar datos de Supabase
   useEffect(() => {
@@ -86,6 +90,34 @@ export default function PTARPage() {
           setSelectedYears(years)
         }
 
+        // Obtener última semana disponible
+        if (diarias && diarias.length > 0) {
+          const sortedByDate = [...diarias].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+          const lastDate = new Date(sortedByDate[0].fecha)
+          const weekNum = getWeekNumber(lastDate)
+          setLastWeekNumber(weekNum)
+          
+          // Obtener datos de última semana y semana anterior
+          const lastWeekRecords = diarias.filter(d => {
+            const date = new Date(d.fecha)
+            return getWeekNumber(date) === weekNum && date.getFullYear() === lastDate.getFullYear()
+          })
+          
+          const prevWeekRecords = diarias.filter(d => {
+            const date = new Date(d.fecha)
+            return getWeekNumber(date) === (weekNum - 1) && date.getFullYear() === lastDate.getFullYear()
+          })
+          
+          // Calcular totales
+          const lastWeekAR = lastWeekRecords.reduce((sum, d) => sum + (Number(d.ar) || 0), 0)
+          const lastWeekAT = lastWeekRecords.reduce((sum, d) => sum + (Number(d.at) || 0), 0)
+          const prevWeekAR = prevWeekRecords.reduce((sum, d) => sum + (Number(d.ar) || 0), 0)
+          const prevWeekAT = prevWeekRecords.reduce((sum, d) => sum + (Number(d.at) || 0), 0)
+          
+          setLastWeekData({ ar: lastWeekAR, at: lastWeekAT, eficiencia: lastWeekAR > 0 ? (lastWeekAT / lastWeekAR * 100) : 0 })
+          setPreviousWeekData({ ar: prevWeekAR, at: prevWeekAT, eficiencia: prevWeekAR > 0 ? (prevWeekAT / prevWeekAR * 100) : 0 })
+        }
+
       } catch (err) {
         console.error('Error al cargar datos:', err)
         setError(err.message)
@@ -97,28 +129,35 @@ export default function PTARPage() {
     fetchData()
   }, [])
 
+  // Función para obtener el número de semana ISO del año
+  const getWeekNumber = (date) => {
+    const d = new Date(date)
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7))
+    const yearStart = new Date(d.getFullYear(), 0, 1)
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
+    return weekNo
+  }
+
   // Calcular variaciones porcentuales
   const calculateVariation = (current, previous) => {
     if (!previous || previous === 0) return 0
     return (((current - previous) / previous) * 100).toFixed(1)
   }
 
-  // Obtener datos del año actual y anterior para comparación
+  // Obtener datos del año actual para mostrar
   const currentYearData = resumenAnual[0] || {}
-  const previousYearData = resumenAnual[1] || {}
 
-  const arVariation = calculateVariation(
-    currentYearData.total_agua_residual_m3,
-    previousYearData.total_agua_residual_m3
-  )
-  const atVariation = calculateVariation(
-    currentYearData.total_agua_tratada_m3,
-    previousYearData.total_agua_tratada_m3
-  )
-  const eficienciaVariation = calculateVariation(
-    currentYearData.eficiencia_promedio_porcentaje,
-    previousYearData.eficiencia_promedio_porcentaje
-  )
+  // Calcular variaciones con respecto a la última semana
+  const arVariation = lastWeekData && previousWeekData 
+    ? calculateVariation(lastWeekData.ar, previousWeekData.ar)
+    : 0
+  const atVariation = lastWeekData && previousWeekData
+    ? calculateVariation(lastWeekData.at, previousWeekData.at)
+    : 0
+  const eficienciaVariation = lastWeekData && previousWeekData
+    ? calculateVariation(lastWeekData.eficiencia, previousWeekData.eficiencia)
+    : 0
 
   // Obtener años disponibles
   const availableYears = [...new Set(resumenAnual.map(d => Number(d.año)))].filter(y => !isNaN(y))
@@ -305,6 +344,244 @@ export default function PTARPage() {
     }))
   }
 
+  const getResidualChartData = () => {
+    // Gráfica de Agua Residual comparando años
+    return chartData.map(item => ({
+      period: item.period,
+      'Agua Residual': item.ar
+    }))
+  }
+
+  const getTratadaChartData = () => {
+    // Gráfica de Agua Tratada comparando años
+    return chartData.map(item => ({
+      period: item.period,
+      'Agua Tratada': item.at
+    }))
+  }
+
+  // Preparar datos multi-año para PTARComparisonChart (AR)
+  const getMultiYearResidualData = () => {
+    if (timeFilter === 'yearly') {
+      // Vista anual: usar datos mensuales para mostrar la tendencia del año
+      const yearGroups = {}
+      
+      resumenMensual
+        .filter(data => selectedYears.includes(Number(data.año)))
+        .forEach(data => {
+          const year = data.año?.toString()
+          if (!yearGroups[year]) yearGroups[year] = []
+          yearGroups[year].push({
+            week: Number(data.mes), // Usar mes como punto en el eje X
+            consumption: Number(data.total_agua_residual_m3) || 0
+          })
+        })
+      
+      return Object.keys(yearGroups).sort().map(year => ({
+        year,
+        data: yearGroups[year].sort((a, b) => a.week - b.week)
+      }))
+    } else if (timeFilter === 'monthly') {
+      // Vista mensual: igual que yearly, mostrar meses
+      const yearGroups = {}
+      
+      resumenMensual
+        .filter(data => selectedYears.includes(Number(data.año)))
+        .forEach(data => {
+          const year = data.año?.toString()
+          if (!yearGroups[year]) yearGroups[year] = []
+          yearGroups[year].push({
+            week: Number(data.mes),
+            consumption: Number(data.total_agua_residual_m3) || 0
+          })
+        })
+      
+      return Object.keys(yearGroups).sort().map(year => ({
+        year,
+        data: yearGroups[year].sort((a, b) => a.week - b.week)
+      }))
+    } else if (timeFilter === 'weekly') {
+      // Usar datos semanales agrupados
+      const yearGroups = {}
+      const filteredData = applyDateFilter(lecturasDiarias)
+      
+      filteredData.forEach(item => {
+        const date = new Date(item.fecha)
+        const year = date.getFullYear().toString()
+        const weekNum = getWeekNumber(date)
+        
+        if (!selectedYears.includes(Number(year))) return
+        
+        if (!yearGroups[year]) yearGroups[year] = {}
+        if (!yearGroups[year][weekNum]) {
+          yearGroups[year][weekNum] = []
+        }
+        yearGroups[year][weekNum].push(Number(item.ar) || 0)
+      })
+      
+      return Object.keys(yearGroups).sort().map(year => ({
+        year,
+        data: Object.keys(yearGroups[year]).sort((a, b) => Number(a) - Number(b)).map(weekNum => ({
+          week: Number(weekNum),
+          consumption: yearGroups[year][weekNum].reduce((sum, val) => sum + val, 0)
+        }))
+      }))
+    } else if (timeFilter === 'quarterly') {
+      const yearGroups = {}
+      
+      resumenTrimestral
+        .filter(data => selectedYears.includes(Number(data.año)))
+        .forEach(data => {
+          const year = data.año?.toString()
+          if (!yearGroups[year]) yearGroups[year] = []
+          yearGroups[year].push({
+            week: Number(data.trimestre),
+            consumption: Number(data.total_agua_residual_m3) || 0
+          })
+        })
+      
+      return Object.keys(yearGroups).sort().map(year => ({
+        year,
+        data: yearGroups[year].sort((a, b) => a.week - b.week)
+      }))
+    } else if (timeFilter === 'daily') {
+      // Vista diaria: usar datos diarios filtrados
+      const yearGroups = {}
+      const filteredData = applyDateFilter(lecturasDiarias)
+      
+      filteredData.forEach((item, index) => {
+        const date = new Date(item.fecha)
+        const year = date.getFullYear().toString()
+        
+        if (!selectedYears.includes(Number(year))) return
+        
+        if (!yearGroups[year]) yearGroups[year] = []
+        yearGroups[year].push({
+          week: index + 1, // Usar índice como posición
+          consumption: Number(item.ar) || 0,
+          date: item.fecha
+        })
+      })
+      
+      return Object.keys(yearGroups).sort().map(year => ({
+        year,
+        data: yearGroups[year]
+      }))
+    }
+    return []
+  }
+
+  // Preparar datos multi-año para PTARComparisonChart (AT)
+  const getMultiYearTratadaData = () => {
+    if (timeFilter === 'yearly') {
+      // Vista anual: usar datos mensuales para mostrar la tendencia del año
+      const yearGroups = {}
+      
+      resumenMensual
+        .filter(data => selectedYears.includes(Number(data.año)))
+        .forEach(data => {
+          const year = data.año?.toString()
+          if (!yearGroups[year]) yearGroups[year] = []
+          yearGroups[year].push({
+            week: Number(data.mes), // Usar mes como punto en el eje X
+            consumption: Number(data.total_agua_tratada_m3) || 0
+          })
+        })
+      
+      return Object.keys(yearGroups).sort().map(year => ({
+        year,
+        data: yearGroups[year].sort((a, b) => a.week - b.week)
+      }))
+    } else if (timeFilter === 'monthly') {
+      // Vista mensual: igual que yearly, mostrar meses
+      const yearGroups = {}
+      
+      resumenMensual
+        .filter(data => selectedYears.includes(Number(data.año)))
+        .forEach(data => {
+          const year = data.año?.toString()
+          if (!yearGroups[year]) yearGroups[year] = []
+          yearGroups[year].push({
+            week: Number(data.mes),
+            consumption: Number(data.total_agua_tratada_m3) || 0
+          })
+        })
+      
+      return Object.keys(yearGroups).sort().map(year => ({
+        year,
+        data: yearGroups[year].sort((a, b) => a.week - b.week)
+      }))
+    } else if (timeFilter === 'weekly') {
+      // Usar datos semanales agrupados
+      const yearGroups = {}
+      const filteredData = applyDateFilter(lecturasDiarias)
+      
+      filteredData.forEach(item => {
+        const date = new Date(item.fecha)
+        const year = date.getFullYear().toString()
+        const weekNum = getWeekNumber(date)
+        
+        if (!selectedYears.includes(Number(year))) return
+        
+        if (!yearGroups[year]) yearGroups[year] = {}
+        if (!yearGroups[year][weekNum]) {
+          yearGroups[year][weekNum] = []
+        }
+        yearGroups[year][weekNum].push(Number(item.at) || 0)
+      })
+      
+      return Object.keys(yearGroups).sort().map(year => ({
+        year,
+        data: Object.keys(yearGroups[year]).sort((a, b) => Number(a) - Number(b)).map(weekNum => ({
+          week: Number(weekNum),
+          consumption: yearGroups[year][weekNum].reduce((sum, val) => sum + val, 0)
+        }))
+      }))
+    } else if (timeFilter === 'quarterly') {
+      const yearGroups = {}
+      
+      resumenTrimestral
+        .filter(data => selectedYears.includes(Number(data.año)))
+        .forEach(data => {
+          const year = data.año?.toString()
+          if (!yearGroups[year]) yearGroups[year] = []
+          yearGroups[year].push({
+            week: Number(data.trimestre),
+            consumption: Number(data.total_agua_tratada_m3) || 0
+          })
+        })
+      
+      return Object.keys(yearGroups).sort().map(year => ({
+        year,
+        data: yearGroups[year].sort((a, b) => a.week - b.week)
+      }))
+    } else if (timeFilter === 'daily') {
+      // Vista diaria: usar datos diarios filtrados
+      const yearGroups = {}
+      const filteredData = applyDateFilter(lecturasDiarias)
+      
+      filteredData.forEach((item, index) => {
+        const date = new Date(item.fecha)
+        const year = date.getFullYear().toString()
+        
+        if (!selectedYears.includes(Number(year))) return
+        
+        if (!yearGroups[year]) yearGroups[year] = []
+        yearGroups[year].push({
+          week: index + 1, // Usar índice como posición
+          consumption: Number(item.at) || 0,
+          date: item.fecha
+        })
+      })
+      
+      return Object.keys(yearGroups).sort().map(year => ({
+        year,
+        data: yearGroups[year]
+      }))
+    }
+    return []
+  }
+
   // Estado de carga
   if (loading) {
     return (
@@ -379,7 +656,9 @@ export default function PTARPage() {
                       })} m³
                     </p>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-sm text-gray-500">vs año anterior</span>
+                      <span className="text-sm text-gray-500">
+                        vs semana {lastWeekNumber ? lastWeekNumber - 1 : 'anterior'}
+                      </span>
                       <Badge 
                         className={`flex items-center gap-1 ${
                           parseFloat(arVariation) > 0 
@@ -414,7 +693,9 @@ export default function PTARPage() {
                       })} m³
                     </p>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-sm text-gray-500">vs año anterior</span>
+                      <span className="text-sm text-gray-500">
+                        vs semana {lastWeekNumber ? lastWeekNumber - 1 : 'anterior'}
+                      </span>
                       <Badge 
                         className={`flex items-center gap-1 ${
                           parseFloat(atVariation) > 0 
@@ -446,7 +727,9 @@ export default function PTARPage() {
                       {(currentYearData.eficiencia_promedio_porcentaje || 0).toFixed(2)}%
                     </p>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-sm text-gray-500">vs año anterior</span>
+                      <span className="text-sm text-gray-500">
+                        vs semana {lastWeekNumber ? lastWeekNumber - 1 : 'anterior'}
+                      </span>
                       <Badge 
                         className={`flex items-center gap-1 ${
                           parseFloat(eficienciaVariation) > 0 
@@ -601,7 +884,7 @@ export default function PTARPage() {
 
                 {/* Selector de Tipo de Gráfica */}
                 <div className="mb-6">
-                  <div className="flex gap-2 border-b border-gray-200">
+                  <div className="flex flex-wrap gap-2 border-b border-gray-200">
                     <button
                       onClick={() => setActiveChart('flujos')}
                       className={`px-4 py-2 text-sm font-medium ${
@@ -610,7 +893,27 @@ export default function PTARPage() {
                           : 'text-gray-500 hover:text-gray-700'
                       }`}
                     >
-                      📊 Flujos de Agua (AR vs AT)
+                      📊 Flujos (AR vs AT)
+                    </button>
+                    <button
+                      onClick={() => setActiveChart('residual')}
+                      className={`px-4 py-2 text-sm font-medium ${
+                        activeChart === 'residual'
+                          ? 'border-b-2 border-blue-500 text-blue-600'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      💧 Agua Residual (AR)
+                    </button>
+                    <button
+                      onClick={() => setActiveChart('tratada')}
+                      className={`px-4 py-2 text-sm font-medium ${
+                        activeChart === 'tratada'
+                          ? 'border-b-2 border-blue-500 text-blue-600'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      ♻️ Agua Tratada (AT)
                     </button>
                     <button
                       onClick={() => setActiveChart('eficiencia')}
@@ -620,7 +923,7 @@ export default function PTARPage() {
                           : 'text-gray-500 hover:text-gray-700'
                       }`}
                     >
-                      📈 Eficiencia de Tratamiento
+                      📈 Eficiencia
                     </button>
                     {(timeFilter === 'daily' || timeFilter === 'weekly') && (
                       <>
@@ -632,7 +935,7 @@ export default function PTARPage() {
                               : 'text-gray-500 hover:text-gray-700'
                           }`}
                         >
-                          🔄 Balance (Recirculación + Total)
+                          🔄 Balance
                         </button>
                         {timeFilter === 'daily' && (
                           <button
@@ -665,6 +968,26 @@ export default function PTARPage() {
                         colors={['#dc2626', '#16a34a']}
                       />
                     </div>
+                  )}
+
+                  {activeChart === 'residual' && (
+                    <PTARComparisonChart
+                      title="Comparación de Agua Residual (AR) entre Años"
+                      multiYearData={getMultiYearResidualData()}
+                      unit="m³"
+                      chartType={chartType}
+                      dataType="residual"
+                    />
+                  )}
+
+                  {activeChart === 'tratada' && (
+                    <PTARComparisonChart
+                      title="Comparación de Agua Tratada (AT) entre Años"
+                      multiYearData={getMultiYearTratadaData()}
+                      unit="m³"
+                      chartType={chartType}
+                      dataType="tratada"
+                    />
                   )}
 
                   {activeChart === 'eficiencia' && (

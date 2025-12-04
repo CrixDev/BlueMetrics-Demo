@@ -688,137 +688,133 @@ export default function ConsumptionPage() {
               </p>
             </div>
 
-            {/* Bento Grid: Gráfica a la izquierda, Filtros a la derecha */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-              {/* Gráfica de comparación - 2 columnas */}
-              <div className="lg:col-span-2">
-                <WeeklyComparisonChart
-                  title={selectedPoint === 'todos' ? 'Todos los Puntos (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición")}
-                  unit="m³"
-                  chartType={comparisonChartType}
-                  showControls={false}
-                  multiYearData={multiYearData}
-                />
-              </div>
-
-              {/* Filtros a la derecha - 1 columna */}
-              <Card className="lg:col-span-1">
-                <CardHeader>
+            {/* Controles superiores */}
+            <Card className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+              <CardContent className="p-6">
+                <div className="flex flex-wrap items-center gap-4">
+                  {/* Punto de Medición */}
                   <div className="flex items-center gap-2">
-                    <TrendingUpIcon className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Filtros</h3>
+                    <label className="text-sm font-semibold text-foreground whitespace-nowrap">Punto de Medición:</label>
+                    <select
+                      value={selectedPoint}
+                      onChange={(e) => setSelectedPoint(e.target.value)}
+                      className="border border-muted rounded-lg px-3 py-2 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors min-w-[200px]"
+                    >
+                      <optgroup label="Pozos de Servicios">
+                        <option value="medidor_general_pozos">Medidor General de Pozos</option>
+                        <option value="pozo_11">Pozo 11</option>
+                        <option value="pozo_12">Pozo 12</option>
+                        <option value="pozo_14">Pozo 14</option>
+                        <option value="pozo_7">Pozo 7</option>
+                        <option value="pozo_3">Pozo 3</option>
+                      </optgroup>
+                      <optgroup label="Pozos de Riego">
+                        <option value="pozo_4_riego">Pozo 4 Riego</option>
+                        <option value="pozo_8_riego">Pozo 8 Riego</option>
+                        <option value="pozo_15_riego">Pozo 15 Riego</option>
+                      </optgroup>
+                      <optgroup label="Residencias">
+                        <option value="residencias_10_15">Residencias 10 y 15</option>
+                        <option value="residencias_1_antiguo">Residencias 1 (Antiguo)</option>
+                        <option value="residencias_2_ote">Residencias 2 Oriente</option>
+                        <option value="residencias_3">Residencias 3</option>
+                        <option value="residencias_4">Residencias 4</option>
+                        <option value="residencias_5">Residencias 5</option>
+                      </optgroup>
+                      <optgroup label="Edificios Principales">
+                        <option value="wellness_edificio">Wellness Edificio</option>
+                        <option value="biblioteca">Biblioteca</option>
+                        <option value="cetec">CETEC</option>
+                        <option value="biotecnologia">Biotecnología</option>
+                        <option value="arena_borrego">Arena Borrego</option>
+                        <option value="centro_congresos">Centro de Congresos</option>
+                        <option value="auditorio_luis_elizondo">Auditorio Luis Elizondo</option>
+                        <option value="nucleo">Núcleo</option>
+                        <option value="expedition">Expedition</option>
+                      </optgroup>
+                      <optgroup label="Torres de Enfriamiento">
+                        <option value="wellness_torre_enfriamiento">Wellness Torre Enfriamiento</option>
+                        <option value="cah3_torre_enfriamiento">CAH3 Torre Enfriamiento</option>
+                        <option value="megacentral_te_2">Megacentral TE 2</option>
+                        <option value="estadio_banorte_te">Estadio Banorte TE</option>
+                      </optgroup>
+                      <optgroup label="Circuitos">
+                        <option value="circuito_8_campus">Circuito 8" Campus</option>
+                        <option value="circuito_6_residencias">Circuito 6" Residencias</option>
+                        <option value="circuito_4_a7_ce">Circuito 4" A7 CE</option>
+                        <option value="circuito_planta_fisica">Circuito Planta Física</option>
+                        <option value="circuito_megacentral">Circuito Megacentral</option>
+                      </optgroup>
+                    </select>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Punto de Medición */}
-                    <div className="border-b pb-3">
-                      <label className="text-sm font-semibold text-foreground mb-2 block">Punto de Medición</label>
-                      <select
-                        value={selectedPoint}
-                        onChange={(e) => setSelectedPoint(e.target.value)}
-                        className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                      >
-                        <optgroup label="Pozos de Servicios">
-                          <option value="medidor_general_pozos">Medidor General de Pozos</option>
-                          <option value="pozo_11">Pozo 11</option>
-                          <option value="pozo_12">Pozo 12</option>
-                          <option value="pozo_14">Pozo 14</option>
-                          <option value="pozo_7">Pozo 7</option>
-                          <option value="pozo_3">Pozo 3</option>
-                        </optgroup>
-                        <optgroup label="Pozos de Riego">
-                          <option value="pozo_4_riego">Pozo 4 Riego</option>
-                          <option value="pozo_8_riego">Pozo 8 Riego</option>
-                          <option value="pozo_15_riego">Pozo 15 Riego</option>
-           
-                        </optgroup>
-                        <optgroup label="Residencias">
-                          <option value="residencias_10_15">Residencias 10 y 15</option>
-                          <option value="residencias_1_antiguo">Residencias 1 (Antiguo)</option>
-                          <option value="residencias_2_ote">Residencias 2 Oriente</option>
-                          <option value="residencias_3">Residencias 3</option>
-                          <option value="residencias_4">Residencias 4</option>
-                          <option value="residencias_5">Residencias 5</option>
-                        </optgroup>
-                        <optgroup label="Edificios Principales">
-                          <option value="wellness_edificio">Wellness Edificio</option>
-                          <option value="biblioteca">Biblioteca</option>
-                          <option value="cetec">CETEC</option>
-                          <option value="biotecnologia">Biotecnología</option>
-                          <option value="arena_borrego">Arena Borrego</option>
-                          <option value="centro_congresos">Centro de Congresos</option>
-                          <option value="auditorio_luis_elizondo">Auditorio Luis Elizondo</option>
-                          <option value="nucleo">Núcleo</option>
-                          <option value="expedition">Expedition</option>
-                        </optgroup>
-                        <optgroup label="Torres de Enfriamiento">
-                          <option value="wellness_torre_enfriamiento">Wellness Torre Enfriamiento</option>
-                          <option value="cah3_torre_enfriamiento">CAH3 Torre Enfriamiento</option>
-                          <option value="megacentral_te_2">Megacentral TE 2</option>
-                          <option value="estadio_banorte_te">Estadio Banorte TE</option>
-                        </optgroup>
-                        <optgroup label="Circuitos">
-                          <option value="circuito_8_campus">Circuito 8" Campus</option>
-                          <option value="circuito_6_residencias">Circuito 6" Residencias</option>
-                          <option value="circuito_4_a7_ce">Circuito 4" A7 CE</option>
-                          <option value="circuito_planta_fisica">Circuito Planta Física</option>
-                          <option value="circuito_megacentral">Circuito Megacentral</option>
-                        </optgroup>
-                      </select>
-                    </div>
 
-                    {/* Tipo de Gráfico */}
-                    <div className="border-b pb-3">
-                      <label className="text-sm font-semibold text-foreground mb-2 block">Tipo de Gráfico</label>
-                      <select 
-                        value={comparisonChartType} 
-                        onChange={(e) => setComparisonChartType(e.target.value)}
-                        className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                      >
-                        <option value="line">Líneas</option>
-                        <option value="bar">Barras</option>
-                      </select>
-                    </div>
+                  {/* Separador */}
+                  <div className="h-8 w-px bg-gray-300"></div>
 
-                    {/* Selección de años para comparación */}
-                    <div className="pt-2">
-                      <label className="text-sm font-semibold text-foreground mb-2 block">Años a mostrar</label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {availableYears.map(year => (
-                          <Button
-                            key={year}
-                            variant={comparisonYearsToShow.includes(year) ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => {
-                              setComparisonYearsToShow(prev => {
-                                if (prev.includes(year)) {
-                                  // Si ya está seleccionado, quitarlo (mínimo 1 año)
-                                  return prev.length > 1 ? prev.filter(y => y !== year) : prev
-                                } else {
-                                  // Si no está seleccionado, agregarlo
-                                  return [...prev, year].sort()
-                                }
-                              })
-                            }}
-                            className={`text-xs transition-all duration-200 ${
-                              comparisonYearsToShow.includes(year) 
-                                ? 'bg-primary text-primary-foreground shadow-md' 
-                                : 'hover:bg-muted/50'
-                            }`}
-                          >
-                            {year}
-                          </Button>
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Seleccionados: {comparisonYearsToShow.join(', ')}
-                      </p>
+                  {/* Tipo de Gráfico */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-semibold text-foreground whitespace-nowrap">Tipo de Gráfico:</label>
+                    <div className="flex gap-1 border rounded-lg p-1 bg-background">
+                      <Button
+                        variant={comparisonChartType === 'line' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setComparisonChartType('line')}
+                        className="h-8 px-3"
+                      >
+                        Líneas
+                      </Button>
+                      <Button
+                        variant={comparisonChartType === 'bar' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setComparisonChartType('bar')}
+                        className="h-8 px-3"
+                      >
+                        Barras
+                      </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+
+                  {/* Separador */}
+                  <div className="h-8 w-px bg-gray-300"></div>
+
+                  {/* Años a mostrar */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-semibold text-foreground whitespace-nowrap">Años:</label>
+                    <div className="flex gap-1 border rounded-lg p-1 bg-background">
+                      {availableYears.map(year => (
+                        <Button
+                          key={year}
+                          variant={comparisonYearsToShow.includes(year) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            setComparisonYearsToShow(prev => {
+                              if (prev.includes(year)) {
+                                return prev.length > 1 ? prev.filter(y => y !== year) : prev
+                              } else {
+                                return [...prev, year].sort()
+                              }
+                            })
+                          }}
+                          className="h-8 px-3"
+                        >
+                          {year}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Gráfica a pantalla completa */}
+            <WeeklyComparisonChart
+              title={selectedPoint === 'todos' ? 'Todos los Puntos (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición")}
+              unit="m³"
+              chartType={comparisonChartType}
+              showControls={false}
+              multiYearData={multiYearData}
+            />
+          </div>
 
 
 
@@ -941,7 +937,6 @@ export default function ConsumptionPage() {
                 />
               )
             ))}
-          </div>
 
             <div className="mt-8"></div>
 

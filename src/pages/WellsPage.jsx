@@ -56,6 +56,8 @@ export default function WellsPage() {
   })
   const [weeklyData, setWeeklyData] = useState({
     multiYearData: [],
+    multiYearDataRiego: [],
+    multiYearDataServicios: [],
     currentYearData: [],
     previousYearData: []
   })
@@ -139,7 +141,7 @@ export default function WellsPage() {
       title: "06NVL102953/24EMGR06",
       annex: "2.4",
       m3CededByAnnex: 0,
-      m3PorAnexo: 50000.00,
+      m3PorAnexo: 65885.00,
       medidor: {
         fechaInstalacion: "2019-11-20",
         vidaUtilMeses: 72,
@@ -156,7 +158,7 @@ export default function WellsPage() {
       title: "06NVL102953/24EMGR06",
       annex: "2.4",
       m3CededByAnnex: 0,
-      m3PorAnexo: 50000.00,
+      m3PorAnexo: 38000.00,
       medidor: {
         fechaInstalacion: "2021-01-10",
         vidaUtilMeses: 60,
@@ -173,7 +175,7 @@ export default function WellsPage() {
       title: "06NVL102953/24EMGR06",
       annex: "2.5",
       m3CededByAnnex: 0,
-      m3PorAnexo: 50000.00,
+      m3PorAnexo: 45885.00,
       medidor: {
         fechaInstalacion: "2020-09-05",
         vidaUtilMeses: 60,
@@ -242,12 +244,11 @@ export default function WellsPage() {
 
       if (readingsError) throw readingsError
 
-      // Cargar consumo
+      // Cargar consumo (TODAS las semanas del año para calcular el total)
       const { data: consumptionData, error: consumptionError } = await supabase
         .from(consumptionTable)
         .select('*')
         .order('l_numero_semana', { ascending: false })
-        .limit(2) // Últimas 2 semanas
 
       if (consumptionError) throw consumptionError
 
@@ -328,8 +329,12 @@ export default function WellsPage() {
     try {
       const years = [2023, 2024, 2025]
       const allPozos = ['l_pozo_11', 'l_pozo_12', 'l_pozo_3', 'l_pozo_7', 'l_pozo_14', 'l_pozo_4_riego', 'l_pozo_8_riego', 'l_pozo_15_riego']
+      const pozosRiego = ['l_pozo_4_riego', 'l_pozo_8_riego', 'l_pozo_15_riego']
+      const pozosServicios = ['l_pozo_11', 'l_pozo_12', 'l_pozo_3', 'l_pozo_7', 'l_pozo_14']
       const yearTotals = {}
       const allWeeklyData = []
+      const riegoWeeklyData = []
+      const serviciosWeeklyData = []
 
       for (const year of years) {
         const tableName = `lecturas_semana_agua_consumo_${year}`
@@ -346,19 +351,52 @@ export default function WellsPage() {
 
         if (data && data.length > 0) {
           let yearTotal = 0
+          let yearTotalRiego = 0
+          let yearTotalServicios = 0
           const yearWeeks = []
+          const yearWeeksRiego = []
+          const yearWeeksServicios = []
 
           data.forEach((row) => {
+            // Total de todos los pozos
             const consumoTotalSemana = allPozos.reduce((acc, col) => {
               return acc + (parseFloat(row[col]) || 0)
             }, 0)
 
+            // Total de pozos de riego
+            const consumoRiegoSemana = pozosRiego.reduce((acc, col) => {
+              return acc + (parseFloat(row[col]) || 0)
+            }, 0)
+
+            // Total de pozos de servicios
+            const consumoServiciosSemana = pozosServicios.reduce((acc, col) => {
+              return acc + (parseFloat(row[col]) || 0)
+            }, 0)
+
             yearTotal += consumoTotalSemana
+            yearTotalRiego += consumoRiegoSemana
+            yearTotalServicios += consumoServiciosSemana
 
             yearWeeks.push({
               week: row.l_numero_semana,
               consumption: parseFloat(consumoTotalSemana.toFixed(2)),
               reading: yearTotal,
+              fecha_inicio: row.l_fecha_inicio,
+              fecha_fin: row.l_fecha_fin
+            })
+
+            yearWeeksRiego.push({
+              week: row.l_numero_semana,
+              consumption: parseFloat(consumoRiegoSemana.toFixed(2)),
+              reading: yearTotalRiego,
+              fecha_inicio: row.l_fecha_inicio,
+              fecha_fin: row.l_fecha_fin
+            })
+
+            yearWeeksServicios.push({
+              week: row.l_numero_semana,
+              consumption: parseFloat(consumoServiciosSemana.toFixed(2)),
+              reading: yearTotalServicios,
               fecha_inicio: row.l_fecha_inicio,
               fecha_fin: row.l_fecha_fin
             })
@@ -368,6 +406,14 @@ export default function WellsPage() {
           allWeeklyData.push({
             year: year.toString(),
             data: yearWeeks
+          })
+          riegoWeeklyData.push({
+            year: year.toString(),
+            data: yearWeeksRiego
+          })
+          serviciosWeeklyData.push({
+            year: year.toString(),
+            data: yearWeeksServicios
           })
         }
       }
@@ -411,11 +457,13 @@ export default function WellsPage() {
 
       setWeeklyData({
         multiYearData: allWeeklyData,
+        multiYearDataRiego: riegoWeeklyData,
+        multiYearDataServicios: serviciosWeeklyData,
         currentYearData: allWeeklyData.find(y => y.year === '2025')?.data || [],
         previousYearData: allWeeklyData.find(y => y.year === '2024')?.data || []
       })
 
-      console.log('✅ KPIs y datos de gráficas cargados:', { yearTotals, allWeeklyData })
+      console.log('✅ KPIs y datos de gráficas cargados:', { yearTotals, allWeeklyData, riegoWeeklyData, serviciosWeeklyData })
     } catch (err) {
       console.error('❌ Error cargando KPIs:', err)
     }
@@ -646,7 +694,7 @@ export default function WellsPage() {
                     size="lg"
                   >
                     <BarChart3Icon className="h-5 w-5" />
-                    Análisis por Categoría
+                    Línea del Tiempo
                   </Button>
                 </div>
               </div>
@@ -657,6 +705,8 @@ export default function WellsPage() {
               <WeeklyComparisonChart
                 title="Comparación de Consumo por Años (Todos los Pozos)"
                 multiYearData={weeklyData.multiYearData}
+                multiYearDataRiego={weeklyData.multiYearDataRiego}
+                multiYearDataServicios={weeklyData.multiYearDataServicios}
                 currentYearData={weeklyData.currentYearData}
                 previousYearData={weeklyData.previousYearData}
                 currentYear="2025"

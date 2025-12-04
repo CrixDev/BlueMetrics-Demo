@@ -25,18 +25,54 @@ export default function WeeklyComparisonChart({
   comparisonMode: externalComparisonMode = null,
   showControls = true,
   multiYearData = null, // Nueva prop: array de { year: '2023', data: [...] }
+  multiYearDataRiego = null, // Datos de pozos de riego
+  multiYearDataServicios = null, // Datos de pozos de servicios
   total2023 = 0 // Total del año 2023
 }) {
 
   const [internalChartType, setInternalChartType] = useState('line') // 'line' o 'bar'
   const [internalComparisonMode, setInternalComparisonMode] = useState('both') // 'current', 'previous', 'both'
+  const [wellFilter, setWellFilter] = useState('total') // 'total', 'riego', 'servicios'
+  const [selectedYears, setSelectedYears] = useState(['2023', '2024', '2025']) // Años seleccionados
   
   // Usar props externos si se proporcionan, sino usar estados internos
   const chartType = externalChartType !== null ? externalChartType : internalChartType
   const comparisonMode = externalComparisonMode !== null ? externalComparisonMode : internalComparisonMode
   
+  // Determinar qué datos usar según el filtro
+  const getFilteredData = () => {
+    switch (wellFilter) {
+      case 'riego':
+        return multiYearDataRiego
+      case 'servicios':
+        return multiYearDataServicios
+      default:
+        return multiYearData
+    }
+  }
+  
+  const activeMultiYearData = getFilteredData()
+  
+  // Filtrar datos por años seleccionados
+  const filteredMultiYearData = activeMultiYearData !== null && Array.isArray(activeMultiYearData)
+    ? activeMultiYearData.filter(yearItem => selectedYears.includes(yearItem.year))
+    : []
+  
   // Determinar si usar modo multi-año
-  const useMultiYear = multiYearData !== null && Array.isArray(multiYearData) && multiYearData.length > 0
+  const useMultiYear = filteredMultiYearData.length > 0
+  
+  // Función para alternar selección de año
+  const toggleYear = (year) => {
+    setSelectedYears(prev => {
+      if (prev.includes(year)) {
+        // No permitir desactivar todos los años
+        if (prev.length === 1) return prev
+        return prev.filter(y => y !== year)
+      } else {
+        return [...prev, year].sort()
+      }
+    })
+  }
 
   // Procesar datos para obtener consumo semanal
   const processWeeklyData = (weeklyData) => {
@@ -71,11 +107,11 @@ export default function WeeklyComparisonChart({
   // Procesar datos para modo multi-año
   const processedMultiYear = useMemo(() => {
     if (!useMultiYear) return []
-    return multiYearData.map(yearItem => ({
+    return filteredMultiYearData.map(yearItem => ({
       year: yearItem.year,
       processed: processWeeklyData(yearItem.data)
     }))
-  }, [multiYearData, useMultiYear])
+  }, [filteredMultiYearData, useMultiYear])
 
   const processedCurrent = useMemo(() => {
     if (useMultiYear && processedMultiYear.length > 0) {
@@ -310,6 +346,17 @@ export default function WeeklyComparisonChart({
         {/* Controles - solo mostrar si showControls es true */}
         {showControls && (
           <div className="flex items-center gap-2 flex-wrap mt-4">
+            {/* Selector de filtro de pozos */}
+            <select
+              value={wellFilter}
+              onChange={(e) => setWellFilter(e.target.value)}
+              className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary h-8"
+            >
+              <option value="total">Todos los Pozos</option>
+              <option value="riego">Pozos de Riego</option>
+              <option value="servicios">Pozos de Servicios</option>
+            </select>
+
             {/* Selector de tipo de gráfico */}
             <div className="flex gap-1 border rounded-lg p-1">
               <Button
@@ -330,16 +377,33 @@ export default function WeeklyComparisonChart({
               </Button>
             </div>
 
-            {/* Selector de modo de comparación */}
-            <select
-              value={comparisonMode}
-              onChange={(e) => setInternalComparisonMode(e.target.value)}
-              className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary h-8"
-            >
-              <option value="both">Ambos años</option>
-              <option value="current">Solo {currentYear}</option>
-              <option value="previous">Solo {previousYear}</option>
-            </select>
+            {/* Selector de años */}
+            <div className="flex gap-1 border rounded-lg p-1">
+              <Button
+                variant={selectedYears.includes('2023') ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleYear('2023')}
+                className="h-8"
+              >
+                2023
+              </Button>
+              <Button
+                variant={selectedYears.includes('2024') ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleYear('2024')}
+                className="h-8"
+              >
+                2024
+              </Button>
+              <Button
+                variant={selectedYears.includes('2025') ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleYear('2025')}
+                className="h-8"
+              >
+                2025
+              </Button>
+            </div>
           </div>
         )}
 
@@ -424,32 +488,6 @@ export default function WeeklyComparisonChart({
           </div>
         </div>
 
-        {/* Comparación adicional: misma semana año anterior */}
-        {comparisonStats.sameWeekLastYear !== 0 && (
-          <div className={`mt-3 p-3 rounded-lg border ${
-            comparisonStats.sameWeekLastYear > 0 
-              ? 'bg-red-50 dark:bg-red-900/20 border-red-200' 
-              : 'bg-green-50 dark:bg-green-900/20 border-green-200'
-          }`}>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">
-                Semana {comparisonStats.lastWeekNumber} ({currentYear}) vs Misma Semana {previousYear}
-              </p>
-              <div className="flex items-center gap-2">
-                {comparisonStats.sameWeekLastYear > 0 ? (
-                  <TrendingUpIcon className="h-5 w-5 text-red-600" />
-                ) : (
-                  <TrendingDownIcon className="h-5 w-5 text-green-600" />
-                )}
-                <span className={`text-lg font-bold ${
-                  comparisonStats.sameWeekLastYear > 0 ? 'text-red-600' : 'text-green-600'
-                }`}>
-                  {comparisonStats.sameWeekLastYear > 0 ? '+' : ''}{comparisonStats.sameWeekLastYear.toFixed(1)}%
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
       </CardHeader>
 
       <CardContent>
@@ -468,7 +506,7 @@ export default function WeeklyComparisonChart({
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span>Estable (±5%)</span>
+                <span>Estable ({'>'}=0 y {'<'}=5%)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>

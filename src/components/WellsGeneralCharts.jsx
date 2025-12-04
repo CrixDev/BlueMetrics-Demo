@@ -172,8 +172,7 @@ export default function WellsGeneralCharts() {
 
         processed[type] = Object.keys(yearGroups).map(year => ({
           label: year,
-          consumo: parseFloat(yearGroups[year].reduce((a, b) => a + b, 0).toFixed(2)),
-          promedio: parseFloat((yearGroups[year].reduce((a, b) => a + b, 0) / yearGroups[year].length).toFixed(2))
+          consumo: parseFloat(yearGroups[year].reduce((a, b) => a + b, 0).toFixed(2))
         }))
       } else if (viewType === 'mensual') {
         // Agrupar por mes
@@ -188,15 +187,13 @@ export default function WellsGeneralCharts() {
 
         processed[type] = Object.keys(monthGroups).sort().map(month => ({
           label: month,
-          consumo: parseFloat(monthGroups[month].reduce((a, b) => a + b, 0).toFixed(2)),
-          promedio: parseFloat((monthGroups[month].reduce((a, b) => a + b, 0) / monthGroups[month].length).toFixed(2))
+          consumo: parseFloat(monthGroups[month].reduce((a, b) => a + b, 0).toFixed(2))
         }))
       } else if (viewType === 'semanal') {
         // Mostrar todas las semanas
         processed[type] = data.map(item => ({
           label: `${item.year}-S${item.week}`,
-          consumo: item.consumo,
-          promedio: item.consumo
+          consumo: item.consumo
         }))
       }
     })
@@ -259,7 +256,8 @@ export default function WellsGeneralCharts() {
             />
             <YAxis 
               tick={{ fill: '#6b7280', fontSize: 14 }}
-              label={{ value: 'Consumo (m³)', angle: -90, position: 'insideLeft', fill: '#374151' }}
+              label={{ value: 'Consumo (m³)', angle: -90, position: 'insideLeft', fill: '#374151', offset: 10 }}
+              width={80}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend 
@@ -272,14 +270,6 @@ export default function WellsGeneralCharts() {
               name="Consumo Total"
               radius={[8, 8, 0, 0]}
             />
-            {viewType !== 'semanal' && (
-              <Bar 
-                dataKey="promedio" 
-                fill="#10b981" 
-                name="Promedio"
-                radius={[8, 8, 0, 0]}
-              />
-            )}
           </BarChart>
         ) : chartType === 'line' ? (
           <LineChart {...commonProps}>
@@ -294,7 +284,8 @@ export default function WellsGeneralCharts() {
             />
             <YAxis 
               tick={{ fill: '#6b7280', fontSize: 14 }}
-              label={{ value: 'Consumo (m³)', angle: -90, position: 'insideLeft', fill: '#374151' }}
+              label={{ value: 'Consumo (m³)', angle: -90, position: 'insideLeft', fill: '#374151', offset: 10 }}
+              width={80}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend 
@@ -310,17 +301,6 @@ export default function WellsGeneralCharts() {
               dot={{ fill: '#3b82f6', r: 4 }}
               activeDot={{ r: 6 }}
             />
-            {viewType !== 'semanal' && (
-              <Line 
-                type="monotone"
-                dataKey="promedio" 
-                stroke="#10b981" 
-                strokeWidth={2}
-                name="Promedio"
-                dot={{ fill: '#10b981', r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            )}
           </LineChart>
         ) : (
           <AreaChart {...commonProps}>
@@ -345,7 +325,8 @@ export default function WellsGeneralCharts() {
             />
             <YAxis 
               tick={{ fill: '#6b7280', fontSize: 14 }}
-              label={{ value: 'Consumo (m³)', angle: -90, position: 'insideLeft', fill: '#374151' }}
+              label={{ value: 'Consumo (m³)', angle: -90, position: 'insideLeft', fill: '#374151', offset: 10 }}
+              width={80}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend 
@@ -361,17 +342,6 @@ export default function WellsGeneralCharts() {
               fill="url(#colorConsumo)"
               name="Consumo Total"
             />
-            {viewType !== 'semanal' && (
-              <Area 
-                type="monotone"
-                dataKey="promedio" 
-                stroke="#10b981" 
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#colorPromedio)"
-                name="Promedio"
-              />
-            )}
           </AreaChart>
         )}
       </ResponsiveContainer>
@@ -632,17 +602,11 @@ export default function WellsGeneralCharts() {
 
         {/* Estadísticas */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <p className="text-sm text-blue-700 font-medium mb-1">Consumo Total</p>
               <p className="text-2xl font-bold text-blue-900">
                 {stats.totalConsumo.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} m³
-              </p>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <p className="text-sm text-green-700 font-medium mb-1">Promedio Anual</p>
-              <p className="text-2xl font-bold text-green-900">
-                {stats.promedioAnual.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} m³
               </p>
             </div>
             <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
