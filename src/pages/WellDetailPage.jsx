@@ -1052,7 +1052,7 @@ export default function WellDetailPage() {
             )}
 
     {/* Métricas en tiempo real desde Supabase */}
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {loading ? (
                     <Card className="p-4 col-span-5">
                       <div className="flex items-center justify-center gap-2">
@@ -1078,7 +1078,7 @@ export default function WellDetailPage() {
                             {currentReading.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">Última semana registrada</p>
+                        <p className="text-xs text-gray-500 mt-1">Última semana registrada 45</p>
                       </Card>
 
                       {/* Consumo de la Última Semana */}
@@ -1090,7 +1090,7 @@ export default function WellDetailPage() {
                             {currentConsumption.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">Última semana</p>
+                        <p className="text-xs text-gray-500 mt-1">Última semana 45</p>
                       </Card>
 
                       {/* Consumo vs Semana Anterior */}
