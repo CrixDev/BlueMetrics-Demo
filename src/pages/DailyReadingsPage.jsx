@@ -393,82 +393,6 @@ const DailyReadingsPage = () => {
           />
         </div>
 
-        {/* Gráficos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          
-          {/* Gráfico de Consumo Diario */}
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="text-xl font-semibold text-foreground mb-4">
-              Consumo Diario (Últimos 30 registros)
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={datosConsumo}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="fecha" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                  tick={{ fontSize: 10 }}
-                />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="consumo" stroke="#0088FE" name="Consumo" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Gráfico de General Pozos */}
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="text-xl font-semibold text-foreground mb-4">
-              General Pozos (Últimos 30 registros)
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={datosConsumo}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="fecha" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                  tick={{ fontSize: 10 }}
-                />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="general_pozos" stroke="#00C49F" name="General Pozos" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-    
-      
-        </div>
-
-
-      <div className=" gap-6 mb-6 mx-20">
-           {/* Gráfico de Pozos Promedio */}
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="text-xl font-semibold text-foreground mb-4">
-              Promedio por Pozo
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={datosPozos}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="nombre" angle={-45} textAnchor="end" height={80} tick={{ fontSize: 10 }} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="valor" fill="#8884d8" name="Lectura Promedio">
-                  {datosPozos.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
 
         {/* Tabla de datos */}
         <div className="bg-card rounded-lg border border-border overflow-hidden">
@@ -478,33 +402,51 @@ const DailyReadingsPage = () => {
             </h3>
           </div>
           
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
             <table className="w-full">
-              <thead className="bg-muted">
+              <thead className="bg-muted sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Mes/Año</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Día/Hora</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Consumo</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">General Pozos</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Campus 8</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">A7-CC</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Megacentral</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Planta Física</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Residencias</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Mes/Año</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Día/Hora</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Consumo</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">General Pozos</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Pozo 3</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Pozo 8</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Pozo 15</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Pozo 4</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Pozo 7</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Pozo 11</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Pozo 12</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Pozo 14</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Campus 8</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">A7-CC</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Megacentral</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Planta Física</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">Residencias</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">A y D</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {lecturasPaginadas.map((lectura, index) => (
                   <tr key={lectura.id || index} className="hover:bg-muted/50">
-                    <td className="px-4 py-3 text-sm text-foreground">{lectura.mes_anio}</td>
-                    <td className="px-4 py-3 text-sm text-foreground">{lectura.dia_hora}</td>
-                    <td className="px-4 py-3 text-sm text-foreground text-right font-medium">{lectura.consumo}</td>
-                    <td className="px-4 py-3 text-sm text-foreground text-right">{lectura.general_pozos}</td>
-                    <td className="px-4 py-3 text-sm text-foreground text-right">{lectura.campus_8}</td>
-                    <td className="px-4 py-3 text-sm text-foreground text-right">{lectura.a7_cc}</td>
-                    <td className="px-4 py-3 text-sm text-foreground text-right">{lectura.megacentral}</td>
-                    <td className="px-4 py-3 text-sm text-foreground text-right">{lectura.planta_fisica}</td>
-                    <td className="px-4 py-3 text-sm text-foreground text-right">{lectura.residencias}</td>
+                    <td className="px-4 py-3 text-sm text-foreground whitespace-nowrap">{lectura.mes_anio}</td>
+                    <td className="px-4 py-3 text-sm text-foreground whitespace-nowrap">{lectura.dia_hora}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right font-medium whitespace-nowrap">{lectura.consumo}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.general_pozos}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.pozo_3}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.pozo_8}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.pozo_15}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.pozo_4}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.pozo7}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.pozo11}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.pozo_12}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.pozo_14}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.campus_8}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.a7_cc}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.megacentral}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.planta_fisica}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.residencias}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">{lectura.a_y_d}</td>
                   </tr>
                 ))}
               </tbody>
