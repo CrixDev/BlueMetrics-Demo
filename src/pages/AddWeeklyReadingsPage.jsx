@@ -316,28 +316,58 @@ export default function AddWeeklyReadingsPage() {
 
   // Descargar plantilla de Excel
   const downloadTemplate = () => {
-    // Crear datos de plantilla con todos los puntos de consumo
+    // Crear datos de plantilla con TODOS los 147 puntos - solo 3 columnas
     const templateData = []
     
     consumptionPointsData.categories.forEach(category => {
       category.points.forEach(point => {
-        if (!point.noRead) {
-          templateData.push({
-            'Punto de Consumo': point.name,
-            'ID': point.id,
-            'Lectura': 0
-          })
-        }
+        templateData.push({
+          'Punto de Consumo': point.name,
+          'ID': point.id,
+          'Lectura': 0
+        })
       })
     })
 
-    // Crear libro de Excel
+    // Crear hoja de trabajo
     const ws = XLSX.utils.json_to_sheet(templateData)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Lecturas')
+    
+    // Ajustar anchos de columna
+    ws['!cols'] = [
+      { wch: 70 },  // Punto de Consumo
+      { wch: 35 },  // ID
+      { wch: 15 }   // Lectura
+    ]
 
-    // Descargar archivo
-    XLSX.writeFile(wb, `Plantilla_Lecturas_Semanales.xlsx`)
+    // Crear libro de Excel
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Lecturas Semanales')
+    
+    // Agregar hoja de instrucciones
+    const totalPuntos = consumptionPointsData.categories.reduce((acc, cat) => acc + cat.points.length, 0)
+    
+    const instrucciones = [
+      { 'INSTRUCCIONES': 'Plantilla de Lecturas Semanales de Agua - Aquanet' },
+      { 'INSTRUCCIONES': '' },
+      { 'INSTRUCCIONES': '📋 INSTRUCCIONES:' },
+      { 'INSTRUCCIONES': '' },
+      { 'INSTRUCCIONES': '1. Complete la columna "Lectura" con los valores en m³' },
+      { 'INSTRUCCIONES': '2. NO modifique las columnas "Punto de Consumo" ni "ID"' },
+      { 'INSTRUCCIONES': '3. Guarde el archivo y súbalo en el sistema' },
+      { 'INSTRUCCIONES': '' },
+      { 'INSTRUCCIONES': '📊 Total de puntos: ' + totalPuntos },
+      { 'INSTRUCCIONES': '' },
+      { 'INSTRUCCIONES': '⚠️ Nota: Algunos puntos están marcados como "(NO TOMAR LECTURA)"' },
+      { 'INSTRUCCIONES': '   Puede dejar esos en 0 o vacío.' }
+    ]
+    
+    const wsInstrucciones = XLSX.utils.json_to_sheet(instrucciones)
+    wsInstrucciones['!cols'] = [{ wch: 80 }]
+    XLSX.utils.book_append_sheet(wb, wsInstrucciones, 'Instrucciones')
+
+    // Descargar archivo con fecha
+    const fecha = new Date().toISOString().split('T')[0]
+    XLSX.writeFile(wb, `Plantilla_Lecturas_Semanales_${fecha}.xlsx`)
   }
 
   // Calcular progreso
