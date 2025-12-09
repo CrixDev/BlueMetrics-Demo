@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { DashboardSummary } from "../components/dashboard-summary"
@@ -54,17 +55,29 @@ import {
 } from 'lucide-react'
 
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth';
+import { useAuth } from '../contexts/AuthContextNew';
 
 export default function DashboardPage() {
+  const navigate = useNavigate()
+  const { user, loading } = useAuth()
   const [selectedPeriod, setSelectedPeriod] = useState('monthly')
   const { consumption, goals, efficiencyKPIs } = dashboardData
+
+  // Redirigir usuarios con rol "datos" directamente a lecturas semanales
+  useEffect(() => {
+    if (!loading && user) {
+      if (user.role === 'datos') {
+        navigate('/agregar-lecturas', { replace: true })
+      }
+    }
+  }, [user, loading, navigate])
   
   // Estados para datos de Supabase
   const [waterWeeklyData, setWaterWeeklyData] = useState([])
   const [gasWeeklyData, setGasWeeklyData] = useState([])
   const [ptarData, setPtarData] = useState([])
   const [dailyReadingsData, setDailyReadingsData] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [dataLoading, setDataLoading] = useState(true)
 
   // Cargar datos de todas las secciones
   useEffect(() => {
@@ -73,7 +86,7 @@ export default function DashboardPage() {
 
   const fetchAllDashboardData = async () => {
     try {
-      setLoading(true)
+      setDataLoading(true)
       
       // Cargar datos de agua (últimas 12 semanas de 2025)
       const { data: waterData } = await supabase
@@ -111,7 +124,7 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Error cargando datos del dashboard:', error)
     } finally {
-      setLoading(false)
+      setDataLoading(false)
     }
   }
 
@@ -888,7 +901,7 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {loading ? (
+              {dataLoading ? (
                 <div className="h-80 flex items-center justify-center">
                   <p className="text-muted-foreground">Generando predicción...</p>
                 </div>

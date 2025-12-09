@@ -31,6 +31,10 @@ const LoginPage = () => {
 
   // Función para obtener la primera ruta permitida según el rol
   const getDefaultRoute = () => {
+    // Si el usuario tiene rol "datos", redirigir directamente a lecturas semanales
+    if (user?.role === 'datos') return '/agregar-lecturas';
+    
+    // Para otros roles, usar el sistema de permisos existente
     if (can('dashboard')) return '/dashboard';
     if (can('water')) return '/consumo';
     if (can('gas')) return '/consumo-gas';
@@ -43,7 +47,7 @@ const LoginPage = () => {
     if (!loading && isAuthenticated) {
       navigate(getDefaultRoute());
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading, navigate, user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

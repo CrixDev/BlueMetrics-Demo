@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
-import { FileSpreadsheet, Database, Download, Upload, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { FileSpreadsheet, Database, Download, Upload, AlertCircle, CheckCircle2, Info, CloudUpload } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 /**
  * Componente reutilizable para convertir archivos Excel a SQL INSERT statements
@@ -25,6 +26,8 @@ const ExcelToSqlConverter = ({ config }) => {
   const [exito, setExito] = useState('');
   const [procesando, setProcesando] = useState(false);
   const [estadisticas, setEstadisticas] = useState(null);
+  const [insertando, setInsertando] = useState(false);
+  const [datosParaInsertar, setDatosParaInsertar] = useState(null);
   
   const fileInputRef = useRef(null);
 
@@ -224,8 +227,18 @@ VALUES (${valoresStr});`;
         // Unir todos los INSERTs con saltos de línea
         const sqlFinal = `-- Generado automáticamente\nBEGIN;\n\n${insertStatements.join('\n\n')}\n\nCOMMIT;`;
         
+        // Preparar datos para inserción en DB
+        const datosDB = todosLosValores.map(valores => {
+          const registro = {};
+          config.campos.forEach((campo, index) => {
+            registro[campo] = convertirValorParaDB(valores[index], campo);
+          });
+          return registro;
+        });
+        
         // Actualizar estado con resultados
         setSqlGenerado(sqlFinal);
+        setDatosParaInsertar(datosDB);
         setEstadisticas({
           totalRegistros: todosLosValores.length,
           totalCampos: config.campos.length,
@@ -283,8 +296,18 @@ VALUES (${valoresStr});`;
         // Construir la sentencia SQL completa
         const sqlFinal = `INSERT INTO public.${nombreTabla.trim()} (\n    ${columnasStr}\n) VALUES \n${todosLosValuesStr};`;
         
+        // Preparar datos para inserción en DB (formato vertical)
+        const datosDB = todosLosValores.map(valores => {
+          const registro = {};
+          config.campos.slice(0, maxFilas).forEach((campo, index) => {
+            registro[campo] = convertirValorParaDB(valores[index], campo);
+          });
+          return registro;
+        });
+        
         // Actualizar estado con resultados
         setSqlGenerado(sqlFinal);
+        setDatosParaInsertar(datosDB);
         setEstadisticas({
           totalRegistros: columnasConDatos,
           totalCampos: datos.length,
@@ -332,6 +355,133 @@ VALUES (${valoresStr});`;
       }, 3000);
     } catch (err) {
       setError('❌ Error al copiar al portapapeles');
+    }
+  };
+
+  // ==================================================
+  // Función para convertir valores SQL a valores JS
+  // ==================================================
+  const convertirValorParaDB = (valorSQL, nombreCampo) => {
+    // Si es NULL, retornar null
+    if (valorSQL === 'NULL') {
+      return null;
+    }
+    
+    // Si es un string con comillas, quitarlas
+    if (typeof valorSQL === 'string' && valorSQL.startsWith("'") && valorSQL.endsWith("'")) {
+      const valor = valorSQL.slice(1, -1).replace(/''/g, "'");
+      
+      // Si es una fecha, convertir a formato ISO
+      if (nombreCampo.includes('fecha')) {
+        return valor;
+      }
+      
+      return valor;
+    }
+    
+    // Si es un número, retornarlo como está
+    return valorSQL;
+  };
+
+  // ==================================================
+  // Insertar datos en la base de datos usando función RPC
+  // ==================================================
+  const insertarEnDB = async () => {
+    if (!datosParaInsertar || datosParaInsertar.length === 0) {
+      setError('No hay datos para insertar. Primero genera el SQL.');
+      return;
+    }
+    
+    setError('');
+    setExito('');
+    setInsertando(true);
+    
+    try {
+      const tableName = nombreTabla.trim();
+      const BATCH_SIZE = 50; // Lotes más pequeños para evitar timeouts
+      let totalInsertados = 0;
+      
+      console.log('🔍 Insertando en tabla:', tableName);
+      console.log('📊 Total de registros:', datosParaInsertar.length);
+      
+      for (let i = 0; i < datosParaInsertar.length; i += BATCH_SIZE) {
+        const lote = datosParaInsertar.slice(i, i + BATCH_SIZE);
+        
+        // Usar función RPC para insertar datos
+        // Esta función debe estar creada en Supabase
+        const { data, error: rpcError } = await supabase.rpc('insert_bulk_data', {
+          p_table_name: tableName,
+          p_data: lote
+        });
+        
+        if (rpcError) {
+          console.error('❌ Error RPC:', rpcError);
+          
+          // Si la función RPC no existe, intentar método alternativo
+          if (rpcError.code === 'PGRST202' || rpcError.message.includes('function')) {
+            console.log('⚠️ Función RPC no encontrada, intentando método directo...');
+            
+            // Intentar inserción directa
+            const { data: directData, error: directError } = await supabase
+              .from(tableName)
+              .insert(lote);
+            
+            if (directError) {
+              throw new Error(`Error al insertar: ${directError.message}`);
+            }
+          } else {
+            throw new Error(`Error RPC: ${rpcError.message}`);
+          }
+        }
+        
+        totalInsertados += lote.length;
+        
+        // Actualizar progreso
+        setExito(`⏳ Insertando... ${totalInsertados} de ${datosParaInsertar.length} registros`);
+        
+        // Pequeña pausa entre lotes para evitar sobrecarga
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      setExito(`✅ Se insertaron ${totalInsertados} registros exitosamente en la tabla "${tableName}"`);
+      
+    } catch (err) {
+      console.error('❌ Error al insertar en DB:', err);
+      
+      let errorMsg = `❌ Error al insertar en la base de datos:\n\n${err.message}\n\n`;
+      
+      if (err.message.includes('schema cache') || err.message.includes('function')) {
+        errorMsg += `🔧 CONFIGURACIÓN NECESARIA:\n\n`;
+        errorMsg += `Para que los clientes puedan subir archivos Excel automáticamente,\n`;
+        errorMsg += `necesitas ejecutar este SQL en Supabase (solo una vez):\n\n`;
+        errorMsg += `──────────────────────────────────────────────────\n\n`;
+        errorMsg += `-- 1. Crear función para inserción masiva\n`;
+        errorMsg += `CREATE OR REPLACE FUNCTION insert_bulk_data(\n`;
+        errorMsg += `  p_table_name TEXT,\n`;
+        errorMsg += `  p_data JSONB\n`;
+        errorMsg += `) RETURNS void AS $$\n`;
+        errorMsg += `DECLARE\n`;
+        errorMsg += `  rec JSONB;\n`;
+        errorMsg += `BEGIN\n`;
+        errorMsg += `  FOR rec IN SELECT * FROM jsonb_array_elements(p_data)\n`;
+        errorMsg += `  LOOP\n`;
+        errorMsg += `    EXECUTE format(\n`;
+        errorMsg += `      'INSERT INTO %I SELECT * FROM jsonb_populate_record(NULL::%I, $1)',\n`;
+        errorMsg += `      p_table_name, p_table_name\n`;
+        errorMsg += `    ) USING rec;\n`;
+        errorMsg += `  END LOOP;\n`;
+        errorMsg += `END;\n`;
+        errorMsg += `$$ LANGUAGE plpgsql SECURITY DEFINER;\n\n`;
+        errorMsg += `-- 2. Dar permisos a usuarios autenticados\n`;
+        errorMsg += `GRANT EXECUTE ON FUNCTION insert_bulk_data(TEXT, JSONB) TO authenticated;\n\n`;
+        errorMsg += `──────────────────────────────────────────────────\n\n`;
+        errorMsg += `📋 Copia este código y ejecútalo en el SQL Editor de Supabase.\n`;
+        errorMsg += `Después, los clientes podrán subir archivos sin problemas.`;
+      }
+      
+      setError(errorMsg);
+    } finally {
+      setInsertando(false);
     }
   };
 
@@ -450,6 +600,27 @@ VALUES (${valoresStr});`;
                 <>⚡ Generar SQL</>
               )}
             </button>
+            
+            {/* Botón insertar en DB */}
+            {sqlGenerado && (
+              <button
+                onClick={insertarEnDB}
+                disabled={insertando || !datosParaInsertar}
+                className="w-full mt-3 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {insertando ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Insertando...
+                  </>
+                ) : (
+                  <>
+                    <CloudUpload className="w-5 h-5" />
+                    Insertar en Base de Datos
+                  </>
+                )}
+              </button>
+            )}
             
             {/* Mensajes */}
             {error && (

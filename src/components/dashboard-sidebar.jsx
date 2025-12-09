@@ -3,18 +3,22 @@ import { useLocation, useNavigate } from "react-router"
 import { 
   Mail, Recycle, PlusCircle, Flame, LayoutDashboard, 
   Droplets, Scale, Drill, Database, FileInput, 
-  TrendingUp, Bell, ChevronDown, ChevronRight, BarChart3, FileSpreadsheet, Calendar
+  TrendingUp, Bell, ChevronDown, ChevronRight, BarChart3, FileSpreadsheet, Calendar, Upload, Edit
 } from "lucide-react"
-import { useState } from "react"
-// import { useEffect } from "react"
-// import { supabase } from "../supabaseClient"
+import { useState, useEffect } from "react"
+import { useAuth } from "../contexts/AuthContextNew"
 
 export function DashboardSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
-  // const [userRole, setUserRole] = useState(null)
-  // TEMPORALMENTE DESACTIVADO - Todos tienen acceso de admin para pruebas
-  const [userRole, setUserRole] = useState('admin')
+  const { user, loading } = useAuth()
+  const [userRole, setUserRole] = useState(null)
+
+  useEffect(() => {
+    if (user) {
+      setUserRole(user.role)
+    }
+  }, [user])
   
   // Estado para secciones colapsables
   const [expandedSections, setExpandedSections] = useState({
@@ -23,6 +27,7 @@ export function DashboardSidebar() {
     gas: true,
     data: true,
     analysis: true,
+    imports: true,
     admin: true
   })
 
@@ -66,8 +71,8 @@ export function DashboardSidebar() {
   //   getUserRole()
   // }, [])
 
-  // Estructura de menú organizada por secciones
-  const menuSections = [
+  // Estructura de menú base
+  const baseMenuSections = [
     {
       id: 'general',
       label: 'General',
@@ -75,6 +80,34 @@ export function DashboardSidebar() {
         { id: "dashboard", label: "Dashboard Principal", path: "/dashboard", icon: LayoutDashboard }
       ]
     },
+    {
+      id: 'data',
+      label: 'Administración de Datos',
+      items: [
+        { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", icon: Database },
+        { id: "add-readings", label: "Lecturas Semanales Agua", path: "/agregar-lecturas", icon: FileInput },
+        { id: "edit-readings", label: "Editar Lecturas Agua", path: "/editar-lecturas", icon: Edit },
+        { id: "add-daily-readings", label: "Lecturas Diarias Agua", path: "/agregar-lecturas-diarias", icon: Calendar },
+        { id: "add-ptar-readings", label: "Lecturas PTAR", path: "/agregar-lecturas-ptar", icon: Recycle }
+      ]
+    },
+    {
+      id: 'imports',
+      label: 'Importación Excel/SQL',
+      items: [
+        { id: "excel-to-sql", label: "Importar Datos", path: "/excel-to-sql", icon: Upload },
+        { id: "excel-agua-2023", label: "Agua 2023", path: "/excel-to-sql/agua/2023", icon: Droplets },
+        { id: "excel-agua-2024", label: "Agua 2024", path: "/excel-to-sql/agua/2024", icon: Droplets },
+        { id: "excel-agua-2025", label: "Agua 2025", path: "/excel-to-sql/agua/2025", icon: Droplets },
+        { id: "excel-gas-2023", label: "Gas 2023", path: "/excel-to-sql/gas/2023", icon: Flame },
+        { id: "excel-gas-2024", label: "Gas 2024", path: "/excel-to-sql/gas/2024", icon: Flame },
+        { id: "excel-gas-2025", label: "Gas 2025", path: "/excel-to-sql/gas/2025", icon: Flame }
+      ]
+    }
+  ]
+
+  // Secciones adicionales para rol admin
+  const adminOnlySections = [
     {
       id: 'water',
       label: 'Gestión Hídrica',
@@ -95,16 +128,6 @@ export function DashboardSidebar() {
       ]
     },
     {
-      id: 'data',
-      label: 'Administración de Datos',
-      items: [
-        { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", icon: Database },
-        { id: "add-readings", label: "Lecturas Semanales Agua", path: "/agregar-lecturas", icon: FileInput },
-        { id: "add-daily-readings", label: "Lecturas Diarias Agua", path: "/agregar-lecturas-diarias", icon: Calendar },
-        { id: "add-ptar-readings", label: "Lecturas PTAR", path: "/agregar-lecturas-ptar", icon: Recycle }
-      ]
-    },
-    {
       id: 'analysis',
       label: 'Análisis',
       items: [
@@ -112,18 +135,21 @@ export function DashboardSidebar() {
         { id: "predictions", label: "Predicciones", path: "/predicciones", icon: TrendingUp },
         { id: "alerts", label: "Alertas", path: "/alertas", icon: Bell }
       ]
-    }
-  ]
-
-  // Agregar sección de administración solo para admins
-  if (userRole === 'admin') {
-    menuSections.push({
+    },
+    {
       id: 'admin',
       label: 'Administración',
       items: [
         { id: "correos", label: "Correos", path: "/correos", icon: Mail, badge: "Admin" }
       ]
-    })
+    }
+  ]
+
+  // Construir menú según rol
+  let menuSections = [...baseMenuSections]
+  
+  if (userRole === 'admin') {
+    menuSections = [...menuSections, ...adminOnlySections]
   }
 
   const handleNavigation = (path) => {

@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router'
 import { AuthProvider } from './contexts/AuthContextNew'
 import ProtectedRoute from './components/ProtectedRouteNew'
 import AdminRoute from './components/AdminRouteNew'
+import DataRoute from './components/DataRouteNew'
 import PermissionRoute from './components/PermissionRoute'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPageNew'
@@ -13,6 +14,7 @@ import WellDetailPage from './pages/WellDetailPage'
 import PTARPage from './pages/PTARPage'
 import AddDataPage from './pages/AddDataPage'
 import AddWeeklyReadingsPage from './pages/AddWeeklyReadingsPage'
+import EditWeeklyReadingsPage from './pages/EditWeeklyReadingsPage'
 import AddDailyReadingsPage from './pages/AddDailyReadingsPage'
 import AddPTARReadingsPage from './pages/AddPTARReadingsPage'
 import GasConsumptionPage from './pages/GasConsumptionPage'
@@ -76,22 +78,25 @@ function App() {
         <Route path="/analisis" element={<ProtectedRoute><AnalysisSectionPage /></ProtectedRoute>} />
         <Route path="/contacto" element={<ProtectedRoute><ContactPage /></ProtectedRoute>} />
 
-        {/* Rutas de admin - requieren rol admin */}
-        <Route path="/agregar-datos" element={<AdminRoute><AddDataPage /></AdminRoute>} />
-        <Route path="/agregar-lecturas" element={<AdminRoute><AddWeeklyReadingsPage /></AdminRoute>} />
-        <Route path="/agregar-lecturas-diarias" element={<AdminRoute><AddDailyReadingsPage /></AdminRoute>} />
-        <Route path="/agregar-lecturas-gas" element={<AdminRoute><AddWeeklyGasReadingsPage /></AdminRoute>} />
-        <Route path="/agregar-lecturas-ptar" element={<AdminRoute><AddPTARReadingsPage /></AdminRoute>} />
+        {/* Rutas de ingreso de datos - accesibles para roles admin y datos */}
+        <Route path="/agregar-datos" element={<DataRoute><AddDataPage /></DataRoute>} />
+        <Route path="/agregar-lecturas" element={<DataRoute><AddWeeklyReadingsPage /></DataRoute>} />
+        <Route path="/editar-lecturas" element={<DataRoute><EditWeeklyReadingsPage /></DataRoute>} />
+        <Route path="/agregar-lecturas-diarias" element={<DataRoute><AddDailyReadingsPage /></DataRoute>} />
+        <Route path="/agregar-lecturas-gas" element={<DataRoute><AddWeeklyGasReadingsPage /></DataRoute>} />
+        <Route path="/agregar-lecturas-ptar" element={<DataRoute><AddPTARReadingsPage /></DataRoute>} />
+        <Route path="/excel-to-sql" element={<DataRoute><ExcelToSqlPage /></DataRoute>} />
+        <Route path="/excel-to-sql/agua/2023" element={<DataRoute><ExcelToSqlAgua2023 /></DataRoute>} />
+        <Route path="/excel-to-sql/agua/2024" element={<DataRoute><ExcelToSqlAgua2024 /></DataRoute>} />
+        <Route path="/excel-to-sql/agua/2025" element={<DataRoute><ExcelToSqlAgua2025 /></DataRoute>} />
+        <Route path="/excel-to-sql/gas/2023" element={<DataRoute><ExcelToSqlGas2023 /></DataRoute>} />
+        <Route path="/excel-to-sql/gas/2024" element={<DataRoute><ExcelToSqlGas2024 /></DataRoute>} />
+        <Route path="/excel-to-sql/gas/2025" element={<DataRoute><ExcelToSqlGas2025 /></DataRoute>} />
+        <Route path="/excel-to-sql/ptar" element={<DataRoute><ExcelToSqlPTAR /></DataRoute>} />
+        <Route path="/csv-to-sql-daily" element={<DataRoute><CsvToSqlDailyPage /></DataRoute>} />
+
+        {/* Rutas exclusivas de admin - solo rol admin */}
         <Route path="/correos" element={<AdminRoute><CorreosPage /></AdminRoute>} />
-        <Route path="/excel-to-sql" element={<AdminRoute><ExcelToSqlPage /></AdminRoute>} />
-        <Route path="/excel-to-sql/agua/2023" element={<AdminRoute><ExcelToSqlAgua2023 /></AdminRoute>} />
-        <Route path="/excel-to-sql/agua/2024" element={<AdminRoute><ExcelToSqlAgua2024 /></AdminRoute>} />
-        <Route path="/excel-to-sql/agua/2025" element={<AdminRoute><ExcelToSqlAgua2025 /></AdminRoute>} />
-        <Route path="/excel-to-sql/gas/2023" element={<AdminRoute><ExcelToSqlGas2023 /></AdminRoute>} />
-        <Route path="/excel-to-sql/gas/2024" element={<AdminRoute><ExcelToSqlGas2024 /></AdminRoute>} />
-        <Route path="/excel-to-sql/gas/2025" element={<AdminRoute><ExcelToSqlGas2025 /></AdminRoute>} />
-        <Route path="/excel-to-sql/ptar" element={<AdminRoute><ExcelToSqlPTAR /></AdminRoute>} />
-        <Route path="/csv-to-sql-daily" element={<AdminRoute><CsvToSqlDailyPage /></AdminRoute>} />
         
         {/* Ruta 404 - debe estar al final */}
         <Route path="*" element={<ErrorPage />} />
