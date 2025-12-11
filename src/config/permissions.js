@@ -1,6 +1,8 @@
 // Definición de roles y sus permisos
 export const ROLES = {
   ADMIN: 'admin',
+  EJECUTIVO: 'ejecutivo',
+  DATOS: 'datos',
   WATER: 'water',
   GAS: 'gas',
   PTAR: 'ptar',
@@ -22,6 +24,36 @@ export const PERMISSIONS = {
     correos: true,
     excelToSql: true,
     dashboard: true,
+  },
+  
+  // Ejecutivo - puede ver todo menos ingreso de datos y correos
+  ejecutivo: {
+    water: true,        // Puede ver gestión hídrica completa
+    gas: true,          // Puede ver gestión de gas
+    ptar: true,         // Puede ver PTAR
+    alerts: true,       // Puede ver alertas
+    predictions: true,  // Puede ver predicciones
+    analysis: true,     // Puede ver análisis
+    contact: true,      // Puede ver contacto
+    addData: false,     // NO puede agregar datos
+    correos: false,     // NO puede ver correos
+    excelToSql: false,  // NO puede importar Excel/SQL
+    dashboard: true,    // Puede ver dashboard
+  },
+
+  // Datos - solo puede agregar/editar datos
+  datos: {
+    water: false,
+    gas: false,
+    ptar: false,
+    alerts: false,
+    predictions: false,
+    analysis: false,
+    contact: false,
+    addData: true,      // Puede agregar datos
+    correos: false,
+    excelToSql: true,   // Puede importar Excel/SQL
+    dashboard: true,    // Puede ver dashboard
   },
   
   // Water solo gestión hídrica específica

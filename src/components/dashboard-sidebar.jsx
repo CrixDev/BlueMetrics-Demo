@@ -71,86 +71,98 @@ export function DashboardSidebar() {
   //   getUserRole()
   // }, [])
 
-  // Estructura de menú base
-  const baseMenuSections = [
+  // Estructura de menú completa con roles permitidos
+  const allMenuSections = [
     {
       id: 'general',
       label: 'General',
+      allowedRoles: ['admin', 'datos', 'ejecutivo', 'user'],
       items: [
-        { id: "dashboard", label: "Dashboard Principal", path: "/dashboard", icon: LayoutDashboard }
+        { id: "dashboard", label: "Dashboard Principal", path: "/dashboard", icon: LayoutDashboard, allowedRoles: ['admin', 'datos', 'ejecutivo', 'user'] }
       ]
     },
     {
       id: 'data',
       label: 'Administración de Datos',
+      allowedRoles: ['admin', 'datos'],
       items: [
-        { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", icon: Database },
-        { id: "add-readings", label: "Lecturas Semanales Agua", path: "/agregar-lecturas", icon: FileInput },
-        { id: "edit-readings", label: "Editar Lecturas Agua", path: "/editar-lecturas", icon: Edit },
-        { id: "add-daily-readings", label: "Lecturas Diarias Agua", path: "/agregar-lecturas-diarias", icon: Calendar },
-        { id: "add-ptar-readings", label: "Lecturas PTAR", path: "/agregar-lecturas-ptar", icon: Recycle }
+        { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", icon: Database, allowedRoles: ['admin', 'datos'] },
+        { id: "add-readings", label: "Lecturas Semanales Agua", path: "/agregar-lecturas", icon: FileInput, allowedRoles: ['admin', 'datos'] },
+        { id: "edit-readings", label: "Editar Lecturas Agua", path: "/editar-lecturas", icon: Edit, allowedRoles: ['admin', 'datos'] },
+        { id: "add-daily-readings", label: "Lecturas Diarias Agua", path: "/agregar-lecturas-diarias", icon: Calendar, allowedRoles: ['admin', 'datos'] },
+        { id: "add-ptar-readings", label: "Lecturas PTAR", path: "/agregar-lecturas-ptar", icon: Recycle, allowedRoles: ['admin', 'datos'] }
       ]
     },
     {
       id: 'imports',
       label: 'Importación Excel/SQL',
+      allowedRoles: ['admin', 'datos'],
       items: [
-        { id: "excel-to-sql", label: "Importar Datos", path: "/excel-to-sql", icon: Upload },
-        { id: "excel-agua-2023", label: "Agua 2023", path: "/excel-to-sql/agua/2023", icon: Droplets },
-        { id: "excel-agua-2024", label: "Agua 2024", path: "/excel-to-sql/agua/2024", icon: Droplets },
-        { id: "excel-agua-2025", label: "Agua 2025", path: "/excel-to-sql/agua/2025", icon: Droplets },
-        { id: "excel-gas-2023", label: "Gas 2023", path: "/excel-to-sql/gas/2023", icon: Flame },
-        { id: "excel-gas-2024", label: "Gas 2024", path: "/excel-to-sql/gas/2024", icon: Flame },
-        { id: "excel-gas-2025", label: "Gas 2025", path: "/excel-to-sql/gas/2025", icon: Flame }
+        { id: "excel-to-sql", label: "Importar Datos", path: "/excel-to-sql", icon: Upload, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-agua-2023", label: "Agua 2023", path: "/excel-to-sql/agua/2023", icon: Droplets, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-agua-2024", label: "Agua 2024", path: "/excel-to-sql/agua/2024", icon: Droplets, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-agua-2025", label: "Agua 2025", path: "/excel-to-sql/agua/2025", icon: Droplets, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-gas-2023", label: "Gas 2023", path: "/excel-to-sql/gas/2023", icon: Flame, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-gas-2024", label: "Gas 2024", path: "/excel-to-sql/gas/2024", icon: Flame, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-gas-2025", label: "Gas 2025", path: "/excel-to-sql/gas/2025", icon: Flame, allowedRoles: ['admin', 'datos'] }
       ]
-    }
-  ]
-
-  // Secciones adicionales para rol admin
-  const adminOnlySections = [
+    },
     {
       id: 'water',
       label: 'Gestión Hídrica',
+      allowedRoles: ['admin', 'ejecutivo'],
       items: [
-        { id: "wells", label: "Pozos", path: "/pozos", icon: Drill },
-        { id: "consumption", label: "Consumo Agua", path: "/consumo", icon: Droplets },
-        { id: "daily-readings", label: "Lecturas Diarias", path: "/lecturas-diarias", icon: Calendar },
-        { id: "ptar", label: "PTAR", path: "/ptar", icon: Recycle },
-        { id: "balance", label: "Balance Hídrico", path: "/balance", icon: Scale }
+        { id: "wells", label: "Pozos", path: "/pozos", icon: Drill, allowedRoles: ['admin', 'ejecutivo'] },
+        { id: "consumption", label: "Consumo Agua", path: "/consumo", icon: Droplets, allowedRoles: ['admin', 'ejecutivo'] },
+        { id: "daily-readings", label: "Lecturas Diarias", path: "/lecturas-diarias", icon: Calendar, allowedRoles: ['admin', 'ejecutivo'] },
+        { id: "ptar", label: "PTAR", path: "/ptar", icon: Recycle, allowedRoles: ['admin', 'ejecutivo'] },
+        { id: "balance", label: "Balance Hídrico", path: "/balance", icon: Scale, allowedRoles: ['admin', 'ejecutivo'] }
       ]
     },
     {
       id: 'gas',
       label: 'Gestión de Gas',
+      allowedRoles: ['admin', 'ejecutivo'],
       items: [
-        { id: "gas-consumption", label: "Consumo Gas", path: "/consumo-gas", icon: Flame },
-        { id: "add-gas-readings", label: "Lecturas Gas", path: "/agregar-lecturas-gas", icon: PlusCircle }
+        { id: "gas-consumption", label: "Consumo Gas", path: "/consumo-gas", icon: Flame, allowedRoles: ['admin', 'ejecutivo'] }
       ]
     },
     {
       id: 'analysis',
       label: 'Análisis',
+      allowedRoles: ['admin', 'ejecutivo'],
       items: [
-        { id: "analysis-section", label: "Centro de Análisis", path: "/analisis", icon: BarChart3 },
-        { id: "predictions", label: "Predicciones", path: "/predicciones", icon: TrendingUp },
-        { id: "alerts", label: "Alertas", path: "/alertas", icon: Bell }
+        { id: "analysis-section", label: "Centro de Análisis", path: "/analisis", icon: BarChart3, allowedRoles: ['admin', 'ejecutivo'] },
+        { id: "predictions", label: "Predicciones", path: "/predicciones", icon: TrendingUp, allowedRoles: ['admin', 'ejecutivo'] },
+        { id: "alerts", label: "Alertas", path: "/alertas", icon: Bell, allowedRoles: ['admin', 'ejecutivo'] }
       ]
     },
     {
       id: 'admin',
       label: 'Administración',
+      allowedRoles: ['admin'],
       items: [
-        { id: "correos", label: "Correos", path: "/correos", icon: Mail, badge: "Admin" }
+        { id: "correos", label: "Correos", path: "/correos", icon: Mail, badge: "Admin", allowedRoles: ['admin'] }
       ]
     }
   ]
 
-  // Construir menú según rol
-  let menuSections = [...baseMenuSections]
-  
-  if (userRole === 'admin') {
-    menuSections = [...menuSections, ...adminOnlySections]
-  }
+  // Filtrar menú según rol del usuario
+  const menuSections = allMenuSections
+    .filter(section => {
+      // Si no hay rol, mostrar solo secciones accesibles para 'user'
+      const currentRole = userRole || 'user'
+      return section.allowedRoles.includes(currentRole)
+    })
+    .map(section => ({
+      ...section,
+      // Filtrar items dentro de cada sección
+      items: section.items.filter(item => {
+        const currentRole = userRole || 'user'
+        return item.allowedRoles.includes(currentRole)
+      })
+    }))
+    .filter(section => section.items.length > 0) // Eliminar secciones sin items
 
   const handleNavigation = (path) => {
     navigate(path)
