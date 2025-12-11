@@ -35,6 +35,10 @@ export default function AddWeeklyReadingsPage() {
   const [readings, setReadings] = useState({})
   const [excelData, setExcelData] = useState(null)
   
+  // Estados para cálculo de consumo
+  const [previousWeekReadings, setPreviousWeekReadings] = useState(null)
+  const [consumption, setConsumption] = useState({})
+  
   // Estados de UI
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -66,6 +70,43 @@ export default function AddWeeklyReadingsPage() {
     }
   }
 
+  // Obtener lecturas de la semana anterior
+  const fetchPreviousWeekReadings = async () => {
+    if (!weekNumber || weekNumber === 1) {
+      setPreviousWeekReadings(null)
+      console.log('ℹ️ No hay semana anterior (es la semana 1)')
+      return null
+    }
+
+    try {
+      const tableName = getTableNameByYear(selectedYear)
+      const previousWeekNum = weekNumber - 1
+      
+      const { data, error: fetchError } = await supabase
+        .from(tableName)
+        .select('*')
+        .eq('l_numero_semana', previousWeekNum)
+        .single()
+
+      if (fetchError) {
+        if (fetchError.code === 'PGRST116') {
+          console.log('ℹ️ No existe la semana anterior:', previousWeekNum)
+          setPreviousWeekReadings(null)
+          return null
+        }
+        throw fetchError
+      }
+
+      setPreviousWeekReadings(data)
+      console.log('✅ Lecturas de semana anterior cargadas:', previousWeekNum)
+      return data
+    } catch (err) {
+      console.error('❌ Error al obtener semana anterior:', err)
+      setPreviousWeekReadings(null)
+      return null
+    }
+  }
+
   // Crear nueva semana
   const createWeek = async () => {
     if (!startDate || !endDate) {
@@ -78,8 +119,10 @@ export default function AddWeeklyReadingsPage() {
       setError(null)
 
       const tableName = getTableNameByYear(selectedYear)
+      // Tabla de consumo (todo en minúsculas)
+      const consumoTableName = `lecturas_semana_agua_consumo_${selectedYear}`
       
-      // Crear la semana en Supabase
+      // Crear la semana en tabla de lecturas
       const { error: insertError } = await supabase
         .from(tableName)
         .insert([{
@@ -90,8 +133,25 @@ export default function AddWeeklyReadingsPage() {
 
       if (insertError) throw insertError
 
-      console.log('✅ Semana creada:', weekNumber)
-      setSuccess(`Semana ${weekNumber} creada exitosamente`)
+      console.log('✅ Semana creada en tabla de lecturas:', weekNumber)
+
+      // Crear la semana en tabla de consumo
+      const { error: consumoInsertError } = await supabase
+        .from(consumoTableName)
+        .insert([{
+          l_numero_semana: weekNumber,
+          l_fecha_inicio: startDate,
+          l_fecha_fin: endDate
+        }])
+
+      if (consumoInsertError) {
+        console.warn('⚠️ Error al crear semana en tabla de consumo:', consumoInsertError)
+        // No lanzar error, continuar de todas formas
+      } else {
+        console.log('✅ Semana creada en tabla de consumo:', weekNumber)
+      }
+
+      setSuccess(`Semana ${weekNumber} creada exitosamente en ambas tablas`)
       setStep(2)
       
     } catch (err) {
@@ -190,6 +250,38 @@ export default function AddWeeklyReadingsPage() {
       })
 
       setReadings(newReadings)
+
+      // Obtener semana anterior y calcular consumo
+      const prevWeek = await fetchPreviousWeekReadings()
+      
+      // Casos especiales con factor 10
+      const specialCases = {
+        'circuito_6_residencias': 10,
+        'circuito_8_campus': 10,
+        'medidor_general_pozos': 10,
+        'campo_soft_bol': 10
+      }
+
+      // Calcular consumo
+      const newConsumption = {}
+      consumptionPointsData.categories.forEach(category => {
+        category.points.forEach(point => {
+          if (!point.noRead) {
+            const key = `${point.id}_${weekNumber}`
+            const currentValue = parseFloat(newReadings[key])
+            
+            if (!isNaN(currentValue) && prevWeek) {
+              const previousValue = parseFloat(prevWeek[`l_${point.id}`]) || 0
+              const factor = specialCases[point.id] || 1
+              const consumption = (currentValue - previousValue) * factor
+              newConsumption[key] = consumption
+            }
+          }
+        })
+      })
+      
+      setConsumption(newConsumption)
+      console.log('📊 Consumo calculado para', Object.keys(newConsumption).length, 'puntos')
 
       let message = `✅ Excel procesado: ${matched} lecturas cargadas`
       if (unmatched.length > 0) {
@@ -290,7 +382,53 @@ export default function AddWeeklyReadingsPage() {
       console.log('✅ Lecturas guardadas exitosamente:', data)
       console.log(`✅ Se guardaron ${readingsCount} lecturas en la semana ${weekNumber}`)
       
-      setSuccess(`✅ ${readingsCount} lecturas guardadas exitosamente en Supabase`)
+      // Guardar consumo en tabla de consumo (todo en minúsculas)
+      const consumoTableName = `lecturas_semana_agua_consumo_${selectedYear}`
+      const consumoData = {
+        l_numero_semana: weekNumber,
+        l_fecha_inicio: startDate,
+        l_fecha_fin: endDate
+      }
+
+      // Agregar consumo calculado
+      let consumoCount = 0
+      consumptionPointsData.categories.forEach(category => {
+        category.points.forEach(point => {
+          if (!point.noRead) {
+            const key = `${point.id}_${weekNumber}`
+            const consumoValue = consumption[key]
+            
+            if (consumoValue !== undefined && !isNaN(consumoValue)) {
+              consumoData[`l_${point.id}`] = consumoValue
+              consumoCount++
+            }
+          }
+        })
+      })
+
+      if (consumoCount > 0) {
+        console.log('💾 Guardando consumo:', consumoData)
+        console.log(`📊 Total de consumos a guardar: ${consumoCount}`)
+
+        // Intentar insertar o actualizar consumo
+        const { error: consumoError } = await supabase
+          .from(consumoTableName)
+          .upsert(consumoData, { 
+            onConflict: 'l_numero_semana',
+            ignoreDuplicates: false 
+          })
+
+        if (consumoError) {
+          console.warn('⚠️ Error guardando consumo:', consumoError)
+          setSuccess(`✅ ${readingsCount} lecturas guardadas. Advertencia: No se pudo guardar el consumo`)
+        } else {
+          console.log('✅ Consumo guardado exitosamente')
+          setSuccess(`✅ ${readingsCount} lecturas y ${consumoCount} consumos guardados exitosamente`)
+        }
+      } else {
+        setSuccess(`✅ ${readingsCount} lecturas guardadas exitosamente`)
+      }
+      
       setStep(4)
 
     } catch (error) {
@@ -298,6 +436,32 @@ export default function AddWeeklyReadingsPage() {
       setError(`Error al guardar: ${error.message}`)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Manejar edición de lectura y recalcular consumo
+  const handleReadingChange = (pointId, value) => {
+    const key = `${pointId}_${weekNumber}`
+    const newReadings = { ...readings, [key]: value }
+    setReadings(newReadings)
+
+    // Recalcular consumo para este punto
+    if (previousWeekReadings && value && value.trim() !== '') {
+      const currentValue = parseFloat(value)
+      if (!isNaN(currentValue)) {
+        const previousValue = parseFloat(previousWeekReadings[`l_${pointId}`]) || 0
+        
+        const specialCases = {
+          'circuito_6_residencias': 10,
+          'circuito_8_campus': 10,
+          'medidor_general_pozos': 10,
+          'campo_soft_bol': 10
+        }
+        const factor = specialCases[pointId] || 1
+        const consumoValue = (currentValue - previousValue) * factor
+        
+        setConsumption(prev => ({ ...prev, [key]: consumoValue }))
+      }
     }
   }
 
@@ -710,46 +874,82 @@ export default function AddWeeklyReadingsPage() {
                         <div>
                           <h3 className="text-lg font-semibold">{category.name}</h3>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Verifica los datos antes de guardar
+                            Vista previa: Semana Anterior, Lectura Actual y Consumo
                           </p>
                         </div>
                       </CardHeader>
                       <CardContent>
+                        {/* Header de columnas */}
+                        <div className="grid grid-cols-[2fr,1fr,1fr,1fr] gap-4 pb-3 border-b border-muted mb-3">
+                          <div className="text-xs font-semibold text-muted-foreground uppercase">Punto de Consumo</div>
+                          <div className="text-xs font-semibold text-muted-foreground uppercase text-right">Semana Anterior</div>
+                          <div className="text-xs font-semibold text-muted-foreground uppercase text-right">Lectura Actual</div>
+                          <div className="text-xs font-semibold text-muted-foreground uppercase text-right">Consumo</div>
+                        </div>
+
                         <div className="space-y-2">
                           {filteredPoints.map(point => {
                             const key = `${point.id}_${weekNumber}`
-                            const value = readings[key] || ''
-                            const isCompleted = value.trim() !== ''
+                            const currentValue = readings[key] || ''
+                            const isCompleted = currentValue.trim() !== ''
+                            
+                            const previousValue = previousWeekReadings ? 
+                              (previousWeekReadings[`l_${point.id}`] || 0) : null
+                            const consumoValue = consumption[key]
 
                             return (
                               <div 
                                 key={point.id}
-                                className={`flex items-center gap-4 p-3 rounded-lg border transition-all ${
+                                className={`grid grid-cols-[2fr,1fr,1fr,1fr] gap-4 p-3 rounded-lg border transition-all items-center ${
                                   isCompleted 
                                     ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/10' 
                                     : 'border-muted bg-muted/30'
                                 }`}
                               >
-                                <div className="flex-shrink-0">
-                                  {isCompleted ? (
-                                    <CheckCircle2Icon className="h-5 w-5 text-green-500" />
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="flex-shrink-0">
+                                    {isCompleted ? (
+                                      <CheckCircle2Icon className="h-5 w-5 text-green-500" />
+                                    ) : (
+                                      <AlertCircleIcon className="h-5 w-5 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-semibold text-sm">{point.name}</p>
+                                    <p className="text-xs text-muted-foreground mt-0.5">{point.id}</p>
+                                  </div>
+                                </div>
+
+                                <div className="text-right">
+                                  {previousValue !== null ? (
+                                    <span className="text-sm text-blue-600 font-medium">
+                                      {parseFloat(previousValue).toLocaleString()}
+                                    </span>
                                   ) : (
-                                    <AlertCircleIcon className="h-5 w-5 text-muted-foreground" />
+                                    <span className="text-xs text-muted-foreground">N/A</span>
                                   )}
                                 </div>
 
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-sm">{point.name}</p>
-                                  <p className="text-xs text-muted-foreground">{point.id}</p>
+                                <div className="text-right">
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    value={currentValue}
+                                    onChange={(e) => handleReadingChange(point.id, e.target.value)}
+                                    className="w-full px-2 py-1 text-sm font-semibold text-right border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="0.00"
+                                  />
                                 </div>
 
-                                <div className="flex items-center gap-2">
-                                  {isCompleted ? (
-                                    <span className="text-sm font-bold text-green-600">
-                                      {parseFloat(value).toLocaleString()} m³
+                                <div className="text-right">
+                                  {consumoValue !== undefined && !isNaN(consumoValue) ? (
+                                    <span className={`text-sm font-bold ${
+                                      consumoValue >= 0 ? 'text-purple-600' : 'text-red-600'
+                                    }`}>
+                                      {consumoValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                   ) : (
-                                    <span className="text-sm text-muted-foreground">Sin dato</span>
+                                    <span className="text-xs text-muted-foreground">--</span>
                                   )}
                                 </div>
                               </div>
