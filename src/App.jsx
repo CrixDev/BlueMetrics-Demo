@@ -16,9 +16,12 @@ import AddDataPage from './pages/AddDataPage'
 import AddWeeklyReadingsPage from './pages/AddWeeklyReadingsPage'
 import EditWeeklyReadingsPage from './pages/EditWeeklyReadingsPage'
 import AddDailyReadingsPage from './pages/AddDailyReadingsPage'
+import EditDailyReadingsPage from './pages/EditDailyReadingsPage'
 import AddPTARReadingsPage from './pages/AddPTARReadingsPage'
+import EditPTARReadingsPage from './pages/EditPTARReadingsPage'
 import GasConsumptionPage from './pages/GasConsumptionPage'
 import AddWeeklyGasReadingsPage from './pages/AddWeeklyGasReadingsPage'
+import EditGasReadingsPage from './pages/EditGasReadingsPage'
 import AlertsPage from './pages/AlertsPage'
 import PredictionsPage from './pages/PredictionsPage'
 import ContactPage from './pages/ContactPage'
@@ -36,6 +39,7 @@ import ExcelToSqlAgua2025 from './pages/ExcelToSql/ExcelToSqlAgua2025'
 import ExcelToSqlGas2023 from './pages/ExcelToSql/ExcelToSqlGas2023'
 import ExcelToSqlGas2024 from './pages/ExcelToSql/ExcelToSqlGas2024'
 import ExcelToSqlGas2025 from './pages/ExcelToSql/ExcelToSqlGas2025'
+import GasComedorTecFoodPage from './pages/GasComedorTecFoodPage'
 
 // Excel to SQL - PTAR
 import ExcelToSqlPTAR from './pages/ExcelToSql/ExcelToSqlPTAR'
@@ -83,8 +87,11 @@ function App() {
         <Route path="/agregar-lecturas" element={<DataRoute><AddWeeklyReadingsPage /></DataRoute>} />
         <Route path="/editar-lecturas" element={<DataRoute><EditWeeklyReadingsPage /></DataRoute>} />
         <Route path="/agregar-lecturas-diarias" element={<DataRoute><AddDailyReadingsPage /></DataRoute>} />
+        <Route path="/editar-lecturas-diarias" element={<DataRoute><EditDailyReadingsPage /></DataRoute>} />
         <Route path="/agregar-lecturas-gas" element={<DataRoute><AddWeeklyGasReadingsPage /></DataRoute>} />
+        <Route path="/editar-lecturas-gas" element={<DataRoute><EditGasReadingsPage /></DataRoute>} />
         <Route path="/agregar-lecturas-ptar" element={<DataRoute><AddPTARReadingsPage /></DataRoute>} />
+        <Route path="/editar-lecturas-ptar" element={<DataRoute><EditPTARReadingsPage /></DataRoute>} />
         <Route path="/excel-to-sql" element={<DataRoute><ExcelToSqlPage /></DataRoute>} />
         <Route path="/excel-to-sql/agua/2023" element={<DataRoute><ExcelToSqlAgua2023 /></DataRoute>} />
         <Route path="/excel-to-sql/agua/2024" element={<DataRoute><ExcelToSqlAgua2024 /></DataRoute>} />
@@ -92,6 +99,7 @@ function App() {
         <Route path="/excel-to-sql/gas/2023" element={<DataRoute><ExcelToSqlGas2023 /></DataRoute>} />
         <Route path="/excel-to-sql/gas/2024" element={<DataRoute><ExcelToSqlGas2024 /></DataRoute>} />
         <Route path="/excel-to-sql/gas/2025" element={<DataRoute><ExcelToSqlGas2025 /></DataRoute>} />
+        <Route path="/excel-to-sql/gas/2025/comedor-tec-food" element={<DataRoute><GasComedorTecFoodPage /></DataRoute>} />
         <Route path="/excel-to-sql/ptar" element={<DataRoute><ExcelToSqlPTAR /></DataRoute>} />
         <Route path="/csv-to-sql-daily" element={<DataRoute><CsvToSqlDailyPage /></DataRoute>} />
 

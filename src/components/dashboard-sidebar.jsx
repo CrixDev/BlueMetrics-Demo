@@ -86,11 +86,14 @@ export function DashboardSidebar() {
       label: 'Administración de Datos',
       allowedRoles: ['admin', 'datos'],
       items: [
-        { id: "add-data", label: "Agregar Datos", path: "/agregar-datos", icon: Database, allowedRoles: ['admin', 'datos'] },
-        { id: "add-readings", label: "Lecturas Semanales Agua", path: "/agregar-lecturas", icon: FileInput, allowedRoles: ['admin', 'datos'] },
+       { id: "add-readings", label: "Lecturas Semanales Agua", path: "/agregar-lecturas", icon: FileInput, allowedRoles: ['admin', 'datos'] },
         { id: "edit-readings", label: "Editar Lecturas Agua", path: "/editar-lecturas", icon: Edit, allowedRoles: ['admin', 'datos'] },
+        { id: "add-readings-gas", label: "Lecturas Semanales Gas", path: "/agregar-lecturas-gas", icon: FileInput, allowedRoles: ['admin', 'datos'] },
+        { id: "edit-readings-gas", label: "Editar Lecturas Gas", path: "/editar-lecturas-gas", icon: Edit, allowedRoles: ['admin', 'datos'] },
         { id: "add-daily-readings", label: "Lecturas Diarias Agua", path: "/agregar-lecturas-diarias", icon: Calendar, allowedRoles: ['admin', 'datos'] },
-        { id: "add-ptar-readings", label: "Lecturas PTAR", path: "/agregar-lecturas-ptar", icon: Recycle, allowedRoles: ['admin', 'datos'] }
+        { id: "edit-daily-readings", label: "Editar Lecturas Diarias", path: "/editar-lecturas-diarias", icon: Edit, allowedRoles: ['admin', 'datos'] },
+        { id: "add-ptar-readings", label: "Lecturas PTAR", path: "/agregar-lecturas-ptar", icon: Recycle, allowedRoles: ['admin', 'datos'] },
+        { id: "edit-ptar-readings", label: "Editar Lecturas PTAR", path: "/editar-lecturas-ptar", icon: Edit, allowedRoles: ['admin', 'datos'] }
       ]
     },
     {

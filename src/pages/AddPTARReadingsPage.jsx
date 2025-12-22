@@ -1,190 +1,263 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { supabase } from '../supabaseClient'
+import * as XLSX from 'xlsx'
 import { 
   SaveIcon, 
+  UploadIcon,
   CheckCircle2Icon,
-  CircleIcon,
   AlertCircleIcon,
   CalendarIcon,
-  DownloadIcon,
   Loader2Icon,
-  RefreshCwIcon,
+  FileSpreadsheetIcon,
+  EyeIcon,
+  DownloadIcon,
   Droplets
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 
-// Definición de puntos de medición para PTAR
+// Definición de puntos de medición para PTAR en orden específico
 const ptarReadingPoints = [
-  { id: 'medidor_entrada', name: 'Medidor de Entrada', type: 'medidor', unit: 'm³' },
-  { id: 'medidor_salida', name: 'Medidor de Salida', type: 'medidor', unit: 'm³' },
-  { id: 'ar', name: 'Agua Residual (AR)', type: 'proceso', unit: 'm³' },
-  { id: 'at', name: 'Agua Tratada (AT)', type: 'proceso', unit: 'm³' },
-  { id: 'recirculacion', name: 'Recirculación', type: 'proceso', unit: 'm³' },
-  { id: 'total_dia', name: 'Total del Día', type: 'total', unit: 'm³' }
+  { id: 'medidor_entrada', name: 'Medidor Entrada', columnName: 'Medidor Entrada' },
+  { id: 'medidor_salida', name: 'Medidor salida', columnName: 'Medidor salida' },
+  { id: 'ar', name: 'AR', columnName: 'AR' },
+  { id: 'at', name: 'AT', columnName: 'AT' },
+  { id: 'recirculacion', name: 'Recirculacion', columnName: 'Recirculacion' },
+  { id: 'total_dia', name: 'Total dia', columnName: 'Total dia' }
 ]
 
 export default function AddPTARReadingsPage() {
+  // Estados principales
+  const [step, setStep] = useState(1) // 1: seleccionar fecha, 2: subir excel, 3: verificar datos, 4: confirmación
+  
+  // Estados para fecha y hora
   const [selectedDate, setSelectedDate] = useState('')
-  const [selectedTime, setSelectedTime] = useState('09:00')
+  const [selectedTime, setSelectedTime] = useState('')
+  
+  // Estados para Excel y datos
+  const [excelFile, setExcelFile] = useState(null)
   const [readings, setReadings] = useState({})
-  const [autoSaveStatus, setAutoSaveStatus] = useState('saved')
+  const [excelData, setExcelData] = useState(null)
+  
+  // Estados de UI
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [existingReadings, setExistingReadings] = useState([])
-  const firstInputRef = useRef(null)
+  const [success, setSuccess] = useState(null)
 
-  // Cargar lecturas existentes
-  useEffect(() => {
-    fetchExistingReadings()
-  }, [])
-
-  // Cargar lectura específica cuando se selecciona una fecha
-  useEffect(() => {
-    if (selectedDate) {
-      loadReadingByDate(selectedDate)
+  // Crear nuevo registro de fecha
+  const createDateEntry = async () => {
+    if (!selectedDate) {
+      setError('Por favor selecciona una fecha')
+      return
     }
-  }, [selectedDate])
 
-  const fetchExistingReadings = async () => {
     try {
       setLoading(true)
-      const { data, error: fetchError } = await supabase
+      setError(null)
+      
+      // Verificar si ya existe
+      const { data: existing } = await supabase
         .from('lecturas_ptar')
-        .select('id, fecha, hora, created_at')
-        .order('fecha', { ascending: false })
-        .limit(50)
+        .select('id')
+        .eq('fecha', selectedDate)
+        .single()
 
-      if (fetchError) throw fetchError
-      setExistingReadings(data || [])
+      if (existing) {
+        setSuccess(`Fecha ${selectedDate} ya existe. Puedes editarla.`)
+      } else {
+        // Crear la entrada
+        const { error: insertError } = await supabase
+          .from('lecturas_ptar')
+          .insert([{
+            fecha: selectedDate,
+            hora: selectedTime || '09:00'
+          }])
+
+        if (insertError) throw insertError
+        console.log('✅ Entrada de fecha creada:', selectedDate)
+        setSuccess(`Fecha ${selectedDate} creada exitosamente`)
+      }
+
+      setStep(2)
+      
     } catch (err) {
-      console.error('❌ Error al cargar lecturas:', err)
+      console.error('❌ Error al crear fecha:', err)
       setError(err.message)
     } finally {
       setLoading(false)
     }
   }
 
-  const loadReadingByDate = async (dateStr) => {
+  // Procesar archivo Excel
+  const handleExcelUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setExcelFile(file)
+    setLoading(true)
+    setError(null)
+
     try {
-      const { data, error: fetchError } = await supabase
-        .from('lecturas_ptar')
-        .select('*')
-        .eq('fecha', dateStr)
-        .single()
+      const data = await file.arrayBuffer()
+      const workbook = XLSX.read(data)
+      const sheetName = workbook.SheetNames[0]
+      const worksheet = workbook.Sheets[sheetName]
+      const jsonData = XLSX.utils.sheet_to_json(worksheet)
 
-      if (fetchError) {
-        console.log('🆕 Nueva lectura, sin datos previos')
-        setReadings({})
-        setSelectedTime('09:00')
-        return
+      console.log('📊 Datos del Excel PTAR:', jsonData)
+      setExcelData(jsonData)
+
+      if (!jsonData || jsonData.length === 0) {
+        throw new Error('El archivo Excel está vacío')
       }
 
-      console.log('✅ Lectura cargada:', data)
+      const firstRow = jsonData[0]
+      const columns = Object.keys(firstRow)
+      
+      // Formato horizontal PTAR: Fecha, Hora, y columnas de mediciones
+      const hasFecha = columns.some(col => /fecha/i.test(col))
+      const hasHora = columns.some(col => /hora/i.test(col))
+      const isHorizontalFormat = hasFecha && hasHora
 
-      const loadedReadings = {}
-      ptarReadingPoints.forEach(point => {
-        if (data[point.id] !== null && data[point.id] !== undefined) {
-          loadedReadings[point.id] = data[point.id].toString()
+      console.log('🔍 Formato detectado:', isHorizontalFormat ? 'HORIZONTAL' : 'VERTICAL')
+
+      let newReadings = {}
+      let matched = 0
+      let unmatched = []
+
+      if (isHorizontalFormat) {
+        // FORMATO HORIZONTAL: usar primera fila
+        const row = jsonData[0]
+        
+        // Mapeo de columnas PTAR
+        const columnMapping = {
+          'medidor entrada': 'medidor_entrada',
+          'medidor salida': 'medidor_salida',
+          'ar': 'ar',
+          'at': 'at',
+          'recirculacion': 'recirculacion',
+          'total dia': 'total_dia'
         }
-      })
 
-      setReadings(loadedReadings)
-      if (data.hora) {
-        setSelectedTime(data.hora)
+        Object.keys(row).forEach(columnName => {
+          // Saltar columnas de fecha/hora
+          if (/fecha/i.test(columnName) || /hora/i.test(columnName)) {
+            return
+          }
+
+          const value = row[columnName]
+          if (value === undefined || value === null || value === '') return
+
+          const columnLower = columnName.toLowerCase().trim()
+          const pointId = columnMapping[columnLower]
+
+          if (pointId) {
+            newReadings[pointId] = value.toString()
+            matched++
+          } else {
+            unmatched.push(columnName)
+          }
+        })
       }
+
+      setReadings(newReadings)
+
+      let message = `✅ Excel procesado: ${matched} lecturas cargadas`
+      if (unmatched.length > 0) {
+        message += `. ${unmatched.length} columnas no encontradas`
+        console.warn('⚠️ Columnas no encontradas:', unmatched)
+      }
+
+      setSuccess(message)
+      setStep(3)
+      
     } catch (err) {
-      console.error('❌ Error al cargar lectura:', err)
+      console.error('❌ Error al procesar Excel:', err)
+      setError(err.message || 'Error al procesar el archivo Excel')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const calculateProgress = () => {
-    const total = ptarReadingPoints.length
-    const completed = ptarReadingPoints.filter(p => {
-      return readings[p.id] && readings[p.id].trim() !== ''
-    }).length
-
-    return { 
-      completed, 
-      total, 
-      percentage: total > 0 ? Math.round((completed / total) * 100) : 0 
-    }
-  }
-
-  const progress = calculateProgress()
-
-  // Auto-guardar cada 3 segundos
-  useEffect(() => {
-    if (Object.keys(readings).length === 0 || !selectedDate) return
-
-    const timer = setTimeout(() => {
-      saveReadings()
-    }, 3000)
-
-    return () => clearTimeout(timer)
-  }, [readings])
-
+  // Guardar lecturas en Supabase
   const saveReadings = async () => {
-    if (!selectedDate) {
-      console.warn('⚠️ No hay fecha seleccionada')
-      return
-    }
+    if (!selectedDate) return
 
-    setAutoSaveStatus('saving')
+    setLoading(true)
+    setError(null)
+
     try {
       const readingData = {
         fecha: selectedDate,
         hora: selectedTime || '09:00'
       }
 
+      let readingsCount = 0
       ptarReadingPoints.forEach(point => {
         const value = readings[point.id]
+        
         if (value && value.trim() !== '') {
-          readingData[point.id] = parseFloat(value)
+          const numValue = parseFloat(value)
+          if (!isNaN(numValue)) {
+            readingData[point.id] = numValue
+            readingsCount++
+          }
         }
       })
 
-      console.log('💾 Guardando datos:', readingData)
+      console.log('💾 Guardando datos PTAR:', readingData)
 
-      // Verificar si ya existe
-      const { data: existingData } = await supabase
+      if (readingsCount === 0) {
+        throw new Error('No hay lecturas para guardar')
+      }
+
+      // Verificar que la fecha existe
+      const { data: existingDate, error: checkError } = await supabase
         .from('lecturas_ptar')
-        .select('id')
+        .select('id, fecha')
         .eq('fecha', selectedDate)
         .single()
 
-      if (existingData) {
-        // UPDATE
-        const { error: updateError } = await supabase
-          .from('lecturas_ptar')
-          .update(readingData)
-          .eq('fecha', selectedDate)
-
-        if (updateError) throw updateError
-        console.log('✅ Lectura actualizada exitosamente')
-      } else {
-        // INSERT
-        const { error: insertError } = await supabase
-          .from('lecturas_ptar')
-          .insert([readingData])
-
-        if (insertError) throw insertError
-        console.log('✅ Lectura guardada exitosamente')
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw new Error(`Error verificando fecha: ${checkError.message}`)
       }
 
-      setAutoSaveStatus('saved')
-      await fetchExistingReadings()
+      if (!existingDate) {
+        throw new Error(`La fecha ${selectedDate} no existe. Por favor créala primero.`)
+      }
+
+      // UPDATE
+      const { data, error: updateError } = await supabase
+        .from('lecturas_ptar')
+        .update(readingData)
+        .eq('fecha', selectedDate)
+        .select()
+
+      if (updateError) {
+        console.error('❌ Error de Supabase:', updateError)
+        throw new Error(`Error al actualizar: ${updateError.message}`)
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('No se actualizó ningún registro')
+      }
+      
+      console.log('✅ Lecturas PTAR guardadas exitosamente:', data)
+      setSuccess(`✅ ${readingsCount} lecturas guardadas exitosamente`)
+      setStep(4)
 
     } catch (error) {
       console.error('❌ Error guardando:', error)
-      setAutoSaveStatus('error')
-      setError(error.message)
+      setError(`Error al guardar: ${error.message}`)
+    } finally {
+      setLoading(false)
     }
   }
 
+  // Manejar edición de lectura
   const handleReadingChange = (pointId, value) => {
     setReadings(prev => ({
       ...prev,
@@ -192,52 +265,14 @@ export default function AddPTARReadingsPage() {
     }))
   }
 
-  const handleKeyDown = (e, pointId, index) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      const nextIndex = index + 1
-      if (nextIndex < ptarReadingPoints.length) {
-        const nextPointId = ptarReadingPoints[nextIndex].id
-        const nextInput = document.getElementById(`input-${nextPointId}`)
-        if (nextInput) {
-          nextInput.focus()
-        }
-      }
-    }
-  }
-
-  const exportReadings = () => {
-    if (Object.keys(readings).length === 0) {
-      alert('No hay datos para exportar')
-      return
-    }
-
-    const exportData = {
-      date: selectedDate,
-      time: selectedTime,
-      timestamp: new Date().toISOString(),
-      readings: readings
-    }
-
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `lectura_ptar_${selectedDate}.json`
-    a.click()
-  }
-
-  const calculateTotal = () => {
-    const ar = parseFloat(readings.ar) || 0
-    const at = parseFloat(readings.at) || 0
-    const recirculacion = parseFloat(readings.recirculacion) || 0
-    return (ar + at + recirculacion).toFixed(2)
-  }
-
   // Auto-calcular total cuando cambian los valores
   useEffect(() => {
     if (readings.ar || readings.at || readings.recirculacion) {
-      const total = calculateTotal()
+      const ar = parseFloat(readings.ar) || 0
+      const at = parseFloat(readings.at) || 0
+      const recirculacion = parseFloat(readings.recirculacion) || 0
+      const total = (ar + at + recirculacion).toFixed(2)
+      
       if (total !== readings.total_dia) {
         setReadings(prev => ({
           ...prev,
@@ -246,6 +281,83 @@ export default function AddPTARReadingsPage() {
       }
     }
   }, [readings.ar, readings.at, readings.recirculacion])
+
+  // Reiniciar formulario
+  const resetForm = () => {
+    setStep(1)
+    setSelectedDate('')
+    setSelectedTime('')
+    setExcelFile(null)
+    setReadings({})
+    setExcelData(null)
+    setError(null)
+    setSuccess(null)
+  }
+
+  // Descargar plantilla de Excel
+  const downloadTemplate = () => {
+    const templateData = []
+    
+    // Crear fila de ejemplo
+    const today = new Date()
+    const exampleRow = {
+      'Fecha': today.toISOString().split('T')[0],
+      'Hora': '9:00'
+    }
+    
+    // Agregar columnas en orden específico
+    ptarReadingPoints.forEach(point => {
+      exampleRow[point.columnName] = 0
+    })
+    
+    templateData.push(exampleRow)
+
+    const ws = XLSX.utils.json_to_sheet(templateData)
+    
+    // Ajustar anchos de columna
+    const colWidths = [
+      { wch: 12 },  // Fecha
+      { wch: 8 }    // Hora
+    ]
+    ptarReadingPoints.forEach(() => {
+      colWidths.push({ wch: 15 })
+    })
+    ws['!cols'] = colWidths
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Lecturas PTAR')
+    
+    const instrucciones = [
+      { 'INSTRUCCIONES': 'Plantilla de Lecturas PTAR - Aquanet' },
+      { 'INSTRUCCIONES': '' },
+      { 'INSTRUCCIONES': '📋 INSTRUCCIONES:' },
+      { 'INSTRUCCIONES': '' },
+      { 'INSTRUCCIONES': '1. Formato HORIZONTAL: cada FILA es una fecha' },
+      { 'INSTRUCCIONES': '2. Columnas: Fecha, Hora, Medidor Entrada, Medidor salida, AR, AT, Recirculacion, Total dia' },
+      { 'INSTRUCCIONES': '3. Complete las lecturas en m³' },
+      { 'INSTRUCCIONES': '4. Total dia se calcula automáticamente (AR + AT + Recirculacion)' },
+      { 'INSTRUCCIONES': '5. NO modifique los nombres de las columnas' },
+      { 'INSTRUCCIONES': '6. Guarde el archivo y súbalo en el sistema' }
+    ]
+    
+    const wsInstrucciones = XLSX.utils.json_to_sheet(instrucciones)
+    wsInstrucciones['!cols'] = [{ wch: 80 }]
+    XLSX.utils.book_append_sheet(wb, wsInstrucciones, 'Instrucciones')
+
+    const fecha = new Date().toISOString().split('T')[0]
+    XLSX.writeFile(wb, `Plantilla_Lecturas_PTAR_${fecha}.xlsx`)
+  }
+
+  // Calcular progreso
+  const calculateProgress = () => {
+    const total = ptarReadingPoints.length
+    const completed = ptarReadingPoints.filter(p => {
+      return readings[p.id] && readings[p.id].trim() !== ''
+    }).length
+    return { completed, total, percentage: total > 0 ? Math.round((completed / total) * 100) : 0 }
+  }
+
+  const progress = calculateProgress()
 
   return (
     <RedirectIfNotAuth>
@@ -264,134 +376,258 @@ export default function AddPTARReadingsPage() {
                     Agregar Lecturas PTAR
                   </h1>
                   <p className="text-muted-foreground">
-                    Sistema para entrada de datos de la Planta de Tratamiento de Aguas Residuales
+                    Selecciona fecha, sube Excel y verifica datos antes de guardar
                   </p>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  {/* Auto-save status */}
-                  <div className="flex items-center gap-2 text-sm">
-                    {autoSaveStatus === 'saving' && (
-                      <span className="text-blue-500 flex items-center gap-1">
-                        <Loader2Icon className="h-4 w-4 animate-spin" />
-                        Guardando...
-                      </span>
-                    )}
-                    {autoSaveStatus === 'saved' && (
-                      <span className="text-green-500 flex items-center gap-1">
-                        <CheckCircle2Icon className="h-4 w-4" />
-                        Guardado
-                      </span>
-                    )}
-                    {autoSaveStatus === 'error' && (
-                      <span className="text-destructive flex items-center gap-1">
-                        <AlertCircleIcon className="h-4 w-4" />
-                        Error: {error}
-                      </span>
-                    )}
-                  </div>
-
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={fetchExistingReadings}
-                    disabled={loading}
-                  >
-                    <RefreshCwIcon className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                    Recargar
-                  </Button>
-
-                  <Button variant="outline" size="sm" onClick={exportReadings}>
-                    <DownloadIcon className="h-4 w-4 mr-2" />
-                    Exportar
-                  </Button>
                 </div>
               </div>
             </div>
 
-            {/* Selección de Fecha y Hora */}
-            <Card className="mb-6">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Seleccionar Fecha y Hora</h3>
+            {/* Indicador de pasos */}
+            {step < 4 && (
+              <div className="mb-8">
+                <div className="flex items-center justify-between max-w-3xl mx-auto">
+                  {[
+                    { num: 1, title: 'Seleccionar Fecha', icon: CalendarIcon },
+                    { num: 2, title: 'Subir Excel', icon: UploadIcon },
+                    { num: 3, title: 'Verificar y Guardar', icon: EyeIcon }
+                  ].map((s, idx) => (
+                    <div key={s.num} className="flex items-center flex-1">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all ${
+                          step >= s.num 
+                            ? 'bg-primary border-primary text-primary-foreground' 
+                            : 'border-muted text-muted-foreground'
+                        }`}>
+                          <s.icon className="h-5 w-5" />
+                        </div>
+                        <p className={`text-sm mt-2 font-medium ${step >= s.num ? 'text-primary' : 'text-muted-foreground'}`}>
+                          {s.title}
+                        </p>
+                      </div>
+                      {idx < 2 && (
+                        <div className={`flex-1 h-0.5 mx-4 ${step > s.num ? 'bg-primary' : 'bg-muted'}`} />
+                      )}
+                    </div>
+                  ))}
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Fecha</label>
-                    <input
-                      type="date"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Hora</label>
-                    <input
-                      type="time"
-                      value={selectedTime}
-                      onChange={(e) => setSelectedTime(e.target.value)}
-                      className="w-full px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                </div>
+              </div>
+            )}
 
-                {!selectedDate && (
-                  <div className="text-center py-4 text-muted-foreground text-sm mt-4">
-                    Selecciona una fecha para comenzar a ingresar lecturas
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Mensajes de estado */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+                <AlertCircleIcon className="h-5 w-5 text-red-600" />
+                <p className="text-red-800">{error}</p>
+              </div>
+            )}
 
-            {selectedDate && (
+            {success && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+                <CheckCircle2Icon className="h-5 w-5 text-green-600" />
+                <p className="text-green-800">{success}</p>
+              </div>
+            )}
+
+            {/* PASO 1: Seleccionar Fecha */}
+            {step === 1 && (
+              <Card className="max-w-2xl mx-auto">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <CalendarIcon className="h-6 w-6 text-primary" />
+                    <div>
+                      <h3 className="text-xl font-semibold">Paso 1: Seleccionar Fecha y Hora</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Elige la fecha y hora para la lectura PTAR
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Fecha de la Lectura
+                        </label>
+                        <input
+                          type="date"
+                          value={selectedDate}
+                          onChange={(e) => setSelectedDate(e.target.value)}
+                          className="w-full px-4 py-3 border border-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Hora
+                        </label>
+                        <input
+                          type="time"
+                          value={selectedTime}
+                          onChange={(e) => setSelectedTime(e.target.value)}
+                          className="w-full px-4 py-3 border border-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                    </div>
+
+                    <Button 
+                      className="w-full mt-4" 
+                      size="lg"
+                      onClick={createDateEntry}
+                      disabled={loading || !selectedDate}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                          Creando...
+                        </>
+                      ) : (
+                        <>
+                          <CalendarIcon className="h-4 w-4 mr-2" />
+                          Crear Fecha y Continuar
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* PASO 2: Subir Excel */}
+            {step === 2 && (
+              <Card className="max-w-2xl mx-auto">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <FileSpreadsheetIcon className="h-6 w-6 text-primary" />
+                    <div>
+                      <h3 className="text-xl font-semibold">Paso 2: Subir Archivo Excel</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Fecha: {selectedDate} | Hora: {selectedTime || '09:00'}
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center">
+                      <FileSpreadsheetIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Sube un archivo Excel con las lecturas PTAR
+                      </p>
+                      <label className="inline-block">
+                        <input
+                          type="file"
+                          accept=".xlsx,.xls"
+                          onChange={handleExcelUpload}
+                          className="hidden"
+                          disabled={loading}
+                        />
+                        <Button asChild disabled={loading}>
+                          <span>
+                            {loading ? (
+                              <>
+                                <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                                Procesando...
+                              </>
+                            ) : (
+                              <>
+                                <UploadIcon className="h-4 w-4 mr-2" />
+                                Seleccionar Excel
+                              </>
+                            )}
+                          </span>
+                        </Button>
+                      </label>
+                      {excelFile && (
+                        <p className="text-sm text-green-600 mt-4">
+                          ✓ Archivo cargado: {excelFile.name}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <p className="text-sm text-blue-900 dark:text-blue-100 font-medium mb-2">
+                            📋 Formato esperado del Excel:
+                          </p>
+                          <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                            <li>• Columnas: Fecha, Hora, Medidor Entrada, Medidor salida, AR, AT, Recirculacion, Total dia</li>
+                            <li>• Formato horizontal: cada fila es una fecha</li>
+                          </ul>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={downloadTemplate}
+                          className="ml-4 bg-white dark:bg-gray-800"
+                        >
+                          <DownloadIcon className="h-4 w-4 mr-2" />
+                          Descargar Plantilla
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* PASO 3: Verificar y Guardar */}
+            {step === 3 && (
               <>
                 {/* Barra de progreso */}
                 <Card className="mb-6">
                   <CardContent className="pt-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">
-                        Progreso: {progress.completed} de {progress.total} medidores
-                      </span>
-                      <span className="text-sm font-bold text-primary">
-                        {progress.percentage}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div 
-                        className="bg-primary h-3 rounded-full transition-all duration-300"
-                        style={{ width: `${progress.percentage}%` }}
-                      />
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 mr-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium">
+                            Progreso: {progress.completed} de {progress.total} lecturas
+                          </span>
+                          <span className="text-sm font-bold text-primary">
+                            {progress.percentage}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-3">
+                          <div 
+                            className="bg-primary h-3 rounded-full transition-all duration-300"
+                            style={{ width: `${progress.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                      <Button 
+                        size="lg"
+                        onClick={saveReadings}
+                        disabled={loading || progress.completed === 0}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                            Guardando...
+                          </>
+                        ) : (
+                          <>
+                            <SaveIcon className="h-4 w-4 mr-2" />
+                            Guardar Lecturas
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Formulario de Entrada de Datos */}
+                {/* Lista de lecturas PTAR */}
                 <Card>
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold">Lecturas PTAR</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Ingresa las lecturas de los medidores y procesos de la planta
-                        </p>
-                      </div>
-                      <Button 
-                        size="sm"
-                        onClick={saveReadings}
-                        disabled={autoSaveStatus === 'saving'}
-                      >
-                        <SaveIcon className="h-4 w-4 mr-2" />
-                        Guardar Ahora
-                      </Button>
+                    <div>
+                      <h3 className="text-lg font-semibold">Lecturas PTAR</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Revisa y edita las lecturas de la planta
+                      </p>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {ptarReadingPoints.map((point, index) => {
+                      {ptarReadingPoints.map(point => {
                         const value = readings[point.id] || ''
                         const isCompleted = value.trim() !== ''
                         const isTotal = point.id === 'total_dia'
@@ -405,64 +641,106 @@ export default function AddPTARReadingsPage() {
                                 : 'border-muted hover:border-primary/50'
                             } ${isTotal ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800' : ''}`}
                           >
-                            {/* Indicador de estado */}
                             <div className="flex-shrink-0">
                               {isCompleted ? (
                                 <CheckCircle2Icon className="h-5 w-5 text-green-500" />
                               ) : (
-                                <CircleIcon className="h-5 w-5 text-muted-foreground" />
+                                <AlertCircleIcon className="h-5 w-5 text-muted-foreground" />
                               )}
                             </div>
 
-                            {/* Información del medidor */}
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">
-                                {point.name}
-                              </p>
-                              <span className="text-xs text-muted-foreground capitalize">
-                                {point.type}
-                              </span>
+                              <p className="font-semibold text-sm">{point.name}</p>
+                              <p className="text-xs text-muted-foreground">{point.id}</p>
                             </div>
 
-                            {/* Input de lectura */}
                             <div className="flex items-center gap-2">
                               <input
-                                id={`input-${point.id}`}
-                                ref={index === 0 ? firstInputRef : null}
                                 type="number"
                                 step="0.01"
-                                placeholder={`Lectura en ${point.unit}`}
                                 value={value}
                                 onChange={(e) => handleReadingChange(point.id, e.target.value)}
-                                onKeyDown={(e) => handleKeyDown(e, point.id, index)}
                                 disabled={isTotal}
                                 className={`w-40 px-3 py-2 border rounded-lg text-sm text-right font-medium focus:outline-none focus:ring-2 focus:ring-primary ${
-                                  isCompleted 
-                                    ? 'border-green-300 bg-white dark:bg-gray-900' 
-                                    : 'border-muted'
-                                } ${isTotal ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed' : ''}`}
+                                  isTotal ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed' : ''
+                                }`}
+                                placeholder="0.00"
                               />
-                              <span className="text-sm text-muted-foreground">{point.unit}</span>
+                              <span className="text-sm text-muted-foreground">m³</span>
                             </div>
                           </div>
                         )
                       })}
                     </div>
 
-                    {/* Información adicional */}
                     <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <p className="text-sm text-blue-900 dark:text-blue-100 font-medium mb-2">
-                        💡 Información:
+                      <p className="text-sm text-blue-900 dark:text-blue-100 font-medium">
+                        💡 El <strong>Total dia</strong> se calcula automáticamente (AR + AT + Recirculacion)
                       </p>
-                      <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-                        <li>• <kbd className="px-1 py-0.5 bg-white dark:bg-gray-800 rounded border">Enter</kbd> - Siguiente campo</li>
-                        <li>• El <strong>Total del Día</strong> se calcula automáticamente (AR + AT + Recirculación)</li>
-                        <li>• Auto-guardado cada 3 segundos</li>
-                      </ul>
                     </div>
                   </CardContent>
                 </Card>
               </>
+            )}
+
+            {/* PASO 4: Confirmación de Éxito */}
+            {step === 4 && (
+              <div className="max-w-2xl mx-auto">
+                <Card className="border-green-200 bg-green-50/50">
+                  <CardContent className="pt-12 pb-12">
+                    <div className="text-center">
+                      <div className="mb-6 flex justify-center">
+                        <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center">
+                          <CheckCircle2Icon className="h-16 w-16 text-green-600" />
+                        </div>
+                      </div>
+
+                      <h2 className="text-3xl font-bold text-green-800 mb-3">
+                        ¡Lecturas PTAR Guardadas!
+                      </h2>
+
+                      <p className="text-lg text-green-700 mb-6">
+                        {success}
+                      </p>
+
+                      <div className="bg-white rounded-lg p-6 mb-8 border border-green-200">
+                        <div className="grid grid-cols-3 gap-6 text-center">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Fecha</p>
+                            <p className="text-xl font-bold text-primary">{selectedDate}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Hora</p>
+                            <p className="text-xl font-bold text-primary">{selectedTime || '09:00'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Lecturas</p>
+                            <p className="text-xl font-bold text-green-600">{progress.completed}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4 justify-center">
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          onClick={() => window.location.href = '/'}
+                          className="border-green-300 text-green-700 hover:bg-green-50"
+                        >
+                          Ir al Dashboard
+                        </Button>
+                        <Button
+                          size="lg"
+                          onClick={resetForm}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          Agregar Otra Fecha
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             )}
           </main>
         </div>

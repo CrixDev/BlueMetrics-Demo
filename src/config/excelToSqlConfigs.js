@@ -398,6 +398,24 @@ export const excelToSqlConfigs = {
     color: 'orange'
   },
 
+  // Gas 2025 - Solo Comedor Centrales Tec Food
+  gas_2025_comedor_tec_food: {
+    tipo: 'gas',
+    año: 2025,
+    nombreTabla: 'lecturas_semanales_gas_2025',
+    campos: [
+      'numero_semana',
+      'fecha_inicio',
+      'fecha_fin',
+      'comedor_centrales_tec_food'
+    ],
+    titulo: 'Excel a SQL - Gas 2025: Comedor Centrales Tec Food',
+    descripcion: 'Inserta datos de gas 2025 solo para Comedor Centrales Tec Food (formato vertical)',
+    nombreArchivoSql: 'inserts_gas_2025_comedor_tec_food.sql',
+    icono: '🍽️',
+    color: 'orange'
+  },
+
   // PTAR (Planta de Tratamiento de Aguas Residuales)
   ptar: {
     tipo: 'ptar',
