@@ -67,26 +67,40 @@ export default function EditDailyReadingsPage() {
   const [existingDates, setExistingDates] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
+  const pageSize = 50
 
   // Cargar fechas existentes
   useEffect(() => {
-    fetchExistingDates()
+    fetchExistingDates(0)
   }, [])
 
-  const fetchExistingDates = async () => {
+  const fetchExistingDates = async (page = 0) => {
     try {
       setLoading(true)
       setError(null)
       
+      // Obtener total de registros
+      const { count, error: countError } = await supabase
+        .from('lecturas_diarias')
+        .select('*', { count: 'exact', head: true })
+      
+      if (countError) throw countError
+      setTotalCount(count || 0)
+      
+      // Obtener datos con paginación
       const { data, error: fetchError } = await supabase
         .from('lecturas_diarias')
-        .select('dia_hora, mes_anio')
-        .order('dia_hora', { ascending: false })
+        .select('dia_hora, mes_anio, id')
+        .order('id', { ascending: false })
+        .range(page * pageSize, (page + 1) * pageSize - 1)
 
       if (fetchError) throw fetchError
 
       console.log('✅ Fechas obtenidas:', data)
       setExistingDates(data || [])
+      setCurrentPage(page)
 
     } catch (err) {
       console.error('❌ Error al cargar fechas:', err)
@@ -289,7 +303,7 @@ export default function EditDailyReadingsPage() {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={fetchExistingDates}
+                    onClick={() => fetchExistingDates(currentPage)}
                     disabled={loading}
                   >
                     <RefreshCwIcon className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -345,6 +359,33 @@ export default function EditDailyReadingsPage() {
                         </button>
                       ))}
                     </div>
+
+                    {/* Controles de Paginación */}
+                    {totalCount > pageSize && (
+                      <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                        <div className="text-sm text-muted-foreground">
+                          Mostrando {currentPage * pageSize + 1}-{Math.min((currentPage + 1) * pageSize, totalCount)} de {totalCount} fechas
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fetchExistingDates(currentPage - 1)}
+                            disabled={currentPage === 0 || loading}
+                          >
+                            Anterior
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fetchExistingDates(currentPage + 1)}
+                            disabled={currentPage >= Math.ceil(totalCount / pageSize) - 1 || loading}
+                          >
+                            Siguiente
+                          </Button>
+                        </div>
+                      </div>
+                    )}
 
                     {!selectedDate && !loading && (
                       <div className="text-center py-8 text-muted-foreground">
