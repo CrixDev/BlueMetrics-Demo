@@ -23,6 +23,26 @@ export const getGasTableNameByYear = (year) => {
 }
 
 /**
+ * Utilidad para obtener el nombre de la tabla de lecturas semanales (nueva estructura) según el año
+ * @param {string|number} year - Año (ej: '2024', '2025', 2024, 2025)
+ * @returns {string} - Nombre de la tabla (ej: 'lecturas_semanales_2024', 'lecturas_semanales_2025')
+ */
+export const getWeeklyTableNameByYear = (year) => {
+  const yearStr = year.toString()
+  return `lecturas_semanales_${yearStr}`
+}
+
+/**
+ * Utilidad para obtener el nombre de la tabla de consumo semanal según el año
+ * @param {string|number} year - Año (ej: '2024', '2025', 2024, 2025)
+ * @returns {string} - Nombre de la tabla (ej: 'lecturas_semanales_consumo_2024', 'lecturas_semanales_consumo_2025')
+ */
+export const getWeeklyConsumptionTableNameByYear = (year) => {
+  const yearStr = year.toString()
+  return `lecturas_semanales_consumo_${yearStr}`
+}
+
+/**
  * Lista de años disponibles en el sistema
  */
 export const AVAILABLE_YEARS = ['2023', '2024', '2025']

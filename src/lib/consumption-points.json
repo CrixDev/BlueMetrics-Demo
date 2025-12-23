@@ -2381,32 +2381,19 @@
               "reading": 0
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "id": "lecturas_semanales_2025",
+      "name": "Lecturas Semanales 2025",
+      "description": "Nuevas ubicaciones para lecturas semanales 2025",
+      "points": [
         {
-          "id": "residencias_10_15_purga_no",
-          "name": "Residencias 10 y 15 purga (STE NO JAVIER GZA)",
-          "type": "purga",
-          "unit": "m³",
-          "noRead": true,
-          "notes": "No tomar lectura - JAVIER GZA",
-          "weeklyData": [
-            {
-              "week": 1,
-              "reading": 0
-            },
-            {
-              "week": 2,
-              "reading": 0
-            }
-          ]
-        },
-        {
-          "id": "cdb1_jardineros",
-          "name": "CDB1 Jardineros (ESTE NO JAVIER GZA)",
+          "id": "farnville",
+          "name": "Farnville",
           "type": "edificio",
           "unit": "m³",
-          "noRead": true,
-          "notes": "No tomar lectura - JAVIER GZA",
           "weeklyData": [
             {
               "week": 1,
@@ -2419,12 +2406,10 @@
           ]
         },
         {
-          "id": "edificio_d",
-          "name": "Edificio D (ESTE NO JAVIER GZA)",
+          "id": "em_box",
+          "name": "Em Box",
           "type": "edificio",
           "unit": "m³",
-          "noRead": true,
-          "notes": "No tomar lectura - JAVIER GZA",
           "weeklyData": [
             {
               "week": 1,
@@ -2437,12 +2422,122 @@
           ]
         },
         {
-          "id": "estadio_yarda",
-          "name": "Estadio Yarda (ESTE NO JAVIER GZA)",
-          "type": "instalacion_deportiva",
+          "id": "crepaso",
+          "name": "Crepaso",
+          "type": "edificio",
           "unit": "m³",
-          "noRead": true,
-          "notes": "No tomar lectura - JAVIER GZA",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 0
+            },
+            {
+              "week": 2,
+              "reading": 0
+            }
+          ]
+        },
+        {
+          "id": "el_negro",
+          "name": "El Negro",
+          "type": "edificio",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 0
+            },
+            {
+              "week": 2,
+              "reading": 0
+            }
+          ]
+        },
+        {
+          "id": "e2_beiker",
+          "name": "E2-Beiker",
+          "type": "edificio",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 0
+            },
+            {
+              "week": 2,
+              "reading": 0
+            }
+          ]
+        },
+        {
+          "id": "e2_evobike",
+          "name": "E2-Evobike",
+          "type": "edificio",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 0
+            },
+            {
+              "week": 2,
+              "reading": 0
+            }
+          ]
+        },
+        {
+          "id": "e2_pancho_de_rigo",
+          "name": "E2-Pancho de Rigo",
+          "type": "edificio",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 0
+            },
+            {
+              "week": 2,
+              "reading": 0
+            }
+          ]
+        },
+        {
+          "id": "e2_bebedero_nube",
+          "name": "E2 bebedero Nube",
+          "type": "bebedero",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 0
+            },
+            {
+              "week": 2,
+              "reading": 0
+            }
+          ]
+        },
+        {
+          "id": "residencias_abc_lavanderia",
+          "name": "Residencias ABC (Lavandería)",
+          "type": "residencia",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 0
+            },
+            {
+              "week": 2,
+              "reading": 0
+            }
+          ]
+        },
+        {
+          "id": "estacionamiento_e1",
+          "name": "Estacionamiento E1",
+          "type": "estacionamiento",
+          "unit": "m³",
           "weeklyData": [
             {
               "week": 1,
