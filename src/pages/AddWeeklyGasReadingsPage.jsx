@@ -119,7 +119,7 @@ export default function AddWeeklyGasReadingsPage() {
       setError(null)
 
       const tableName = getGasTableNameByYear(selectedYear)
-      const consumoTableName = `lecturas_semana_gas_consumo_${selectedYear}`
+      const consumoTableName = `lecturas_semanales_gas_consumo_${selectedYear}`
       
       // Crear la semana en tabla de lecturas
       const { error: insertError } = await supabase
@@ -431,7 +431,7 @@ export default function AddWeeklyGasReadingsPage() {
       
       console.log('✅ Lecturas guardadas exitosamente:', data)
       
-      const consumoTableName = `lecturas_semana_gas_consumo_${selectedYear}`
+      const consumoTableName = `lecturas_semanales_gas_consumo_${selectedYear}`
       const consumoData = {
         numero_semana: weekNumber,
         fecha_inicio: startDate,
